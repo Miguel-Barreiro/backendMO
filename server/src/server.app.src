@@ -15,7 +15,6 @@
     ]},
     {mod, { server, []} },
     {env, [
-
         {poolserver_ip, "127.0.0.1"},
         {poolserver_port, 9000},
         {poolserver_ssl_port, 9001},

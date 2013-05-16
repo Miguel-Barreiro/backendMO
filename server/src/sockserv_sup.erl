@@ -12,7 +12,8 @@ start_link() ->
 
 init([]) ->
 
-    {ok, Ip} = application:get_env(poolserver, poolserver_ip),
+	Ip ="127.0.0.1",
+    %{ok, Ip} = application:get_env(poolserver, poolserver_ip),
     {ok, IpInet} = inet:getaddr(Ip, inet), 
 
     Port = case application:get_env(poolserver, poolserver_port) of undefined -> 80; {ok, Any1} -> Any1 end,
