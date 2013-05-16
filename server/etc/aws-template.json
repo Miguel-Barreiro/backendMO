@@ -1,0 +1,560 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+
+    "Description" : "8Ballpool Mobile stack.",
+
+    "Parameters" : {
+
+        "InstanceType" : {
+            "Description" : "Pool server EC2 instance type",
+            "Type" : "String",
+            "Default" : "m3.2xlarge",
+            "AllowedValues" : [ "m1.large","m1.xlarge","m3.2xlarge","m2.4xlarge","c1.medium","c1.xlarge","cc1.4xlarge","cc2.8xlarge","cg1.4xlarge"],
+            "ConstraintDescription" : "must be a valid EC2 instance type."
+        },
+
+        "KeyName" : {
+            "Description" : "Name of and existing EC2 KeyPair to enable SSH access to the instance",    
+            "Type" : "String",
+            "Default" : "aws-mc-keys"
+        },
+
+        "DeploymentBucket" : {
+            "Description" : "Bucket with deployment binaries",
+            "Type" : "String",
+            "Default" : "teamrocket-builds"
+        },
+
+        "DeploymentPoolBinary" : {
+            "Description" : "Pool package file name",
+            "Type" : "String",
+            "Default" : "pool-server/pool.tgz"
+        },
+
+        "ListenPort" : {
+            "Description" : "Pool server listen port",
+            "Type" : "String",
+            "Default" : "80"
+        },
+
+        "DatabaseUser" : {
+            "Description" : "Database user",
+            "Type" : "String"
+        },
+
+        "DatabasePassword" : {
+            "Description" : "Database password",
+            "Type" : "String"
+        },
+
+        "DatabaseName" : {
+            "Description" : "Database name",
+            "Type" : "String",
+            "Default" : "pool"
+        },
+
+        "DatabaseSnapshot" : {
+            "Description" : "Database snapshot ID",
+            "Type" : "String"
+        },
+
+        "DatabaseInstanceClass" : {
+            "Description" : "Database instance class",
+            "Type" : "String",
+            "Default" : "db.m1.large"
+        },
+
+        "IOSInAppsVerifyURL" : {
+            "Description" : "URL for Inapps verfification",
+            "Type" : "String",
+            "Default" : "https://buy.itunes.apple.com/verifyReceipt"
+        },
+
+        "ConfigURL" : {
+            "Description" : "URL where dynamic configuration is located",
+            "Type" : "String",
+            "Default" : "http://s3-us-west-2.amazonaws.com/pool-dev-configuration/latest.txt"
+        },
+
+        "APNServer" : { 
+            "Description" : "Apple Push Notification server",
+            "Type" : "String",
+            "Default" : "gateway.push.apple.com"
+        },
+
+        "GPPubKey" : {
+            "Description" : "GooglePlay public key",
+            "Type" : "String",
+            "Default" : "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAh+r1FDthSVi+/DCPsBZmqIGT1fcnheonJaS8Q77nPkSRjJOAtor2cVM6PApBmi2Z0vrPwAakT/iqaiJ1E2WiJ6DrgAjt3IjL1D3jn7g8+fdaZZlH2mAFywCzrxFPiwtfo8sqHvLgYkQHl2fyPV24IP9z26LVwuQwdHJoL9Bo00YHEStPSBBVtqCnhw9Z+ytU8kfSmB7TyjegvP3/jKKXCBimUcaIhAI2HraSvVNhRkEp8uxnwp93GfYLvftygqpg/ma8rZzkJVdg3x2mUiClcv8spbjEAwBYC6dIcd+oSCkKIvDQJ8uS3X7QFv1CxCRGuSZ0VeSWTAyvACv0etQUIQIDAQAB"
+        },
+
+        "GCMKey" : {
+            "Description" : "Google Cloud Messaging key",
+            "Type" : "String",
+            "Default" : "AIzaSyDO97LP4Tzr1nAplIQYzDN3_J6j0oWzTOo"
+        },
+
+        "GCMURL" : {
+            "Description" : "Google Cloud Messaging URL",
+            "Type" : "String",
+            "Default" : "https://android.googleapis.com/gcm/send"
+        },
+
+        "AWSUserID" : {
+            "Description" : "AWS user ID",
+            "Type" : "String",
+            "Default" : "378204947660"
+        },
+
+        "DatadogKey" : {
+            "Description" : "Datadog API key",
+            "Type" : "String",
+            "Default" : "4aff5d15dba3c8efca67d6459769a033"
+        },
+
+        "SSLCertificate" : {
+            "Description" : "SSL certificate ID",
+            "Type" : "String",
+            "Default" : "arn:aws:iam::378204947660:server-certificate/pool-server-certificate"
+        }
+
+    },
+
+    "Mappings" : {
+        "RegionMap" : {
+            "us-east-1"      : { "AMI" : "ami-1624987f" },
+            "us-west-1"      : { "AMI" : "ami-1bf9de5e" },
+            "us-west-2"      : { "AMI" : "ami-2a31bf1a" },
+            "eu-west-1"      : { "AMI" : "ami-c37474b7" },
+            "sa-east-1"      : { "AMI" : "ami-1e08d103" },
+            "ap-southeast-1" : { "AMI" : "ami-a6a7e7f4" },
+            "ap-northeast-1" : { "AMI" : "ami-4e6cd34f" }
+        }
+    },
+
+
+    "Resources" : {
+
+        "InAppQueue" : {
+            "Type" : "AWS::SQS::Queue"
+        },
+
+        "ClusterSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable any traffic",
+                "SecurityGroupIngress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "0",  "ToPort" : "65535", "SourceSecurityGroupName" : { "Ref" : "InstanceSecurityGroup" }}
+                ]
+            }
+        },
+
+        "InstanceSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable proper access",
+                "SecurityGroupIngress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0" },
+                    { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" }
+                ]
+            }
+        },
+
+        "DbSecurityGroup" : {
+            "Type" : "AWS::RDS::DBSecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Ingress for Amazon EC2 security group",
+                "DBSecurityGroupIngress" : {
+                    "EC2SecurityGroupName" : {"Ref" : "InstanceSecurityGroup"},
+                    "EC2SecurityGroupOwnerId" : {"Ref" : "AWSUserID"}
+                }
+            }
+        },
+
+        "DBinstance" : {
+            "Type" : "AWS::RDS::DBInstance",
+            "Properties" : {
+                "DBSecurityGroups" : [ {"Ref" : "DbSecurityGroup"} ],
+                "AllocatedStorage" : "15",
+                "DBInstanceClass" : {"Ref" : "DatabaseInstanceClass"},
+                "Engine" : "MySQL",
+                "MasterUsername" : {"Ref" :  "DatabaseUser"},
+                "MasterUserPassword" : {"Ref" : "DatabasePassword"},
+                "DBSnapshotIdentifier" : {"Ref" : "DatabaseSnapshot"}
+            }
+        },
+
+        "PoolServerUser" : {
+            "Type" : "AWS::IAM::User",
+            "Properties" : {
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "root",
+                        "PolicyDocument": { 
+                            "Statement":[
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "cloudformation:DescribeStackResource"
+                                    ],
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Effect" : "Allow",
+                                    "Action" : [
+                                        "ec2:DescribeInstanceAttribute",
+                                        "ec2:DescribeInstanceStatus",
+                                        "ec2:DescribeInstances",
+                                        "ec2:DescribeNetworkInterfaceAttribute",
+                                        "ec2:DescribeNetworkInterfaces"
+                                    ],
+                                    "Resource" : "*"
+                                }
+
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName": "bucketpolicy",
+                        "PolicyDocument": { 
+                            "Statement":[{
+                                "Effect": "Allow",
+                                "Action": [
+                                    "s3:GetObject"
+                                ],
+                                "Resource": { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "DeploymentBucket" } , "/*" ]]}
+                            }]
+                        }
+                    },
+                    {
+                        "PolicyName" : "sqspolicy",
+                        "PolicyDocument" : {
+                            "Statement" : [
+                                {
+                                    "Action": [ "sqs:ListQueues" ],
+                                    "Effect": "Allow",
+                                    "Resource": { "Fn::Join": ["", ["arn:aws:sqs:", { "Ref" : "AWS::Region" }, ":", {"Ref" : "AWSUserID"} ,":*" ] ] }
+                                },
+                                {
+                                    "Effect" : "Allow",
+                                    "Action" : [
+                                        "sqs:ChangeMessageVisibility",
+                                        "sqs:ChangeMessageVisibilityBatch",
+                                        "sqs:DeleteMessage",
+                                        "sqs:DeleteMessageBatch",
+                                        "sqs:GetQueueUrl",
+                                        "sqs:ReceiveMessage",
+                                        "sqs:SendMessage"
+                                    ],
+                                    "Resource" : [ { "Fn::GetAtt" : [ "InAppQueue", "Arn" ] } ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+
+
+        "PoolServerKeys" : {
+            "Type" : "AWS::IAM::AccessKey",
+            "Properties" : {
+                "UserName" : {"Ref": "PoolServerUser"}
+            }
+        },
+
+
+        "PoolServerLaunchConfig" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata" : {
+                "Comment" : "Install pool server",
+
+                "AWS::CloudFormation::Authentication" : {
+                    "DeployS3" : {
+                        "type" : "S3",
+                        "accessKeyId" : { "Ref" : "PoolServerKeys" },
+                        "secretKey" : {"Fn::GetAtt": ["PoolServerKeys", "SecretAccessKey"]},
+                        "buckets" : [ { "Ref" : "DeploymentBucket" } ]
+                    }
+                },
+
+                "AWS::CloudFormation::Init" : {
+                    "config" : {
+                        "packages" : {
+                            "yum" : {
+                                "php" : [],
+                                "stunnel" : []
+                            }
+                        },
+
+                        "files" : {
+
+                            "/etc/yum.repos.d/datadog.repo" : {
+                                "content" : { "Fn::Join" : ["", [
+                                    "[datadog]\n",
+                                    "name = Datadog, Inc.\n",
+                                    "baseurl = http://yum.datadoghq.com/rpm/\n",
+                                    "enabled=1\n",
+                                    "gpgcheck=0\n"
+                                ]]}
+                            },
+
+                            "/ec2-user/pool.tgz" : {
+                                "source" : { "Fn::Join" : ["", [ "https://", { "Ref" : "DeploymentBucket" }, ".s3.amazonaws.com/", { "Ref" : "DeploymentPoolBinary" } ] ] },
+                                "owner" : "root",
+                                "auhtentication" : "DeployS3"
+                            },
+
+                            "/etc/cfn/cfn-credentials" : {
+                                "content" : { "Fn::Join" : ["", [
+                                    "AWSAccessKeyId=", { "Ref" : "PoolServerKeys" }, "\n",
+                                    "AWSSecretKey=", {"Fn::GetAtt": ["PoolServerKeys", "SecretAccessKey"]}, "\n"
+                                ]]},
+                                "mode"  : "000400",
+                                "owner" : "root",
+                                "group" : "root"
+                            },
+
+                            "/etc/cfn/cfn-hup.conf" : {
+                                "content" : { "Fn::Join" : ["", [
+                                    "[main]\n",
+                                    "stack=", { "Ref" : "AWS::StackName" }, "\n",
+                                    "credential-file=/etc/cfn/cfn-credentials\n",
+                                    "region=", { "Ref" : "AWS::Region" }, "\n"
+                                ]]},
+                                "mode"    : "000400",
+                                "owner"   : "root",
+                                "group"   : "root"
+                            },
+
+                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf" : {
+                                "content": { "Fn::Join" : ["", [
+                                    "[cfn-auto-reloader-hook]\n",
+                                    "triggers=post.update\n",
+                                    "path=Resources.PoolServerInstance.Metadata.AWS::CloudFormation::Init\n",
+                                    "action=/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackName" }, " -r PoolServerLaunchConfig ",
+                                        " --credential-file /etc/cfn/cfn-credentials ",
+                                        " --region ", { "Ref" : "AWS::Region" }, "\n",
+                                    "runas=root\n"
+                                ]]}
+                            },
+
+                            "/etc/security/limits.conf" : {
+                                "content" : { "Fn::Join" : ["", [
+                                    "* soft nofile 500000\n",
+                                    "* hard nofile 500000\n"
+                                ]]}
+                            },
+
+                            "/etc/sysctl.conf" : {
+                                "content": { "Fn::Join" : ["", [
+                                    "net.core.rmem_max = 33554432\n",
+                                    "net.core.wmem_max = 33554432\n",
+                                    "net.core.netdev_max_backlog = 3000\n",
+
+                                    "net.ipv4.tcp_rmem = 4096 16384 33554432\n",
+                                    "net.ipv4.tcp_wmem=  4096 16384 33554432\n",
+                                    "net.ipv4.tcp_mem = 786432 1048576 26777216\n",
+                                    "net.ipv4.tcp_max_tw_buckets = 360000\n",
+                                    "net.ipv4.ip_forward = 0\n",
+                                    "net.ipv4.conf.default.rp_filter = 1\n",
+                                    "net.ipv4.conf.default.accept_source_route = 0\n",
+                                    "net.ipv4.tcp_syncookies = 1\n",
+                                    "net.ipv4.ip_local_port_range = 1024 65535\n",
+
+                                    "kernel.sysrq = 0\n",
+                                    "kernel.msgmnb = 65536\n",
+                                    "kernel.msgmax = 65536\n",
+                                    "kernel.shmmax = 68719476736\n",
+                                    "kernel.shmall = 4294967296\n",
+
+                                    "fs.file-max = 400000\n"
+                                ]]}
+                            },
+
+                            "/etc/stunnel/mcapi.conf" : {
+                                "content": { "Fn::Join" : ["", [
+                                    "socket = l:TCP_NODELAY=1\n",
+                                    "socket = r:TCP_NODELAY=1\n",
+                                    "output = /etc/stunnel/mcapi.log\n",
+                                    "client = yes\n",
+                                    "[mcapi]\n",
+                                    "accept = 127.0.0.1:8081\n",
+                                    "connect = api.miniclip.com:443\n"
+                                ]]}
+                            }
+                        }
+
+                    }
+                }
+            },
+
+            "Properties" : {
+                "ImageId" : { "Fn::FindInMap" : [ "RegionMap", { "Ref" : "AWS::Region" }, "AMI" ]},
+                "SecurityGroups" : [{ "Ref" : "InstanceSecurityGroup" }, { "Ref" : "ClusterSecurityGroup" }],
+                "InstanceType" : { "Ref" : "InstanceType" },
+                "KeyName" : { "Ref" : "KeyName" },
+                "BlockDeviceMappings" : [{"DeviceName" : "/dev/sdb", "Ebs": { "VolumeSize": "500"}}],
+                "UserData"       : { "Fn::Base64" : { "Fn::Join" : ["", [
+                    "#!/bin/bash\n",
+                    "yum update -y aws-cfn-bootstrap\n",
+
+                    "# Install the server\n",
+                    "/opt/aws/bin/cfn-init -s ", { "Ref" : "AWS::StackName" }, " -r PoolServerLaunchConfig ",
+                    "         --access-key ", { "Ref" : "PoolServerKeys" },
+                    "         --secret-key ", {"Fn::GetAtt": ["PoolServerKeys", "SecretAccessKey"]},
+                    "         --region ", { "Ref" : "AWS::Region" }, " || error_exit 'Failed to run cfn-init'\n",
+
+                    "yum makecache\n",
+                    "yum install -y datadog-agent\n",
+                    "sed 's/api_key:.*/api_key: ", { "Ref" : "DatadogKey" },  "/' /etc/dd-agent/datadog.conf.example > /etc/dd-agent/datadog.conf\n",
+                    "/etc/init.d/datadog-agent restart\n",
+
+                    "# Wait for the EBS volume to show up\n",
+                    "while [ ! -e /dev/sdb ]; do echo Waiting for EBS volume to attach; sleep 5; done\n",
+ 
+                    "# Format the EBS volume and mount it\n",
+                    "/sbin/mkfs -t ext3 /dev/sdb\n",
+                    "mount /dev/sdb /srv\n",
+
+                    "/bin/tar xzf /ec2-user/pool.tgz -C /srv\n",
+
+                    "MY_INSTANCE_ID=`(curl http://169.254.169.254/latest/meta-data/instance-id)`\n",
+                    "MY_IP=`(curl http://169.254.169.254/latest/meta-data/local-ipv4)`\n",
+                    "sed -i 's/REPLACE_LOCAL_IP/'$MY_IP'/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_TCP_PORT/", { "Ref" : "ListenPort" } ,"/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i \"s/REPLACE_INAPPS_VERIFY_URL/$(echo ", { "Ref" : "IOSInAppsVerifyURL" } ,"| sed -e 's/[\\/&]/\\\\&/g')/g\" /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_STATSD_TAG/'$MY_INSTANCE_ID'/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_AWS_KEY/", { "Ref" : "PoolServerKeys" } ,"/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i \"s/REPLACE_AWS_SECRET_KEY/$(echo ", {"Fn::GetAtt": ["PoolServerKeys", "SecretAccessKey"]} ,"| sed -e 's/[\\/&]/\\\\&/g')/g\" /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_MINICLIP_API_URL/http:\\/\\/127.0.0.1:8081/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_SECURE_MINICLIP_API_URL/http:\\/\\/127.0.0.1:8081/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_SQS_HOST/", { "Ref" : "AWS::Region" } ,".queue.amazonaws.com/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_SQS_NAME/", {"Fn::GetAtt": ["InAppQueue", "QueueName"]} ,"/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_MYSQL_HOST/", { "Fn::GetAtt" : ["DBinstance", "Endpoint.Address"] } ,"/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_MYSQL_USER/", { "Ref" : "DatabaseUser" } ,"/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_MYSQL_PASSWORD/", { "Ref" : "DatabasePassword" } ,"/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_MYSQL_DB/", { "Ref" : "DatabaseName" } ,"/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i \"s/REPLACE_CONFIG_MONITORING_ADDRESS/$(echo ", { "Ref" : "ConfigURL" } ,"| sed -e 's/[\\/&]/\\\\&/g')/g\" /srv/poolserver/etc/app.config\n",
+                    "sed -i \"s/REPLACE_APN_SERVER_ADDRESS/$(echo ", { "Ref" : "APNServer" } ,"| sed -e 's/[\\/&]/\\\\&/g')/g\" /srv/poolserver/etc/app.config\n",
+                    "sed -i \"s/REPLACE_GOOGLE_PLAY_PUBLIC_KEY/$(echo ", { "Ref" : "GPPubKey" } ,"| sed -e 's/[\\/&]/\\\\&/g')/g\" /srv/poolserver/etc/app.config\n",
+                    "sed -i \"s/REPLACE_GCM_KEY/$(echo ", { "Ref" : "GCMKey" } ,"| sed -e 's/[\\/&]/\\\\&/g')/g\" /srv/poolserver/etc/app.config\n",
+                    "sed -i \"s/REPLACE_GCM_URL/$(echo ", { "Ref" : "GCMURL" } ,"| sed -e 's/[\\/&]/\\\\&/g')/g\" /srv/poolserver/etc/app.config\n",
+                    "sed -i 's/REPLACE_AWS_SECURITY_GROUP/", { "Ref" : "InstanceSecurityGroup" } ,"/g' /srv/poolserver/etc/app.config\n",
+                    "sed -i \"s/REPLACE_EC2_ENDPOINT/$(echo ", { "Ref" : "AWS::Region" }, ".ec2.amazonaws.com | sed -e 's/[\\/&]/\\\\&/g')/g\" /srv/poolserver/etc/app.config\n",
+
+                    "sysctl -p\n",
+                    "ulimit -n 400000\n",
+                    "export HOME=/srv/poolserver\n",
+
+                    "/usr/bin/stunnel /etc/stunnel/mcapi.conf\n",
+                    "/srv/poolserver/bin/poolserver start\n"
+                ]]}}        
+            }
+        },
+
+        "PoolServerGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "Properties" : {
+                "AvailabilityZones" : { "Fn::GetAZs" : "" },
+                "LaunchConfigurationName" : { "Ref" : "PoolServerLaunchConfig" },
+                "MinSize" : "2",
+                "MaxSize" : "2",
+                "LoadBalancerNames" : [ { "Ref" : "PoolLoadBalancer" } ]
+            }
+        },
+
+        "PoolLoadBalancer" : {
+            "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties" : {
+                "AvailabilityZones" : { "Fn::GetAZs" : "" },
+                "Listeners" : [ 
+                    {
+                        "LoadBalancerPort" : "443",
+                        "InstancePort" : { "Ref" : "ListenPort" },
+                        "Protocol" : "SSL",
+                        "InstanceProtocol" : "TCP",
+                        "SSLCertificateId" : "arn:aws:iam::378204947660:server-certificate/pool-server-certificate"
+                    },
+                    {
+                        "LoadBalancerPort" : "9001",
+                        "InstancePort" : { "Ref" : "ListenPort" },
+                        "Protocol" : "SSL",
+                        "InstanceProtocol" : "TCP",
+                        "SSLCertificateId" : "arn:aws:iam::378204947660:server-certificate/pool-server-certificate"
+                    }
+                ],
+                "HealthCheck" : {
+                    "Target" : { "Fn::Join" : [ "", ["TCP:", { "Ref" : "ListenPort" }]]},
+                    "HealthyThreshold" : "3",
+                    "UnhealthyThreshold" : "5",
+                    "Interval" : "30",
+                    "Timeout" : "5"
+                }
+            }
+        },
+
+        "FBRealtimeUpdatesHandlerApplication" : {
+            "Type" : "AWS::ElasticBeanstalk::Application",
+            "Properties" : {
+                "Description" : "Facebook realtime updates handler",
+                "ApplicationVersions" : [{
+                    "VersionLabel" : "Initial Version",
+                    "Description" : "Version 1.0",
+                    "SourceBundle" : {
+                        "S3Bucket" : { "Fn::Join" : ["-", ["elasticbeanstalk-samples", { "Ref" : "AWS::Region" }]]},
+                        "S3Key" : "php-sample.zip"
+                    }
+                }],
+                "ConfigurationTemplates" : [{
+                    "TemplateName" : "DefaultConfiguration",
+                    "Description" : "Default Configuration Version 1.0 - with SSH access",
+                    "SolutionStackName" : "64bit Amazon Linux running PHP 5.4",
+                    "OptionSettings" : [
+                        {
+                            "Namespace" : "aws:autoscaling:launchconfiguration",
+                            "OptionName" : "EC2KeyName",
+                            "Value" : { "Ref" : "KeyName" }
+                        },
+                        {
+                            "Namespace" : "aws:elasticbeanstalk:application:environment",
+                            "OptionName" : "DB_HOST",
+                            "Value" : { "Fn::GetAtt" : ["DBinstance", "Endpoint.Address"] }
+                        },
+                        {
+                            "Namespace" : "aws:elasticbeanstalk:application:environment",
+                            "OptionName" : "DB_USER",
+                            "Value" : { "Ref" : "DatabaseUser" }
+                        },
+                        {
+                            "Namespace" : "aws:elasticbeanstalk:application:environment",
+                            "OptionName" : "DB_PASS",
+                            "Value" : { "Ref" : "DatabasePassword" }
+                        }
+                    ]
+                }]
+            }
+        },
+        "FriendInvalidatorEnvironment" : {
+            "Type" : "AWS::ElasticBeanstalk::Environment",
+            "Properties" : {
+                "ApplicationName" : { "Ref" : "FBRealtimeUpdatesHandlerApplication" },
+                "Description" :  "Facebook realtime updates handler",
+                "TemplateName" : "DefaultConfiguration",
+                "VersionLabel" : "Initial Version"
+            }
+        }
+    },
+    "Outputs" : {
+        "FBURL" : {
+            "Description" : "URL Facebook realtime updates handler",
+            "Value" : { "Fn::Join" : [ "", [ "http://", { "Fn::GetAtt" : ["FriendInvalidatorEnvironment", "EndpointURL"] }]]}
+        },
+        "PoolURL" : {
+            "Description" : "Pool loadbalancer DNSName",
+            "Value" : { "Fn::GetAtt" : ["PoolLoadBalancer", "DNSName"] }
+        }
+    }
+
+}
