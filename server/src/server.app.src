@@ -13,7 +13,7 @@
         gproc,
         inets
     ]},
-    {mod, { sockserv_sup, []} },
+    {mod, { server, []} },
     {env, [
 
         {poolserver_ip, "127.0.0.1"},
