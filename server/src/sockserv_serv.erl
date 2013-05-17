@@ -221,6 +221,6 @@ code_change(_OldVsn, State, _Extra) ->
 
 process(Msg, State) ->
 	lager:debug("Message: ~p received", [Msg]),
-	gen_server:cast(self(), {reply, "CUM CRL!"}),
+	gen_server:cast(self(), {reply, "received " ++ Msg}),
 	State.
 
