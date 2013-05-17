@@ -10,7 +10,9 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    sockserv_sup:start_link().
+    Res = sockserv_sup:start_link(),
+    sockserv_sup:launch_empty_listeners(),
+    Res.
 
 stop(_State) ->
     ok.
