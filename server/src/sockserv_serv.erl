@@ -217,10 +217,11 @@ terminate(Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
 
-
-
 process(Msg, State) ->
-	lager:debug("Message: ~p received", [Msg]),
-	gen_server:cast(self(), {reply, "received " ++ Msg}),
+	case message_processor:process(Msg) of
+		{reply, Reply} -> gen_server:cast(self(), {reply, Reply} );
+		{reply_with_disconnect, Last_reply} -> gen_server:cast(self(), {reply_with_disconnect, Last_reply} );
+		_ -> nothing
+	end,
 	State.
 
