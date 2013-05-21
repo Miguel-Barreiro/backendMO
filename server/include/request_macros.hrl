@@ -1,0 +1,2 @@
+%% REQUESTS TAGS
+-define(MESSAGE_ACTION_KEY,"action").
