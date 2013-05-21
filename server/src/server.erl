@@ -10,8 +10,8 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    Res = sockserv_sup:start_link(),
     server_db:start(),
+    Res = sockserv_sup:start_link(),
     sockserv_sup:launch_empty_listeners(),
     Res.
 

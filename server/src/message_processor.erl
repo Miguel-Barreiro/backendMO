@@ -1,23 +1,45 @@
 -module(message_processor).
 
 -include("include/softstate.hrl").
+-include("include/request_macros.hrl").
 
--export([process/1]).
+-export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0]).
 
 
-process(Msg)->
+
+process_pre_login_message(Msg) ->
 	lager:info("Message: ~p received", [Msg]),
 	Decoded = ejson:decode(Msg),
-	{[{<<"userId">>, Id}]} = Decoded,
-	User = #user{ userid = Id, pid = self(), state = in_queue },
-	lager:info("save resulted: ~p ", [server_db:push_user_data(User)]),
-%	{reply, "received " ++ Msg}.
-	{ ok , List} = server_db:get_unmatched_all_users(),
-	Response = [turn_user_into_list( User_result ) || User_result <- List],
-	{reply, ejson:encode(Response)}.
+	{[{<<"userId">>, User_id} | _ ]} = Decoded,
+
+	{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
+
+	User = #user{ 	user_id = User_id, 
+					user_process_pid = Child_pid, 
+					user_connection_pid = self(), 
+					state = in_queue },
+
+	server_db:push_user_data(User),
+
+	{ ok , List} = server_db:get_all_unmatched_users(),
+%	Response = [turn_user_into_list( User_result ) || User_result <- List],
+%	{reply, ejson:encode(Response)}.
+	{reply, "[ \"result\" : 0 ]"}.
 
 
 
-turn_user_into_list( User = #user{  userid = UserId } ) ->
-	{[ {"userId" , UserId} ]}.
+process(Msg, User_process_pid) ->
+	{reply, "[ \"result\" : 0 ]"}.
 
+
+turn_user_into_list( _User = #user{  user_id = User_id } ) ->
+	{[ {"userId" , User_id} ]}.
+
+
+handle_connect() ->
+	ok.
+
+handle_disconect() ->
+	ok.
+
+	
