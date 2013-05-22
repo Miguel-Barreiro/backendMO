@@ -1,6 +1,7 @@
 -module(users_serv).
 -behaviour(gen_server).
 
+-define(SERVER, ?MODULE).
 -define(CONNECTION_TIMEOUT, 40000).
 
 -include("include/softstate.hrl").
@@ -19,10 +20,8 @@
 }).
 
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/2]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
-start_link(Connection_pid , User_id ) ->
-    gen_server:start_link(?MODULE, [Connection_pid , User_id ], []).
 
 init(InitData) ->
 	gen_server:cast(self(), InitData),
@@ -30,8 +29,6 @@ init(InitData) ->
 
 
 handle_cast([ Connection_pid , User_id ], State = #user_process_state{ }) ->
-
-	lager:info("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
 	gen_server:cast( Connection_pid , {register_user_process,self()}),
 	Connection_monitor = monitor(process, Connection_pid),
@@ -83,7 +80,7 @@ handle_call(_E, _From, State) ->
 	{noreply, State}.
 
 terminate(Reason, _State) ->
-	lager:error("users_serv: terminate reason: ~p", [Reason]),
+	lager:error("terminate reason: ~p", [Reason]),
 	ok.
 
 code_change(_OldVsn, State, _Extra) ->
