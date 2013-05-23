@@ -48,7 +48,7 @@ handle_cast([ Connection_pid , User_id ], State = #user_process_state{ }) ->
 				connection_pid = Connection_pid,
 				disconect_timer = undefined,
 				connection_state = connected
-			} 
+			}
 	};
 
 

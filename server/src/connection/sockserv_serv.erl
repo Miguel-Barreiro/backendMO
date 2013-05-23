@@ -121,8 +121,8 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
 
 					AuthTimeout = ?DEFAULT_AUTH_TIMEOUT,
 
-					%erlang:send_after(timer:seconds(60), self(), check_inactivity_timeout),
-					%erlang:send_after(timer:seconds(?DEFAULT_PING_TIMEOUT), self(), check_ping_timeout),
+					erlang:send_after(timer:seconds(60), self(), check_inactivity_timeout),
+					erlang:send_after(timer:seconds(?DEFAULT_PING_TIMEOUT), self(), check_ping_timeout),
 					%erlang:send_after(timer:seconds(AuthTimeout), self(), check_auth_state),
 
 					{noreply, State#connection_state{peer_ip = Name, socket = AcceptSocket, connstate = handshake}}
@@ -131,7 +131,6 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
             lager:error("accept error ~p", [Reason]),
             handle_cast(accept, State)
     end.
-
 
 
 %%
@@ -218,14 +217,9 @@ handle_info(M,S) ->
 handle_call(_E, _From, State) ->
     {noreply, State}.
 
-terminate(normal, #connection_state{connstate = CS}) when CS =/= undefined ->
-    ok;
 
-terminate(normal, _State) ->
-    ok;
-
-terminate(Reason, #connection_state{connstate = CS}) when CS =/= undefined ->
-	lager:error("terminate reason: ~p", [Reason]),
+terminate(Reason, #connection_state{}) ->
+	lager:error("connection: terminate reason: ~p", [Reason]),
     ok;
 
 terminate(Reason, _State) ->
