@@ -16,13 +16,14 @@ start_link() ->
 
 init([]) ->
 
-	Ip ="127.0.0.1",
+	Ip ="0.0.0.0",
+	%Ip ="127.0.0.1",
 	Port = 9000,
 	SSLPort = 9001,
 	CertFile = "etc/server_cert.pem",
 	KeyFile = "etc/server_key.pem",
 
-	%httpc:set_options([{pipeline_timeout, 0},{max_pipeline_length,1},{max_sessions,APN_worker_number}]),
+	httpc:set_options([{max_sessions, 2000}, {pipeline_timeout, 100}, {max_pipeline_length, 5}]),
 
 
     %{ok, Ip} = application:get_env(poolserver, poolserver_ip),

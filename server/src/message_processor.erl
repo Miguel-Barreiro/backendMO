@@ -14,6 +14,12 @@ process_pre_login_message(Msg) ->
 
 	{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
 
+	case server_db:get_user_data( User_id ) of 
+		{ error, no_user } ->
+		{ ok, UserData } ->
+		{ error, Reason }
+	end,
+
 	User = #user{ 	user_id = User_id, 
 					user_process_pid = Child_pid, 
 					user_connection_pid = self(), 
