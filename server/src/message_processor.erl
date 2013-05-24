@@ -14,11 +14,11 @@ process_pre_login_message(Msg) ->
 
 	{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
 
-	case server_db:get_user_data( User_id ) of 
-		{ error, no_user } ->
-		{ ok, UserData } ->
-		{ error, Reason }
-	end,
+%	case server_db:get_user_data( User_id ) of 
+%		{ error, no_user } ->
+%		{ ok, UserData } ->
+%		{ error, Reason }
+%	end,
 
 	User = #user{ 	user_id = User_id, 
 					user_process_pid = Child_pid, 
@@ -29,8 +29,8 @@ process_pre_login_message(Msg) ->
 
 	{ ok , List} = server_db:get_all_unmatched_users(),
 %	Response = [turn_user_into_list( User_result ) || User_result <- List],
-%	{reply, ejson:encode(Response)}.
-	{reply, "[ \"result\" : 0 ]"}.
+	Response = { [ { "result", 0 } ] },
+	{reply, ejson:encode(Response)}.
 
 
 
@@ -46,6 +46,7 @@ handle_connect() ->
 	ok.
 
 handle_disconect() ->
+	lager:info("client disconect"),
 	ok.
 
 	

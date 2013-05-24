@@ -87,7 +87,7 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
     case AcceptRet of
         {ok, AcceptSocket} ->
 
-			lager:debug("accepted another connection"),
+			lager:info("accepted another connection"),
 
 			MaxConnections = ?MAX_CONNECTIONS,
 
@@ -103,8 +103,8 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
 					timer:sleep(5000),
 					{stop, normal, State};
 				false ->
-					%Opts = [{packet,4}, {packet_size, 16384}, {active, once}, {nodelay, true}],
-					Opts = [{packet_size, 16384}, {active, once}, {nodelay, true}],
+					Opts = [{packet,4}, {packet_size, 16384}, {active, once}, {nodelay, true}],
+					%Opts = [{packet_size, 16384}, {active, once}, {nodelay, true}],
 					{ok, Name} = case Type of
 					    tcp ->
 					        ok = inet:setopts(AcceptSocket, Opts),
