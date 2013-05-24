@@ -10,7 +10,7 @@
 process_pre_login_message(Msg) ->
 	lager:info("Message: ~p received", [Msg]),
 	Decoded = ejson:decode(Msg),
-	{[{<<"userId">>, User_id} | _ ]} = Decoded,
+	{[ { <<"code">> , Code }, {<<"userId">>, User_id} | _ ]} = Decoded,
 
 	{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
 
