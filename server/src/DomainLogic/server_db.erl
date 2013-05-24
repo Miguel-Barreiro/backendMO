@@ -7,7 +7,7 @@
 -export([ start/0 ,get_user_data/1, push_user_data/1, delete_user_data/1, get_all_unmatched_users/0]).
 
 get_all_unmatched_users() ->
-	case mnesia:sync_transaction(fun () -> mnesia:match_object(user, {user, '_', '_', '_', 'in_queue'}, read) end)  of
+	case mnesia:sync_transaction(fun () -> mnesia:match_object(user, {user, '_', '_', '_', '_', 'in_queue'}, read) end)  of
 		{atomic, Result } ->  			{ ok , Result };
 		{aborted, Reason} ->			{ error, Reason }
 	end.
