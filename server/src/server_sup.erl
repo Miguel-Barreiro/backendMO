@@ -25,6 +25,8 @@ start_link() ->
 init([]) ->
 	{ok, { {one_for_one, 5, 10}, [
 		?CHILD(sockserv_sup, supervisor),
-		?CHILD(users_sup, supervisor)
+		?CHILD(users_sup, supervisor),
+		?CHILD(queue_sup, supervisor),
+		?CHILD(game_sup, supervisor)
 	]} }.
 

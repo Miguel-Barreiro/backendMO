@@ -3,7 +3,7 @@
 -include("include/softstate.hrl").
 -include("include/request_macros.hrl").
 
--export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4]).
+-export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
 
 
 -define(MESSAGE_LOGIN_CODE, 1).
@@ -42,6 +42,14 @@ process(Msg, User_process_pid) ->
 	end.
 
 
+
+
+process_user_disconect( Disconected_pid, User_pid, Game_pid) ->
+	ok.
+
+
+
+
 handle_connect() ->
 	ok.
 
@@ -59,10 +67,12 @@ handle_disconect() ->
 
 
 process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Message_encoded ) ->
+	lager:info("login from user"),
 	case lists:keysearch(<<"userId">>, 1, Message_decoded) of
 		{value ,{<<"userId">> ,User_id}} ->
 			case server_db:get_user_data( User_id ) of 
 				{ error, no_user } ->
+					lager:info("no_user"),
 					%% @WARNING: THIS SHOULD BE DONE INSIDE A TRANSATION SO if 2 people try to login at the same time with the same id 2 user processes dont get spawn
 					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
 					User = #user{ 	user_id = User_id, 
@@ -73,11 +83,32 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 					ok = server_db:push_user_data(User),
 					{no_reply};
 
-				{ ok, _User_data = #user{  user_process_pid = User_pid } } when User_pid == undefined ->
-					{ok, _Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
+				{ ok, User_data = #user{  user_process_pid = User_pid } } when User_pid == undefined ->
+					lager:info("user but no process"),
+					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
+
+					User = User_data#user{ 	user_process_pid = Child_pid,
+											user_connection_pid = self(), 
+											state = in_queue },
+
+					ok = server_db:push_user_data(User),
+
 					{no_reply};
 
-				{ ok, _User_data = #user{ user_process_pid = _User_pid } } ->
+				{ ok, User_data = #user{ user_process_pid = User_pid } } ->
+					case is_process_alive( User_pid ) of
+						false->
+							lager:info("user but no process"),
+							{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
+							User = User_data#user{ 	user_process_pid = Child_pid,
+													user_connection_pid = self(), 
+													state = in_queue };
+						true->
+							gen_server:cast( User_pid, { reconnecting , User_id, self()} ),
+							User = User_data#user{  user_connection_pid = self(), 
+													state = in_queue }
+					end,
+					ok = server_db:push_user_data(User),
 					{no_reply};
 
 				{ error, Reason } ->

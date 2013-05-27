@@ -19,12 +19,12 @@
 start_link( User_pid, User_pid2  ) ->
     gen_server:start_link(?MODULE, [ User_pid, User_pid2 ], []).
 
-init([ User_pid, User_pid2 ]) ->
-	gen_server:cast(self(), {start, User_pid, User_pid2 }),
+init(InitData) ->
+	gen_server:cast(self(), InitData),
 	{ok, #game_state{ }}.
 
 
-handle_cast({start, User_pid, User_pid2 }, State = #game_state{ }) ->
+handle_cast([User_pid, User_pid2], State = #game_state{ }) ->
 
 	lager:info("new game with user_id ~p user ~p",[User_pid,User_pid2]),
 
@@ -67,9 +67,10 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 	lager:debug("user ~p connection went down", [Pid]),
 
 	demonitor(Connection_monitor , [flush]),
-	gen_server:cast(User2_pid, send_win_by_disconect_message),
+
+	message_processor:process_user_disconect(Pid, User2_pid, self()),
 	
-	{stop, user_disconect, State};
+	{stop, normal, State};
 
 %%
 %	called when the user1 connection stops
@@ -82,7 +83,7 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 	demonitor(Connection_monitor , [flush]),
 	gen_server:cast(User1_pid, send_win_by_disconect_message),
 
-	{stop, user_disconect, State};
+	{stop, normal, State};
 
 
 %%

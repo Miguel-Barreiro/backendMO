@@ -30,6 +30,8 @@ init(InitData) ->
 	gen_server:cast(self(), InitData),
 	{ok, #user_process_state{ session_start_time = swiss:unix_timestamp() }}.
 
+
+
 handle_cast( {send_message, _Msg }, State = #user_process_state{ connection_pid = Connection_pid }) when Connection_pid == undefined ->
 	{noreply, State};
 
@@ -38,12 +40,40 @@ handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid =
 	{noreply, State};
 
 
+
+
 handle_cast( { send_message_to_other, _Msg }, State = #user_process_state{ game_pid = Game_pid }) when Game_pid == undefined ->
 	{noreply, State};
 
 handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_pid = Game_pid }) ->
 	gen_server:cast( Game_pid, { send_message_to_other, Msg, self() } ),
 	{noreply, State};
+
+
+
+
+
+%handler_cast( { reconnecting , User_id, Connection_pid }, State = #user_process_state{ user_id = Current_user_id } ) 
+%				when Current_user_id =/= User_id ->
+%	lager:info("player '~p' tried to connect to the wrong proccess" ,[User_id]),
+%	{noreply, State};
+%
+%handler_cast( { reconnecting , User_id, Connection_pid}, State = #user_process_state{ user_id = Current_user_id , connection_state = Connection_state } ) 
+%				when Current_user_id == User_id, Connection_state == connected ->
+%	lager:info("player '~p' tried to connect to a already connect user" ,[User_id]),
+%	{noreply, State};
+%
+%handler_cast( { reconnecting , User_id, Connection_pid}, State = #user_process_state{ user_id = Current_user_id , connection_state = Connection_state } ) 
+%				when Current_user_id == User_id, Connection_state == disconnected ->
+%
+%	lager:info("player '~p' reconnected" ,[User_id]),
+%	gen_server:cast(self(), [ Connection_pid , User_id ]),
+%
+%	{noreply, State};
+
+
+
+
 
 
 handle_cast([ Connection_pid , User_id ], State = #user_process_state{ }) ->
@@ -58,6 +88,8 @@ handle_cast([ Connection_pid , User_id ], State = #user_process_state{ }) ->
         true -> erlang:cancel_timer(State#user_process_state.disconect_timer);
         false -> ok
     end,
+
+	queue_serv:enter( self() ),
 
 	{noreply, State#user_process_state{ 
 				connection_monitor = Connection_monitor,
@@ -83,8 +115,9 @@ handle_cast(accept, State ) ->
 handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_state{connection_monitor = Connection_monitor}) when Reference == Connection_monitor ->
 	lager:debug("user connection went down", []),
 	demonitor(Connection_monitor , [flush]),
-	TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
-	{noreply, State#user_process_state{connection_state = disconnected, disconect_timer = TimerRef}};
+	%TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
+	%{noreply, State#user_process_state{connection_state = disconnected, disconect_timer = TimerRef}};
+	{stop, disconnected, State};
 
 %%
 %	called when the game stops

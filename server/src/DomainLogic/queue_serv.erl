@@ -8,24 +8,40 @@
 	user_monitor
 }).
 
+-export([enter/1,leave/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).
 
 start_link() ->
-    gen_server:start_link(?MODULE, [], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
 	{ok, #queue_state{ }}.
 
 
+enter(User_pid) ->
+    gen_server:cast(whereis(?MODULE), {add_user, User_pid}).
+
+leave(User_pid) ->
+    gen_server:cast(whereis(?MODULE), {remove_user, User_pid}).
+
+
+
 handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) when Queued_user == undefined ->
 
+	lager:info("added a new user"),
 	User_monitor = monitor(process, User_pid),
-
 	{noreply, State#queue_state{ queued_user_pid = User_pid, user_monitor = User_monitor }};
 
-handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) when Queued_user =/= undefined ->
+handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) when Queued_user =/= undefined, Queued_user == User_pid ->
+	{noreply, State};
+
+handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) when Queued_user =/= undefined, Queued_user =/= User_pid ->
+	lager:info("added a new user and started a game"),
 	game_sup:start_new_game_process( [ Queued_user, User_pid ] ),
 	{noreply, State#queue_state{ queued_user_pid = undefined }};
+
+
+
 
 
 handle_cast( Msg, State) ->

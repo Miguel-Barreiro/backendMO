@@ -12,5 +12,5 @@ init([]) ->
     	{games, {game_serv, start_link, []}, temporary, 1000, worker, [game_serv]}
     ]}}.
 
-start_new_game_process( [ User_pid, User_pid2 ] )->
-	supervisor:start_child(game_sup, [ User_pid, User_pid2 ]).
+start_new_game_process( Game_data_list )->
+	supervisor:start_child(game_sup, Game_data_list ).
