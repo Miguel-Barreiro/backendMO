@@ -1,4 +1,4 @@
--module(server_sup).
+-module(queue_sup).
 
 -behaviour(supervisor).
 
@@ -23,8 +23,5 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-	{ok, { {one_for_one, 5, 10}, [
-		?CHILD(sockserv_sup, supervisor),
-		?CHILD(users_sup, supervisor)
-	]} }.
+	{ok, { {one_for_one, 5, 10}, [ ?CHILD(queue_serv, worker) ] } }.
 
