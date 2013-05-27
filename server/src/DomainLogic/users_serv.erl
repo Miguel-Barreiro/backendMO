@@ -112,20 +112,20 @@ handle_cast(accept, State ) ->
 %%
 %	called when the user connection stops
 %%
-handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_state{connection_monitor = Connection_monitor}) when Reference == Connection_monitor ->
+handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{connection_monitor = Connection_monitor}) when Reference == Connection_monitor ->
 	lager:debug("user connection went down", []),
 	demonitor(Connection_monitor , [flush]),
 	%TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
 	%{noreply, State#user_process_state{connection_state = disconnected, disconect_timer = TimerRef}};
-	{stop, disconnected, State};
+	{stop, Reason, State};
 
 %%
 %	called when the game stops
 %%
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = Game_monitor}) when Reference == Game_monitor ->
-	lager:debug("game stoped", []),
+	lager:debug("game stoped but i will continue", []),
 	demonitor(Game_monitor , [flush]),
-	{stop, Reason, State};
+	{noreply, State#user_process_state{ game_monitor = undefined, game_pid = undefined }};
 
 %%
 %	called when the user disconect timeouts

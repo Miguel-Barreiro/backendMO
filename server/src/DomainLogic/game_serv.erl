@@ -67,7 +67,6 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 	lager:debug("user ~p connection went down", [Pid]),
 
 	demonitor(Connection_monitor , [flush]),
-
 	message_processor:process_user_disconect(Pid, User2_pid, self()),
 	
 	{stop, normal, State};
@@ -81,7 +80,7 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 	lager:debug("user ~p connection went down", [Pid]),
 
 	demonitor(Connection_monitor , [flush]),
-	gen_server:cast(User1_pid, send_win_by_disconect_message),
+	message_processor:process_user_disconect(Pid, User1_pid, self()),
 
 	{stop, normal, State};
 
