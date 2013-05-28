@@ -4,7 +4,7 @@
 -include("include/request_macros.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
-
+-export([create_lost_message/1,create_won_message/1]).
 
 -define(MESSAGE_LOGIN_CODE, 1).
 -define(MESSAGE_PLACE_PIECE_CODE,2).
@@ -16,6 +16,11 @@
 -define(MESSAGE_LOST_CODE,8).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
+
+
+-define( GAME_END_OPPONNENT_LOST , 1).
+-define( GAME_END_OPPONNENT_WON , 2).
+-define( GAME_END_OPPONNENT_DISCONECT , 3).
 
 process_pre_login_message(Msg) ->
 	lager:info("Message: ~p received", [Msg]),
@@ -45,6 +50,7 @@ process(Msg, User_process_pid) ->
 
 
 process_user_disconect( Disconected_pid, User_pid, Game_pid) ->
+
 	ok.
 
 
@@ -58,6 +64,17 @@ handle_disconect() ->
 	ok.
 
 
+
+%%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+%%
+%%										MESSAGE creation
+%%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+create_lost_message(_Lost_details)->
+	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_WON } ]} ).
+
+create_won_message(_Won_details)->
+	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_LOST } ]} ).
 
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 %%
@@ -120,17 +137,28 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 			{reply_with_disconnect, Response }
 	end;
 
-%process_message( ?MESSAGE_PLACE_PIECE_CODE, _User_process_pid, _Message_decoded, _Message_encoded ) ->
-%	{no_reply};
+process_message( ?MESSAGE_READY_CODE, User_process_pid, Message_decoded, _Message_encoded ) ->	
+	gen_server:cast( User_process_pid, { enter_queue, no_details }),
+	{no_reply};
 
-process_message( Other_code, User_process_pid, _Message_decoded, Message_encoded ) ->
+process_message( ?MESSAGE_LOST_CODE, User_process_pid, _Message_decoded, _Message_encoded ) ->
+	gen_server:cast( User_process_pid, { lost_game, no_details }),
+	{no_reply};
+
+process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded ) 
+			when Client_message_code == ?MESSAGE_UPDATE_PIECE_CODE,
+					Client_message_code == ?MESSAGE_PLACE_GARBAGE_CODE,
+					Client_message_code == ?MESSAGE_PLACE_PIECE_CODE ->
+	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+	{no_reply};
+
+
+process_message( Other_code, _User_process_pid, _Message_decoded, Message_encoded ) ->
 	Response = ejson:encode( {[ { <<"reason">> , ?DISCONECT_RESPONSE }, { <<"code_given">> , Other_code } ]} ),
 	
-	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
-
 	lager:info("Responding to ~p with ~p",[self(),Response]),
-%	{reply_with_disconnect, Response }.
-	{reply, Response }.
+	{reply_with_disconnect, Response }.
+%	{reply, Response }.
 
 
 

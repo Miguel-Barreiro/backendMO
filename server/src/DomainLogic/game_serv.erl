@@ -42,6 +42,26 @@ handle_cast([User_pid, User_pid2], State = #game_state{ }) ->
 			}
 	};
 
+
+
+
+handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1_pid = User1_pid, user2_pid = User2_pid } ) ->
+	case Lost_user_pid of
+		User1_pid ->
+			gen_server:cast(User2_pid, {send_won_message , no_reason}),
+			gen_server:cast(User1_pid, {send_lost_message , no_reason});
+		User2_pid ->
+			gen_server:cast(User2_pid, {send_lost_message , no_reason}),
+			gen_server:cast(User1_pid, {send_won_message , no_reason});
+		_->
+			ok
+	end,
+	{stop, normal, State};
+
+
+
+
+
 handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user1_pid = User1_pid, user2_pid = User2_pid })->
 	case From_pid of
 		User1_pid ->
@@ -54,8 +74,14 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 	{noreply, State};
 
 
-handle_cast(accept, State ) ->
+
+
+handle_cast(Msg, State ) ->
+	lager:error("game_serv: unknown cast ~p received", [Msg]),
 	{noreply, State}.
+
+
+
 
 
 %%
@@ -85,12 +111,23 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 	{stop, normal, State};
 
 
+
+
+
+
 %%
 %	called when the user disconect timeouts
 %%
 handle_info(connection_timeout, State = #game_state{}) ->
     lager:debug("connection timeout", []),
     {stop, normal, State};
+
+
+
+
+
+
+
 
 handle_info(M,S) ->
 	lager:error("unhandled info ~p", [M]),

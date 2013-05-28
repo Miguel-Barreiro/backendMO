@@ -61,6 +61,32 @@ handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Ty
 	end,
 	{noreply, State};
 
+
+
+handle_cast( {send_won_message, Won_details}, State = #connection_state{socket = Socket, type = Type})  ->
+	Packet = message_processor:create_won_message(Won_details),
+	case Type of
+		tcp -> gen_tcp:send(Socket, Packet);
+		ssl -> ssl:send(Socket, Packet)
+	end,
+	{noreply, State};
+
+
+
+
+handle_cast({reply_with_disconnect, Lost_details}, State = #connection_state{socket = Socket, type = Type})  ->
+	Packet = message_processor:create_lost_message(Lost_details),
+	case Type of
+		tcp -> gen_tcp:send(Socket, Packet);
+		ssl -> ssl:send(Socket, Packet)
+	end,
+	message_processor:handle_disconect(),
+    {stop, normal, State};
+
+
+
+
+
 handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = Socket, type = Type})  ->
 	%Packet = add_envelope(Reply),
 	Packet = Reply,
@@ -70,6 +96,10 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 	end,
 	message_processor:handle_disconect(),
     {stop, normal, State};
+
+
+
+
 
 
 handle_cast( { register_user_process, User_process_pid }, State = #connection_state{} ) ->
