@@ -12,9 +12,9 @@
 	session_start_time,
 	user_id,
 	game_state = init :: user_states(), 
-	connection_pid :: pid(),
+	connection_pid = undefined :: pid(),
 	connection_monitor,
-	game_pid :: pid(),
+	game_pid = undefined :: pid(),
 	game_monitor,
 	connection_state = connected ::connection_states(),
 	disconect_timer
@@ -123,7 +123,7 @@ handle_cast( { enter_queue, _Queue_details }, State = #user_process_state{ game_
 handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state }) 
 				when Game_pid =/= undefined, User_state == playing_game ->
 	gen_server:cast(Game_pid , { user_lost_game, self() }),
-	{noreply, State#user_process_state{ game_state = in_queue }};
+	{noreply, State};
 
 handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ }) ->
 	{noreply, State};
@@ -132,9 +132,19 @@ handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ }) ->
 
 
 
+handle_cast( {game_start , Opponnent_name , Start_date, Seed }, State = #user_process_state{ connection_pid = Connection_pid }) ->
+	gen_server:cast( Connection_pid, {send_start_message , { Opponnent_name , Start_date, Seed }}),
+	{noreply, State};
 
-handle_cast( { register_game_process, Game_process_pid }, State = #user_process_state{} ) ->
-	New_state = State#user_process_state{ game_monitor =  monitor(process, Game_process_pid ) , game_pid = Game_process_pid, game_state = playing_game },
+
+
+
+
+
+handle_cast( { register_game_process, Game_process_pid }, State = #user_process_state{ connection_pid = Connection_pid } ) ->
+	New_state = State#user_process_state{ 	game_monitor =  monitor(process, Game_process_pid ) , 
+											game_pid = Game_process_pid, 
+											game_state = playing_game },
 	{noreply, New_state};
 
 

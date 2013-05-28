@@ -4,7 +4,7 @@
 -define(CONNECTION_TIMEOUT, 40000).
 
 -record(queue_state, {
-	queued_user_pid = undefined,
+	queued_user_pid = undefined :: pid(),
 	user_monitor
 }).
 
@@ -26,19 +26,23 @@ leave(User_pid) ->
 
 
 
-handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) when Queued_user == undefined ->
+handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) 
+				when Queued_user == undefined ->
 
 	lager:info("added a new user"),
 	User_monitor = monitor(process, User_pid),
 	{noreply, State#queue_state{ queued_user_pid = User_pid, user_monitor = User_monitor }};
 
-handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) when Queued_user =/= undefined, Queued_user == User_pid ->
+handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) 
+				when Queued_user =/= undefined, Queued_user == User_pid ->
 	{noreply, State};
 
-handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) when Queued_user =/= undefined, Queued_user =/= User_pid ->
+handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user, user_monitor = User_monitor })
+				 when Queued_user =/= undefined, Queued_user =/= User_pid ->
 	lager:info("added a new user and started a game"),
+	demonitor(User_monitor , [flush]),
 	game_sup:start_new_game_process( [ Queued_user, User_pid ] ),
-	{noreply, State#queue_state{ queued_user_pid = undefined }};
+	{noreply, State#queue_state{ queued_user_pid = undefined , user_monitor = undefined}};
 
 
 

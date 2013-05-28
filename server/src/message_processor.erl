@@ -4,7 +4,7 @@
 -include("include/request_macros.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
--export([create_lost_message/1,create_won_message/1]).
+-export([create_lost_message/1,create_won_message/1, create_start_message/1]).
 
 -define(MESSAGE_LOGIN_CODE, 1).
 -define(MESSAGE_PLACE_PIECE_CODE,2).
@@ -70,10 +70,13 @@ handle_disconect() ->
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-create_lost_message(_Lost_details)->
+create_start_message( { Opponnent_name , Start_date, Seed } ) ->
+	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_START_CODE }, { <<"seed">> , Seed }, { <<"opponent">> , Opponnent_name }, { <<"startTimestamp">> , Start_date } ]} ).
+
+create_lost_message(_Lost_details) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_WON } ]} ).
 
-create_won_message(_Won_details)->
+create_won_message(_Won_details) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_LOST } ]} ).
 
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -84,12 +87,10 @@ create_won_message(_Won_details)->
 
 
 process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Message_encoded ) ->
-	lager:info("login from user"),
 	case lists:keysearch(<<"userId">>, 1, Message_decoded) of
 		{value ,{<<"userId">> ,User_id}} ->
 			case server_db:get_user_data( User_id ) of 
 				{ error, no_user } ->
-					lager:info("no_user"),
 					%% @WARNING: THIS SHOULD BE DONE INSIDE A TRANSATION SO if 2 people try to login at the same time with the same id 2 user processes dont get spawn
 					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
 					User = #user{ 	user_id = User_id, 
@@ -101,7 +102,6 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 					{no_reply};
 
 				{ ok, User_data = #user{  user_process_pid = User_pid } } when User_pid == undefined ->
-					lager:info("user but no process"),
 					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
 
 					User = User_data#user{ 	user_process_pid = Child_pid,
@@ -115,7 +115,6 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 				{ ok, User_data = #user{ user_process_pid = User_pid } } ->
 					case is_process_alive( User_pid ) of
 						false->
-							lager:info("user but no process"),
 							{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
 							User = User_data#user{ 	user_process_pid = Child_pid,
 													user_connection_pid = self(), 
@@ -137,7 +136,8 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 			{reply_with_disconnect, Response }
 	end;
 
-process_message( ?MESSAGE_READY_CODE, User_process_pid, Message_decoded, _Message_encoded ) ->	
+process_message( ?MESSAGE_READY_CODE, User_process_pid, Message_decoded, _Message_encoded ) ->
+	lager:info("user ~p is ready",[User_process_pid]),
 	gen_server:cast( User_process_pid, { enter_queue, no_details }),
 	{no_reply};
 
@@ -146,8 +146,8 @@ process_message( ?MESSAGE_LOST_CODE, User_process_pid, _Message_decoded, _Messag
 	{no_reply};
 
 process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded ) 
-			when Client_message_code == ?MESSAGE_UPDATE_PIECE_CODE,
-					Client_message_code == ?MESSAGE_PLACE_GARBAGE_CODE,
+			when Client_message_code == ?MESSAGE_UPDATE_PIECE_CODE orelse
+					Client_message_code == ?MESSAGE_PLACE_GARBAGE_CODE orelse
 					Client_message_code == ?MESSAGE_PLACE_PIECE_CODE ->
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};

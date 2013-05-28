@@ -52,6 +52,10 @@ init([Socket, SSLSocket, Type]) ->
 	}}.
 
 
+
+
+
+
 handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Type}) ->
     %Packet = add_envelope(Reply),
 	Packet = Reply,
@@ -60,32 +64,6 @@ handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Ty
 		ssl -> ssl:send(Socket, Packet)
 	end,
 	{noreply, State};
-
-
-
-handle_cast( {send_won_message, Won_details}, State = #connection_state{socket = Socket, type = Type})  ->
-	Packet = message_processor:create_won_message(Won_details),
-	case Type of
-		tcp -> gen_tcp:send(Socket, Packet);
-		ssl -> ssl:send(Socket, Packet)
-	end,
-	{noreply, State};
-
-
-
-
-handle_cast({reply_with_disconnect, Lost_details}, State = #connection_state{socket = Socket, type = Type})  ->
-	Packet = message_processor:create_lost_message(Lost_details),
-	case Type of
-		tcp -> gen_tcp:send(Socket, Packet);
-		ssl -> ssl:send(Socket, Packet)
-	end,
-	message_processor:handle_disconect(),
-    {stop, normal, State};
-
-
-
-
 
 handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = Socket, type = Type})  ->
 	%Packet = add_envelope(Reply),
@@ -102,9 +80,44 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 
 
+
+
+
+handle_cast( {send_start_message, { Opponnent_name , Start_date, Seed } }, State = #connection_state{socket = Socket, type = Type})  ->
+	Packet = message_processor:create_start_message( { Opponnent_name , Start_date, Seed } ),
+	case Type of
+		tcp -> gen_tcp:send(Socket, Packet);
+		ssl -> ssl:send(Socket, Packet)
+	end,
+	{noreply, State};
+
+handle_cast( {send_won_message, Won_details}, State = #connection_state{socket = Socket, type = Type})  ->
+	Packet = message_processor:create_won_message(Won_details),
+	case Type of
+		tcp -> gen_tcp:send(Socket, Packet);
+		ssl -> ssl:send(Socket, Packet)
+	end,
+	{noreply, State};
+
+handle_cast( {send_lost_message, Lost_details}, State = #connection_state{socket = Socket, type = Type})  ->
+	Packet = message_processor:create_lost_message(Lost_details),
+	case Type of
+		tcp -> gen_tcp:send(Socket, Packet);
+		ssl -> ssl:send(Socket, Packet)
+	end,
+	{noreply, State};
+
+
+
+
+
+
+
 handle_cast( { register_user_process, User_process_pid }, State = #connection_state{} ) ->
 	New_state = State#connection_state{ user_monitor =  monitor(process, User_process_pid ) , user_process_pid = User_process_pid },
 	{noreply, New_state};
+
+
 
 
 handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket = SSLListenSocket, type = Type}) ->
@@ -176,6 +189,13 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #connection_sta
     {noreply, State};
 
 
+
+
+
+
+
+
+
 handle_info({tcp, _Port, Msg}, State = #connection_state{socket=Socket}) ->
 	inet:setopts(Socket, [{active, once}]),
 	NewState = process(Msg, State),
@@ -214,6 +234,13 @@ handle_info(check_auth_state, State = #connection_state{connstate = Connstate}) 
 handle_info(check_auth_state, State) ->
     {noreply, State};
 
+
+
+
+
+
+
+
 handle_info(check_inactivity_timeout, State = #connection_state{last_packet_time = LastPacketTime}) ->
     Timeout = ?DEFAULT_INACTIVITY_TIMEOUT,
 
@@ -240,6 +267,17 @@ handle_info(check_ping_timeout, State = #connection_state{last_ping_time = LastP
             {noreply, State}
     end,
     Ret;
+
+
+
+
+
+
+
+
+
+
+
 
 handle_info(M,S) ->
 	lager:error("unhandled info ~p", [M]),

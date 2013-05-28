@@ -34,6 +34,12 @@ handle_cast([User_pid, User_pid2], State = #game_state{ }) ->
 	gen_server:cast( User_pid2 , {register_game_process,self()}),
 	Connection_monitor2 = monitor(process, User_pid2),
 
+
+												%Opponnent_name , Start_date, Seed
+	gen_server:cast( User_pid , {game_start , <<"Opponnent_name">> , 666, 1 } ),
+	gen_server:cast( User_pid2 , {game_start , <<"Opponnent_name">> , 666, 1 } ),
+
+
 	{noreply, State#game_state{
 				user1_pid = User_pid,
 				user2_pid = User_pid2,
@@ -56,9 +62,8 @@ handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1_pid 
 		_->
 			ok
 	end,
+	lager:info("game ~p is going to end",[self()]),
 	{stop, normal, State};
-
-
 
 
 
