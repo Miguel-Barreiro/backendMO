@@ -116,7 +116,7 @@ handle_cast( {send_lost_message, Lost_details}, State = #connection_state{socket
 handle_cast( { register_user_process, User_process_pid }, State = #connection_state{ socket = Socket, type = Type } ) ->
 	New_state = State#connection_state{ user_monitor =  monitor(process, User_process_pid ) , user_process_pid = User_process_pid },
 
-	Packet = message_processor:create_login_success(User_process_pid),
+	Packet = message_processor:create_login_success("userId"),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
