@@ -53,23 +53,23 @@ handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_p
 
 
 
-%handler_cast( { reconnecting , User_id, Connection_pid }, State = #user_process_state{ user_id = Current_user_id } ) 
-%				when Current_user_id =/= User_id ->
-%	lager:info("player '~p' tried to connect to the wrong proccess" ,[User_id]),
-%	{noreply, State};
-%
-%handler_cast( { reconnecting , User_id, Connection_pid}, State = #user_process_state{ user_id = Current_user_id , connection_state = Connection_state } ) 
-%				when Current_user_id == User_id, Connection_state == connected ->
-%	lager:info("player '~p' tried to connect to a already connect user" ,[User_id]),
-%	{noreply, State};
-%
-%handler_cast( { reconnecting , User_id, Connection_pid}, State = #user_process_state{ user_id = Current_user_id , connection_state = Connection_state } ) 
-%				when Current_user_id == User_id, Connection_state == disconnected ->
-%
-%	lager:info("player '~p' reconnected" ,[User_id]),
-%	gen_server:cast(self(), [ Connection_pid , User_id ]),
-%
-%	{noreply, State};
+handle_cast( { reconnecting , User_id, Connection_pid }, State = #user_process_state{ user_id = Current_user_id } ) 
+				when Current_user_id =/= User_id ->
+	lager:info("player '~p' tried to connect to the wrong proccess" ,[User_id]),
+	{noreply, State};
+
+handle_cast( { reconnecting , User_id, Connection_pid}, State = #user_process_state{ user_id = Current_user_id , connection_state = Connection_state } ) 
+				when Current_user_id == User_id, Connection_state == connected ->
+	lager:info("player '~p' tried to connect to a already connect user" ,[User_id]),
+	{noreply, State};
+
+handle_cast( { reconnecting , User_id, Connection_pid}, State = #user_process_state{ user_id = Current_user_id , connection_state = Connection_state } ) 
+				when Current_user_id == User_id, Connection_state == disconnected ->
+
+	lager:info("player '~p' reconnected" ,[User_id]),
+	gen_server:cast(self(), [ Connection_pid , User_id ]),
+
+	{noreply, State};
 
 
 
@@ -103,7 +103,6 @@ handle_cast([ Connection_pid , User_id ], State = #user_process_state{ }) ->
 handle_cast( { register_game_process, Game_process_pid }, State = #user_process_state{} ) ->
 	New_state = State#user_process_state{ game_monitor =  monitor(process, Game_process_pid ) , game_pid = Game_process_pid },
 	{noreply, New_state};
-
 
 handle_cast(accept, State ) ->
 	{noreply, State}.

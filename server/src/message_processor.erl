@@ -120,11 +120,15 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 			{reply_with_disconnect, Response }
 	end;
 
-process_message( ?MESSAGE_PLACE_PIECE_CODE, _User_process_pid, _Message_decoded, _Message_encoded ) ->
-	{no_reply};
+%process_message( ?MESSAGE_PLACE_PIECE_CODE, _User_process_pid, _Message_decoded, _Message_encoded ) ->
+%	{no_reply};
 
-process_message( Other_code, _User_process_pid, _Message_decoded, _Message_encoded ) ->
+process_message( Other_code, User_process_pid, _Message_decoded, Message_encoded ) ->
 	Response = ejson:encode( {[ { <<"reason">> , ?DISCONECT_RESPONSE }, { <<"code_given">> , Other_code } ]} ),
+	
+	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+
+	lager:info("Responding to ~p with ~p",[self(),Response]),
 %	{reply_with_disconnect, Response }.
 	{reply, Response }.
 
