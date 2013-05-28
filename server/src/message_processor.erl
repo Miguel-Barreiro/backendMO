@@ -14,6 +14,7 @@
 -define(MESSAGE_GAME_START_CODE,6).
 -define(MESSAGE_READY_CODE,7).
 -define(MESSAGE_LOST_CODE,8).
+-define(MESSAGE_LOGIN_SUCESS,9).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -69,6 +70,9 @@ handle_disconect() ->
 %%
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+create_login_success( User_pid ) ->
+	ejson:encode( {[ { <<"code">> , ?MESSAGE_LOGIN_SUCESS }, { <<"user_id">> , User_pid } ]} ).
 
 create_start_message( { Opponnent_name , Start_date, Seed } ) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_START_CODE }, { <<"seed">> , Seed }, { <<"opponent">> , Opponnent_name }, { <<"startTimestamp">> , Start_date } ]} ).
@@ -136,17 +140,18 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 			{reply_with_disconnect, Response }
 	end;
 
-process_message( ?MESSAGE_READY_CODE, User_process_pid, Message_decoded, _Message_encoded ) ->
+process_message( ?MESSAGE_READY_CODE, User_process_pid, Message_decoded, _Message_encoded ) when User_process_pid =/= no_user_process->
 	lager:info("user ~p is ready",[User_process_pid]),
 	gen_server:cast( User_process_pid, { enter_queue, no_details }),
 	{no_reply};
 
-process_message( ?MESSAGE_LOST_CODE, User_process_pid, _Message_decoded, _Message_encoded ) ->
+process_message( ?MESSAGE_LOST_CODE, User_process_pid, _Message_decoded, _Message_encoded ) when User_process_pid =/= no_user_process->
 	gen_server:cast( User_process_pid, { lost_game, no_details }),
 	{no_reply};
 
-process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded ) 
-			when Client_message_code == ?MESSAGE_UPDATE_PIECE_CODE orelse
+process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded )
+			when User_process_pid =/= no_user_process,
+					Client_message_code == ?MESSAGE_UPDATE_PIECE_CODE orelse
 					Client_message_code == ?MESSAGE_PLACE_GARBAGE_CODE orelse
 					Client_message_code == ?MESSAGE_PLACE_PIECE_CODE ->
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
