@@ -97,7 +97,7 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 
 	lager:debug("user ~p connection went down", [Pid]),
 
-	demonitor(Connection_monitor , [flush]),
+	demonitor(Connection_monitor),
 	message_processor:process_user_disconect(Pid, User2_pid, self()),
 	
 	{stop, normal, State};
@@ -110,7 +110,7 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 
 	lager:debug("user ~p connection went down", [Pid]),
 
-	demonitor(Connection_monitor , [flush]),
+	demonitor(Connection_monitor),
 	message_processor:process_user_disconect(Pid, User1_pid, self()),
 
 	{stop, normal, State};
@@ -142,7 +142,7 @@ handle_call(_E, _From, State) ->
 	{noreply, State}.
 
 terminate(Reason, _State) ->
-	lager:error("users_serv: terminate reason: ~p", [Reason]),
+	lager:error("game_serv: ~p terminate with reason: ~p", [self(),Reason]),
 	ok.
 
 code_change(_OldVsn, State, _Extra) ->

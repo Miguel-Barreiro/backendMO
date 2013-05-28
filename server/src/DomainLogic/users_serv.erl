@@ -189,7 +189,7 @@ handle_cast(accept, State ) ->
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{connection_monitor = Connection_monitor}) 
 				when Reference == Connection_monitor ->
 	lager:debug("user connection went down", []),
-	demonitor(Connection_monitor , [flush]),
+	demonitor(Connection_monitor),
 	%TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
 	%{noreply, State#user_process_state{connection_state = disconnected, disconect_timer = TimerRef}};
 	{stop, Reason, State};
@@ -200,7 +200,7 @@ handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_st
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = Game_monitor})
 				when Reference == Game_monitor ->
 	lager:debug("game stoped (~p) but i will continue", [Reason]),
-	demonitor(Game_monitor , [flush]),
+	demonitor(Game_monitor),
 	{noreply, State#user_process_state{ game_monitor = undefined, game_pid = undefined, game_state = init }};
 
 %%
@@ -218,7 +218,7 @@ handle_call(_E, _From, State) ->
 	{noreply, State}.
 
 terminate(Reason, _State) ->
-	lager:error("users_serv: terminate reason: ~p", [Reason]),
+	lager:error("users_serv: ~p terminate with reason: ~p", [self(),Reason]),
 	ok.
 
 code_change(_OldVsn, State, _Extra) ->

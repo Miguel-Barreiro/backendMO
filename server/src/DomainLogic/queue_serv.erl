@@ -40,7 +40,7 @@ handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Qu
 handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user, user_monitor = User_monitor })
 				 when Queued_user =/= undefined, Queued_user =/= User_pid ->
 	lager:info("added a new user and started a game"),
-	demonitor(User_monitor , [flush]),
+	demonitor(User_monitor),
 	game_sup:start_new_game_process( [ Queued_user, User_pid ] ),
 	{noreply, State#queue_state{ queued_user_pid = undefined , user_monitor = undefined}};
 
@@ -57,7 +57,7 @@ handle_cast( Msg, State) ->
 %%
 handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #queue_state{user_monitor = Connection_monitor}) when Reference == Connection_monitor ->
 	lager:debug("queue_serv: user connection went down", []),
-	demonitor(Connection_monitor , [flush]),
+	demonitor(Connection_monitor),
 	{noreply, State#queue_state{queued_user_pid = disconnected, user_monitor = disconnected}};
 
 
