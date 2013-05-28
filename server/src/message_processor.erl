@@ -4,7 +4,7 @@
 -include("include/request_macros.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
--export([create_lost_message/1,create_won_message/1, create_start_message/1]).
+-export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1]).
 
 -define(MESSAGE_LOGIN_CODE, 1).
 -define(MESSAGE_PLACE_PIECE_CODE,2).
