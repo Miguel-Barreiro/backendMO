@@ -50,8 +50,7 @@ process(Msg, User_process_pid) ->
 
 
 
-process_user_disconect( Disconected_pid, User_pid, Game_pid) ->
-
+process_user_disconect( _Disconected_pid, _User_pid, _Game_pid) ->
 	ok.
 
 
@@ -71,8 +70,8 @@ handle_disconect() ->
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-create_login_success( User_pid ) ->
-	ejson:encode( {[ { <<"code">> , ?MESSAGE_LOGIN_SUCESS }, { <<"user_id">> , User_pid } ]} ).
+create_login_success( User_id ) ->
+	ejson:encode( {[ { <<"code">> , ?MESSAGE_LOGIN_SUCESS }, { <<"user_id">> , User_id } ]} ).
 
 create_start_message( { Opponnent_name , Start_date, Seed } ) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_START_CODE }, { <<"seed">> , Seed }, { <<"opponent">> , Opponnent_name }, { <<"startTimestamp">> , Start_date } ]} ).
@@ -140,7 +139,7 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 			{reply_with_disconnect, Response }
 	end;
 
-process_message( ?MESSAGE_READY_CODE, User_process_pid, Message_decoded, _Message_encoded ) when User_process_pid =/= no_user_process->
+process_message( ?MESSAGE_READY_CODE, User_process_pid, _Message_decoded, _Message_encoded ) when User_process_pid =/= no_user_process->
 	lager:info("user ~p is ready",[User_process_pid]),
 	gen_server:cast( User_process_pid, { enter_queue, no_details }),
 	{no_reply};
@@ -158,7 +157,7 @@ process_message( Client_message_code, User_process_pid, _Message_decoded, Messag
 	{no_reply};
 
 
-process_message( Other_code, _User_process_pid, _Message_decoded, Message_encoded ) ->
+process_message( Other_code, _User_process_pid, _Message_decoded, _Message_encoded ) ->
 	Response = ejson:encode( {[ { <<"reason">> , ?DISCONECT_RESPONSE }, { <<"code_given">> , Other_code } ]} ),
 	
 	lager:info("Responding to ~p with ~p",[self(),Response]),

@@ -35,10 +35,13 @@ handle_cast([User_pid, User_pid2], State = #game_state{ }) ->
 	Connection_monitor2 = monitor(process, User_pid2),
 
 
-												%Opponnent_name , Start_date, Seed
-	gen_server:cast( User_pid , {game_start , <<"Opponnent_name">> , 666, 1 } ),
-	gen_server:cast( User_pid2 , {game_start , <<"Opponnent_name">> , 666, 1 } ),
+	{ ok, Name1 } = gen_server:call( User_pid, get_user_id ),
+	{ ok, Name2 } = gen_server:call( User_pid2, get_user_id ),
+	StartTime = swiss:unix_timestamp() + 10,
+	Seed = random:uniform(666),
 
+	gen_server:cast( User_pid , {game_start , Name2 , StartTime, Seed } ),
+	gen_server:cast( User_pid2 , {game_start , Name1 , StartTime, Seed } ),
 
 	{noreply, State#game_state{
 				user1_pid = User_pid,

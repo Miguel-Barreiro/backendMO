@@ -13,6 +13,8 @@ start(_StartType, _StartArgs) ->
 
 	Supervisor = server_sup:start_link(),
 
+	random:seed(),
+
     server_db:start(),
  	sockserv_sup:launch_empty_listeners(),
 

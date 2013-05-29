@@ -141,7 +141,7 @@ handle_cast( {game_start , Opponnent_name , Start_date, Seed }, State = #user_pr
 
 
 
-handle_cast( { register_game_process, Game_process_pid }, State = #user_process_state{ connection_pid = Connection_pid } ) ->
+handle_cast( { register_game_process, Game_process_pid }, State = #user_process_state{ } ) ->
 	New_state = State#user_process_state{ 	game_monitor =  monitor(process, Game_process_pid ) , 
 											game_pid = Game_process_pid, 
 											game_state = playing_game },
@@ -213,6 +213,20 @@ handle_info(connection_timeout, State = #user_process_state{}) ->
 handle_info(M,S) ->
 	lager:error("unhandled info ~p", [M]),
 	{noreply, S}.
+
+
+%%
+%		GETTERS
+%%
+
+handle_call( get_user_id, _From, State = #user_process_state{ user_id = User_id } ) ->
+	{reply,{ ok ,User_id},State};
+
+handle_call( get_game_pid, _From, State = #user_process_state{ game_pid = Game_pid } ) ->
+	{reply,{ ok , Game_pid},State};
+
+
+
 
 handle_call(_E, _From, State) ->
 	{noreply, State}.
