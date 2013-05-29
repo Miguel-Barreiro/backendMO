@@ -59,6 +59,7 @@ init([Socket, SSLSocket, Type]) ->
 handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Type}) ->
     %Packet = add_envelope(Reply),
 	Packet = Reply,
+	lager:info("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -68,6 +69,7 @@ handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Ty
 handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = Socket, type = Type})  ->
 	%Packet = add_envelope(Reply),
 	Packet = Reply,
+	lager:info("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -85,6 +87,7 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 handle_cast( {send_start_message, { Opponnent_name , Start_date, Seed } }, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_start_message( { Opponnent_name , Start_date, Seed } ),
+	lager:info("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -93,6 +96,7 @@ handle_cast( {send_start_message, { Opponnent_name , Start_date, Seed } }, State
 
 handle_cast( {send_won_message, Won_details}, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_won_message(Won_details),
+	lager:info("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -101,6 +105,7 @@ handle_cast( {send_won_message, Won_details}, State = #connection_state{socket =
 
 handle_cast( {send_lost_message, Lost_details}, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_lost_message(Lost_details),
+	lager:info("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -119,6 +124,7 @@ handle_cast( { register_user_process, User_process_pid }, State = #connection_st
 	{ ok, User_id} = gen_server:call( User_process_pid, get_user_id),
 
 	Packet = message_processor:create_login_success( User_id ),
+	lager:info("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
