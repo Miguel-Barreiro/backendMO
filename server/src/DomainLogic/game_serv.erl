@@ -5,12 +5,20 @@
 
 -include("include/softstate.hrl").
 
+-define( COUNTDOWN_TO_START_SECONDS , 10).
+
+-type game_state_type() :: running | waiting_payers.
 
 -record(game_state, {
 	user1_pid :: pid(),
 	user2_pid :: pid(),
 	user1_monitor,
-	user2_monitor
+	user2_monitor,
+	user1_victories = 0,
+	user2_victories = 0,
+	is_user1_ready = true,
+	is_user2_ready = true,
+	state = waiting_payers :: game_state_type()
 }).
 
 
@@ -34,22 +42,69 @@ handle_cast([User_pid, User_pid2], State = #game_state{ }) ->
 	gen_server:cast( User_pid2 , {register_game_process,self()}),
 	Connection_monitor2 = monitor(process, User_pid2),
 
-
-	{ ok, Name1 } = gen_server:call( User_pid, get_user_id ),
-	{ ok, Name2 } = gen_server:call( User_pid2, get_user_id ),
-	StartTime = swiss:unix_timestamp() + 10,
-	Seed = random:uniform(666),
-
-	gen_server:cast( User_pid , {game_start , Name2 , StartTime, Seed } ),
-	gen_server:cast( User_pid2 , {game_start , Name1 , StartTime, Seed } ),
+	gen_server:cast(self() , start_game ),
 
 	{noreply, State#game_state{
 				user1_pid = User_pid,
 				user2_pid = User_pid2,
 				user1_monitor = Connection_monitor1,
-				user2_monitor = Connection_monitor2
+				user2_monitor = Connection_monitor2,
+				is_user1_ready = true,
+				is_user2_ready = true
 			}
 	};
+
+
+
+
+
+
+handle_cast( start_game, State = #game_state{ 	user1_pid = User_pid, 
+												user2_pid = User_pid2, 
+												state = Game_State, 
+												is_user1_ready = User1_ready, 
+												is_user2_ready = User2_ready} ) when Game_State == waiting_payers,
+																					 User1_ready == true,
+																					 User2_ready == true ->
+	
+	{ ok, Name1 } = gen_server:call( User_pid, get_user_id ),
+	{ ok, Name2 } = gen_server:call( User_pid2, get_user_id ),
+
+	StartTime = swiss:unix_timestamp() + ?COUNTDOWN_TO_START_SECONDS, 	%the game will start in <COUNTDOWN_TO_START_SECONDS> seconds
+	Seed = random:uniform(2147483646),
+
+	gen_server:cast( User_pid , {game_start , Name2 , StartTime, Seed } ),
+	gen_server:cast( User_pid2 , {game_start , Name1 , StartTime, Seed } ),
+
+	{ noreply, State#game_state{ state = running, is_user1_ready = false, is_user2_ready = false } };
+
+
+
+
+
+
+handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, is_user2_ready = User2_ready, user1_pid = User1_pid } ) 
+				when User1_pid == User_pid, Game_State == waiting_payers ->
+	case User2_ready of
+		true ->
+			gen_server:cast(self() , start_game );
+		false ->
+			nothing_happens
+	end,
+	{ noreply, State#game_state{ is_user1_ready = true } };
+
+handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, is_user1_ready = User1_ready, user2_pid = User2_pid } ) 
+				when User2_pid == User_pid, Game_State == waiting_payers ->
+	case User1_ready of
+		true ->
+			gen_server:cast(self() , start_game );
+		false ->
+			nothing_happens
+	end,
+	{ noreply, State#game_state{ is_user2_ready = true} };
+
+
+
 
 
 
@@ -66,7 +121,11 @@ handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1_pid 
 			ok
 	end,
 	lager:info("game ~p is going to end",[self()]),
-	{stop, normal, State};
+
+	{stop, normal, State#game_state{ state = waiting_payers, is_user1_ready = false, is_user2_ready = false } };
+
+
+
 
 
 
@@ -80,6 +139,9 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 			ok
 	end,
 	{noreply, State};
+
+
+
 
 
 
@@ -106,7 +168,7 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 	{stop, normal, State};
 
 %%
-%	called when the user1 connection stops
+%	called when the user2 connection stops
 %%
 handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user2_monitor = Connection_monitor, user1_pid = User1_pid }) 
 		when Reference == Connection_monitor ->

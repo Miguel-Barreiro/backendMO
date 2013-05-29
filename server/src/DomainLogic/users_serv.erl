@@ -107,16 +107,19 @@ handle_cast( { send_won_message, Won_details }, State = #user_process_state{ con
 
 
 
-handle_cast( { enter_queue, _Queue_details }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state }) 
-				when Game_pid == undefined, User_state == init ->
+handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state }) 
+				when User_state == init, Game_pid == undefined ->
 	queue_serv:enter( self() ),
 	{noreply, State#user_process_state{ game_state = in_queue }};
 
-handle_cast( { enter_queue, _Queue_details }, State = #user_process_state{ game_state = User_state }) 
-				when User_state =/= init ->
+handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid,  game_state = User_state }) 
+				when User_state == playing_game, Game_pid =/= undefined ->
+	gen_server:cast( Game_pid , { user_ready_rematch, self()}),
 	{noreply, State};
 
-
+handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_state = User_state }) 
+				when User_state =/= init ->
+	{noreply, State};
 
 
 
