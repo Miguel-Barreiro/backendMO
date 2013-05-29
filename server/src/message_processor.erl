@@ -144,7 +144,7 @@ process_message( ?MESSAGE_READY_CODE, User_process_pid, _Message_decoded, _Messa
 	{no_reply};
 
 process_message( ?MESSAGE_LOST_CODE, User_process_pid, _Message_decoded, _Message_encoded ) when User_process_pid =/= no_user_process->
-	gen_server:cast( User_process_pid, { ready, no_details }),
+	gen_server:cast( User_process_pid, { lost_game, no_details }),
 	{no_reply};
 
 process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded )

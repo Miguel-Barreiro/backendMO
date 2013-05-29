@@ -50,7 +50,8 @@ handle_cast([User_pid, User_pid2], State = #game_state{ }) ->
 				user1_monitor = Connection_monitor1,
 				user2_monitor = Connection_monitor2,
 				is_user1_ready = true,
-				is_user2_ready = true
+				is_user2_ready = true,
+				state = waiting_payers
 			}
 	};
 
@@ -87,6 +88,7 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 				when User1_pid == User_pid, Game_State == waiting_payers ->
 	case User2_ready of
 		true ->
+			lager:info("game ~p is going to start (rematch)",[self()]),
 			gen_server:cast(self() , start_game );
 		false ->
 			nothing_happens
@@ -97,6 +99,7 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 				when User2_pid == User_pid, Game_State == waiting_payers ->
 	case User1_ready of
 		true ->
+			lager:info("game ~p is going to start (rematch)",[self()]),
 			gen_server:cast(self() , start_game );
 		false ->
 			nothing_happens
@@ -110,6 +113,9 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 
 
 handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1_pid = User1_pid, user2_pid = User2_pid } ) ->
+	
+	lager:info("game ~p is going to end",[self()]),
+
 	case Lost_user_pid of
 		User1_pid ->
 			gen_server:cast(User2_pid, {send_won_message , no_reason}),
@@ -120,9 +126,8 @@ handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1_pid 
 		_->
 			ok
 	end,
-	lager:info("game ~p is going to end",[self()]),
-
-	{stop, normal, State#game_state{ state = waiting_payers, is_user1_ready = false, is_user2_ready = false } };
+	
+	{noreply, State#game_state{ state = waiting_payers, is_user1_ready = false, is_user2_ready = false } };
 
 
 
@@ -147,7 +152,7 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 
 
 handle_cast(Msg, State ) ->
-	lager:error("game_serv: unknown cast ~p received", [Msg]),
+	lager:error("game_serv: unknown cast ~p received when state was ~p", [Msg, State]),
 	{noreply, State}.
 
 
