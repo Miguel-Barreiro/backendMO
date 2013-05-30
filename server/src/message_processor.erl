@@ -50,7 +50,8 @@ process(Msg, User_process_pid) ->
 
 
 
-process_user_disconect( _Disconected_pid, _User_pid, _Game_pid) ->
+process_user_disconect( _Disconected_pid, User_pid, _Game_pid) ->
+	gen_server:cast( User_pid ,{send_won_message, disconect }),
 	ok.
 
 
@@ -78,6 +79,8 @@ create_start_message( { Opponnent_name , Start_date, Seed } ) ->
 create_lost_message(_Lost_details) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_WON } ]} ).
 
+create_won_message(disconect) ->
+	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_DISCONECT } ]} );
 create_won_message(_Won_details) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_LOST } ]} ).
 

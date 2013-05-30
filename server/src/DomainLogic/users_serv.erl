@@ -145,6 +145,7 @@ handle_cast( {game_start , Opponnent_name , Start_date, Seed }, State = #user_pr
 
 
 handle_cast( { register_game_process, Game_process_pid }, State = #user_process_state{ } ) ->
+	lager:info("i am now monitoring game ~p",[Game_process_pid]),
 	New_state = State#user_process_state{ 	game_monitor =  monitor(process, Game_process_pid ) , 
 											game_pid = Game_process_pid, 
 											game_state = playing_game },
@@ -191,7 +192,7 @@ handle_cast(accept, State ) ->
 %%
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{connection_monitor = Connection_monitor}) 
 				when Reference == Connection_monitor ->
-	lager:debug("user connection went down", []),
+	lager:info("user connection went down", []),
 	demonitor(Connection_monitor),
 	%TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
 	%{noreply, State#user_process_state{connection_state = disconnected, disconect_timer = TimerRef}};
@@ -202,7 +203,7 @@ handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_st
 %%
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = Game_monitor})
 				when Reference == Game_monitor ->
-	lager:debug("game stoped (~p) but i will continue", [Reason]),
+	lager:info("game stoped (~p) but i will continue", [Reason]),
 	demonitor(Game_monitor),
 	{noreply, State#user_process_state{ game_monitor = undefined, game_pid = undefined, game_state = init }};
 

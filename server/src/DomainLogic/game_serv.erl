@@ -84,6 +84,9 @@ handle_cast( start_game, State = #game_state{ 	user1_pid = User_pid,
 
 
 
+
+
+
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, is_user2_ready = User2_ready, user1_pid = User1_pid } ) 
 				when User1_pid == User_pid, Game_State == waiting_payers ->
 	case User2_ready of
@@ -105,6 +108,8 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 			nothing_happens
 	end,
 	{ noreply, State#game_state{ is_user2_ready = true} };
+
+
 
 
 
@@ -165,7 +170,7 @@ handle_cast(Msg, State ) ->
 handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user1_monitor = Connection_monitor, user2_pid = User2_pid})
 		 when Reference == Connection_monitor ->
 
-	lager:debug("user ~p connection went down", [Pid]),
+	lager:info("user ~p connection went down", [Pid]),
 
 	demonitor(Connection_monitor),
 	message_processor:process_user_disconect(Pid, User2_pid, self()),
@@ -178,7 +183,7 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user2_monitor = Connection_monitor, user1_pid = User1_pid }) 
 		when Reference == Connection_monitor ->
 
-	lager:debug("user ~p connection went down", [Pid]),
+	lager:info("user ~p connection went down", [Pid]),
 
 	demonitor(Connection_monitor),
 	message_processor:process_user_disconect(Pid, User1_pid, self()),

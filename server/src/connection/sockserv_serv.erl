@@ -81,10 +81,6 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 
 
-
-
-
-
 handle_cast( {send_start_message, { Opponnent_name , Start_date, Seed } }, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_start_message( { Opponnent_name , Start_date, Seed } ),
 	lager:info("sent message: ~p",[Packet]),
