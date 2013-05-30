@@ -15,7 +15,7 @@
 -define(MAX_CONNECTIONS, 400).
 
 
--define(DISCONNECT_MESSAGE,"{ \"" ++ ?MESSAGE_ACTION_KEY ++ "\" : \"disconect\" , \"reason\" : \"game crashed\" }").
+-define(DISCONNECT_MESSAGE,"{ \"code\" : \"10\" , \"reason\" : \"game crashed\" }").
 
 
 %% ------------------------------------------------------------------
@@ -197,10 +197,10 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
 %%
 %	called when the user process stops
 %%
-handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #connection_state{user_monitor = Game_monitor}) when (Reference == Game_monitor) ->
+handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #connection_state{user_monitor = User_monitor}) when (Reference == User_monitor) ->
 	
 	lager:debug("game either crashed or user was stoped so we disconect and send a disconect message", []),
-	demonitor(Game_monitor , [flush]),
+	demonitor(User_monitor),
 
     gen_server:cast(self(), {reply_with_disconnect, ?DISCONNECT_MESSAGE}),
     {noreply, State};
@@ -284,8 +284,6 @@ handle_info(check_ping_timeout, State = #connection_state{last_ping_time = LastP
             {noreply, State}
     end,
     Ret;
-
-
 
 
 
