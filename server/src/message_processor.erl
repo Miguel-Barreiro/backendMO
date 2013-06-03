@@ -33,6 +33,7 @@ process_pre_login_message(Msg) ->
 		false ->
 			Response = ejson:encode( {[ { <<"reason">> , ?DISCONECT_RESPONSE } ]} ),
 			{reply_with_disconnect, Response }
+
 	end.
 
 process(Msg, User_process_pid) ->

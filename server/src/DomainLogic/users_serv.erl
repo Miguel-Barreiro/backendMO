@@ -24,7 +24,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/2]).
 
 start_link(Connection_pid , User_id ) ->
-    gen_server:start_link(?MODULE, [Connection_pid , User_id ], []).
+	gen_server:start_link(?MODULE, [Connection_pid , User_id ], []).
 
 init(InitData) ->
 	gen_server:cast(self(), InitData),
@@ -40,9 +40,9 @@ handle_cast([ Connection_pid , User_id ], State = #user_process_state{ }) ->
 
 	%cancels the timeout for disconect
 	case State#user_process_state.disconect_timer =/= undefined of
-        true -> erlang:cancel_timer(State#user_process_state.disconect_timer);
-        false -> ok
-    end,
+		true -> erlang:cancel_timer(State#user_process_state.disconect_timer);
+		false -> ok
+	end,
 
 	{noreply, State#user_process_state{ 
 				connection_monitor = Connection_monitor,
@@ -109,17 +109,23 @@ handle_cast( { send_won_message, Won_details }, State = #user_process_state{ con
 
 handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state }) 
 				when User_state == init, Game_pid == undefined ->
+	lager:info("users_serv: ready to place in queue"),
 	queue_serv:enter( self() ),
 	{noreply, State#user_process_state{ game_state = in_queue }};
 
 handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid,  game_state = User_state }) 
 				when User_state == playing_game, Game_pid =/= undefined ->
+	lager:info("users_serv: ready rematch"),
 	gen_server:cast( Game_pid , { user_ready_rematch, self()}),
 	{noreply, State};
 
 handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_state = User_state }) 
 				when User_state =/= init ->
+	lager:error("users_serv: ready sent but user is not in correct ready state"),
 	{noreply, State};
+
+
+
 
 
 
@@ -129,6 +135,7 @@ handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ game_pid
 	{noreply, State};
 
 handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ }) ->
+	lager:error("users_serv: lost_game received but user is not in correct lost_game state"),
 	{noreply, State};
 
 
@@ -211,8 +218,8 @@ handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_st
 %	called when the user disconect timeouts
 %%
 handle_info(connection_timeout, State = #user_process_state{}) ->
-    lager:debug("connection timeout", []),
-    {stop, normal, State};
+	lager:debug("connection timeout", []),
+	{stop, normal, State};
 
 handle_info(M,S) ->
 	lager:error("unhandled info ~p", [M]),
