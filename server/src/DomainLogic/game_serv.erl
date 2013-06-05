@@ -181,6 +181,8 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, user2_p
 	gen_server:cast( User1_pid , {game_difficult_change , New_level } ),
 	gen_server:cast( User2_pid , {game_difficult_change , New_level } ),
 
+	lager:info("game_serv: GAME DIFFICULT CHANGED TO ~p",[New_level]),
+
 	{ noreply, State#game_state{ is_user1_ready = true , difficult_level = New_level } };
 
 
