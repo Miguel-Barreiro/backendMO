@@ -159,7 +159,7 @@ handle_cast( {game_start , Opponnent_name , Start_date, Seed },
 														client_start_time = Client_time }) ->
 	
 
-	Client_start_time = Client_time + (Session_start - Start_date),
+	Client_start_time = Client_time + ( Start_date - Session_start),
 	gen_server:cast( Connection_pid, {send_start_message , { Opponnent_name , Client_start_time, Seed }}),
 	{noreply, State};
 
