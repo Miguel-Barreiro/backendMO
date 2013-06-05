@@ -7,7 +7,7 @@
 
 -include("include/softstate.hrl").
 
--define( COUNTDOWN_TO_START_SECONDS , 10).
+-define( COUNTDOWN_TO_START_SECONDS , 5).
 
 -type game_state_type() :: running | waiting_payers.
 
@@ -160,15 +160,6 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 handle_cast(Msg, State ) ->
 	lager:error("game_serv: unknown cast ~p received when state was ~p", [Msg, State]),
 	{noreply, State}.
-
-
-
-
-
-
-
-
-
 
 
 
