@@ -81,6 +81,8 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 
 
+
+
 handle_cast( {send_start_message, { Opponnent_name , Start_date, Seed } }, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_start_message( { Opponnent_name , Start_date, Seed } ),
 	lager:info("sent message: ~p",[Packet]),
@@ -108,6 +110,15 @@ handle_cast( {send_lost_message, Lost_details}, State = #connection_state{socket
 	end,
 	{noreply, State};
 
+
+handle_cast( {game_difficult_change, New_level}, State = #connection_state{socket = Socket, type = Type})  ->
+	Packet = message_processor:create_difficult_message(New_level),
+	lager:info("sent message: ~p",[Packet]),
+	case Type of
+		tcp -> gen_tcp:send(Socket, Packet);
+		ssl -> ssl:send(Socket, Packet)
+	end,
+	{noreply, State};
 
 
 

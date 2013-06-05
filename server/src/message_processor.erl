@@ -4,7 +4,7 @@
 -include("include/request_macros.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
--export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1]).
+-export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1, create_difficult_message/1]).
 
 -define(MESSAGE_LOGIN_CODE, 1).
 -define(MESSAGE_READY_CODE,7).
@@ -16,6 +16,8 @@
 -define(MESSAGE_GAME_START_CODE,6).
 -define(MESSAGE_UPDATE_PIECE_CODE,3).
 -define(MESSAGE_PLACE_GARBAGE_CODE,4).
+
+-define(MESSAGE_DIFFICULT_CHANGE,11).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -85,6 +87,9 @@ create_won_message(disconect) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_DISCONECT } ]} );
 create_won_message(_Won_details) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_LOST } ]} ).
+
+create_difficult_message( Level ) ->
+	ejson:encode( {[ { <<"code">> , ?MESSAGE_DIFFICULT_CHANGE }, { <<"level">> , Level } ]} ).
 
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 %%

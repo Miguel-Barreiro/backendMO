@@ -3,6 +3,8 @@
 
 -define(CONNECTION_TIMEOUT, 40000).
 
+-define(DIFFICULT_CHANGE_SECONDS, 50).
+
 -include("include/softstate.hrl").
 
 -define( COUNTDOWN_TO_START_SECONDS , 10).
@@ -10,6 +12,7 @@
 -type game_state_type() :: running | waiting_payers.
 
 -record(game_state, {
+	difficult_level = 0,
 	user1_pid :: pid(),
 	user2_pid :: pid(),
 	user1_monitor,
@@ -79,13 +82,20 @@ handle_cast( start_game, State = #game_state{ 	user1_pid = User_pid,
 	gen_server:cast( User_pid , {game_start , Name2 , StartTime, Seed } ),
 	gen_server:cast( User_pid2 , {game_start , Name1 , StartTime, Seed } ),
 
+	erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
+
 	{ noreply, State#game_state{ state = running, is_user1_ready = false, is_user2_ready = false } };
 
 
 
+handle_cast( difficult_change , State = #game_state{ state = Game_State, user2_pid = User2_pid, user1_pid = User1_pid , difficult_level = Level } ) ->
 
+	New_level = Level + 1,
 
+	gen_server:cast( User1_pid , {game_difficult_change , New_level } ),
+	gen_server:cast( User2_pid , {game_difficult_change , New_level } ),
 
+	{ noreply, State#game_state{ is_user1_ready = true , difficult_level = New_level } };
 
 
 

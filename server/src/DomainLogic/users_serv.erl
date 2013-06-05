@@ -106,6 +106,15 @@ handle_cast( { send_won_message, Won_details }, State = #user_process_state{ con
 
 
 
+handle_cast( {game_difficult_change , _New_level } ,  State = #user_process_state{ game_pid = Game_pid } )
+				when Game_pid == undefined ->
+	{noreply, State};
+
+handle_cast( {game_difficult_change , New_level }, State = #user_process_state{ connection_pid = Connection_pid , game_state = Game_state }) 
+				when Game_state == playing_game ->
+	gen_server:cast( Connection_pid, {game_difficult_change, New_level} ),
+	{noreply, State};
+
 
 
 
