@@ -19,10 +19,10 @@ init([]) ->
 
 
 enter(User_pid) ->
-    gen_server:cast(whereis(?MODULE), {add_user, User_pid}).
+	gen_server:cast(whereis(?MODULE), {add_user, User_pid}).
 
 leave(User_pid) ->
-    gen_server:cast(whereis(?MODULE), {remove_user, User_pid}).
+	gen_server:cast(whereis(?MODULE), {remove_user, User_pid}).
 
 
 

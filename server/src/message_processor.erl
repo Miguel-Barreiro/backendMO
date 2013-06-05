@@ -7,14 +7,15 @@
 -export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1]).
 
 -define(MESSAGE_LOGIN_CODE, 1).
--define(MESSAGE_PLACE_PIECE_CODE,2).
--define(MESSAGE_UPDATE_PIECE_CODE,3).
--define(MESSAGE_PLACE_GARBAGE_CODE,4).
--define(MESSAGE_GAME_END_CODE,5).
--define(MESSAGE_GAME_START_CODE,6).
 -define(MESSAGE_READY_CODE,7).
 -define(MESSAGE_LOST_CODE,8).
 -define(MESSAGE_LOGIN_SUCESS,9).
+-define(MESSAGE_GAME_END_CODE,5).
+
+-define(MESSAGE_PLACE_PIECE_CODE,2).
+-define(MESSAGE_GAME_START_CODE,6).
+-define(MESSAGE_UPDATE_PIECE_CODE,3).
+-define(MESSAGE_PLACE_GARBAGE_CODE,4).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -93,13 +94,21 @@ create_won_message(_Won_details) ->
 
 
 process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Message_encoded ) ->
+
+	case lists:keysearch(<<"clientTime">>, 1, Message_decoded) of
+		{value ,{<<"clientTime">> ,Client_time}} -> 
+			ok;
+		false ->
+			Client_time = swiss:unix_timestamp()
+	end,
+	
 	case lists:keysearch(<<"userId">>, 1, Message_decoded) of
 		{value ,{<<"userId">> ,User_id}} ->
 			case server_db:get_user_data( User_id ) of 
 				{ error, no_user } ->
 					%% @WARNING: THIS SHOULD BE DONE INSIDE A TRANSATION SO if 2 people try to login at the same time with the same id 2 user processes dont get spawn
-					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
-					User = #user{ 	user_id = User_id, 
+					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
+					User = #user{ 	user_id = User_id,
 									user_process_pid = Child_pid,
 									user_connection_pid = self(), 
 									state = in_queue },
@@ -108,7 +117,7 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 					{no_reply};
 
 				{ ok, User_data = #user{  user_process_pid = User_pid } } when User_pid == undefined ->
-					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
+					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
 
 					User = User_data#user{ 	user_process_pid = Child_pid,
 											user_connection_pid = self(), 
@@ -121,7 +130,7 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 				{ ok, User_data = #user{ user_process_pid = User_pid } } ->
 					case is_process_alive( User_pid ) of
 						false->
-							{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id ]),
+							{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
 							User = User_data#user{ 	user_process_pid = Child_pid,
 													user_connection_pid = self(), 
 													state = in_queue };

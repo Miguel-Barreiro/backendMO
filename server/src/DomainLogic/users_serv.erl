@@ -10,6 +10,7 @@
 
 -record(user_process_state, {
 	session_start_time,
+	client_start_time,
 	user_id,
 	game_state = init :: user_states(), 
 	connection_pid = undefined :: pid(),
@@ -21,17 +22,17 @@
 }).
 
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/2]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/3]).
 
-start_link(Connection_pid , User_id ) ->
-	gen_server:start_link(?MODULE, [Connection_pid , User_id ], []).
+start_link(Connection_pid , User_id, Client_time ) ->
+	gen_server:start_link(?MODULE, [Connection_pid , User_id, Client_time ], []).
 
 init(InitData) ->
 	gen_server:cast(self(), InitData),
 	{ok, #user_process_state{ session_start_time = swiss:unix_timestamp() }}.
 
 
-handle_cast([ Connection_pid , User_id ], State = #user_process_state{ }) ->
+handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_state{ }) ->
 
 	lager:info("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
@@ -44,7 +45,8 @@ handle_cast([ Connection_pid , User_id ], State = #user_process_state{ }) ->
 		false -> ok
 	end,
 
-	{noreply, State#user_process_state{ 
+	{noreply, State#user_process_state{
+				client_start_time = Client_time,
 				connection_monitor = Connection_monitor,
 				user_id = User_id, 
 				connection_pid = Connection_pid,
@@ -142,8 +144,14 @@ handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ }) ->
 
 
 
-handle_cast( {game_start , Opponnent_name , Start_date, Seed }, State = #user_process_state{ connection_pid = Connection_pid }) ->
-	gen_server:cast( Connection_pid, {send_start_message , { Opponnent_name , Start_date, Seed }}),
+handle_cast( {game_start , Opponnent_name , Start_date, Seed }, 
+					State = #user_process_state{ connection_pid = Connection_pid, 
+														session_start_time = Session_start,
+														client_start_time = Client_time }) ->
+	
+
+	Client_start_time = Client_time + (Session_start - Start_date),
+	gen_server:cast( Connection_pid, {send_start_message , { Opponnent_name , Client_start_time, Seed }}),
 	{noreply, State};
 
 
@@ -235,7 +243,6 @@ handle_call( get_user_id, _From, State = #user_process_state{ user_id = User_id 
 
 handle_call( get_game_pid, _From, State = #user_process_state{ game_pid = Game_pid } ) ->
 	{reply,{ ok , Game_pid},State};
-
 
 
 
