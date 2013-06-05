@@ -78,7 +78,11 @@ create_login_success( User_id ) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_LOGIN_SUCESS }, { <<"user_id">> , User_id } ]} ).
 
 create_start_message( { Opponnent_name , Start_date, Seed } ) ->
-	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_START_CODE }, { <<"seed">> , Seed }, { <<"opponent">> , Opponnent_name }, { <<"startTimestamp">> , Start_date } ]} ).
+	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_START_CODE }, 
+						{ <<"seed">> , Seed }, 
+						{ <<"opponent">> , Opponnent_name }, 
+						{ <<"startLevel">> , 0 }, 
+						{ <<"startTimestamp">> , Start_date } ]} ).
 
 create_lost_message(_Lost_details) ->
 	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_WON } ]} ).
