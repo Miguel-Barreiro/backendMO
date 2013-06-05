@@ -88,15 +88,6 @@ handle_cast( start_game, State = #game_state{ 	user1_pid = User_pid,
 
 
 
-handle_cast( difficult_change , State = #game_state{ state = Game_State, user2_pid = User2_pid, user1_pid = User1_pid , difficult_level = Level } ) ->
-
-	New_level = Level + 1,
-
-	gen_server:cast( User1_pid , {game_difficult_change , New_level } ),
-	gen_server:cast( User2_pid , {game_difficult_change , New_level } ),
-
-	{ noreply, State#game_state{ is_user1_ready = true , difficult_level = New_level } };
-
 
 
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, is_user2_ready = User2_ready, user1_pid = User1_pid } ) 
@@ -166,11 +157,34 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 
 
 
-
-
 handle_cast(Msg, State ) ->
 	lager:error("game_serv: unknown cast ~p received when state was ~p", [Msg, State]),
 	{noreply, State}.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+handle_info( difficult_change , State = #game_state{ state = Game_State, user2_pid = User2_pid, user1_pid = User1_pid , difficult_level = Level } ) ->
+
+	New_level = Level + 1,
+
+	gen_server:cast( User1_pid , {game_difficult_change , New_level } ),
+	gen_server:cast( User2_pid , {game_difficult_change , New_level } ),
+
+	{ noreply, State#game_state{ is_user1_ready = true , difficult_level = New_level } };
+
+
+
 
 
 
@@ -201,8 +215,6 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{user
 	message_processor:process_user_disconect(Pid, User1_pid, self()),
 
 	{stop, normal, State};
-
-
 
 
 
