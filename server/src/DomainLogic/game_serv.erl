@@ -3,7 +3,7 @@
 
 -define(CONNECTION_TIMEOUT, 40000).
 
--define(DIFFICULT_CHANGE_SECONDS, 50).
+-define(DIFFICULT_CHANGE_SECONDS, 30).
 
 -include("include/softstate.hrl").
 
@@ -84,7 +84,7 @@ handle_cast( start_game, State = #game_state{ 	user1_pid = User_pid,
 
 	erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
 
-	{ noreply, State#game_state{ state = running, is_user1_ready = false, is_user2_ready = false } };
+	{ noreply, State#game_state{ difficult_level = 0, state = running, is_user1_ready = false, is_user2_ready = false } };
 
 
 
@@ -174,8 +174,9 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, user2_p
 
 	lager:info("game_serv: GAME DIFFICULT CHANGED TO ~p",[New_level]),
 
-	{ noreply, State#game_state{ is_user1_ready = true , difficult_level = New_level } };
+	erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
 
+	{ noreply, State#game_state{ is_user1_ready = true , difficult_level = New_level } };
 
 
 
