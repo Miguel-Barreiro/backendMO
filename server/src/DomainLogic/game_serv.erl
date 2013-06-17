@@ -60,9 +60,6 @@ handle_cast([User_pid, User_pid2], State = #game_state{ }) ->
 
 
 
-
-
-
 handle_cast( start_game, State = #game_state{ 	user1_pid = User_pid, 
 												user2_pid = User_pid2, 
 												state = Game_State, 
@@ -75,7 +72,7 @@ handle_cast( start_game, State = #game_state{ 	user1_pid = User_pid,
 	{ ok, Name2 } = gen_server:call( User_pid2, get_user_id ),
 
 	StartTime = swiss:unix_timestamp() + ?COUNTDOWN_TO_START_SECONDS, 	%the game will start in <COUNTDOWN_TO_START_SECONDS> seconds
-	{A1,A2,A3} = now(), 
+	{A1,A2,A3} = now(),
 	random:seed(A1, A2, A3), 
 	Seed = random:uniform(2147483646),
 
