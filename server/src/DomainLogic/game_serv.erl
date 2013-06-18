@@ -131,7 +131,6 @@ handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1_pid 
 		_->
 			ok
 	end,
-	
 	{noreply, State#game_state{ state = waiting_payers, is_user1_ready = false, is_user2_ready = false } };
 
 
@@ -162,7 +161,14 @@ handle_cast(Msg, State ) ->
 
 
 
-handle_info( difficult_change , State = #game_state{ state = Game_State, user2_pid = User2_pid, user1_pid = User1_pid , difficult_level = Level } ) ->
+
+handle_info( difficult_change , State = #game_state{ state = Game_State } ) 
+			when Game_State =/= running ->
+	{ noreply, State#game_state{ } };
+
+
+handle_info( difficult_change , State = #game_state{ state = Game_State, user2_pid = User2_pid, user1_pid = User1_pid , difficult_level = Level } ) 
+			when Game_State == running ->
 
 	New_level = Level + 1,
 
@@ -170,10 +176,8 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, user2_p
 	gen_server:cast( User2_pid , {game_difficult_change , New_level } ),
 
 	lager:info("game_serv: GAME DIFFICULT CHANGED TO ~p",[New_level]),
-
 	erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
-
-	{ noreply, State#game_state{ is_user1_ready = true , difficult_level = New_level } };
+	{ noreply, State#game_state{ difficult_level = New_level } };
 
 
 

@@ -10,9 +10,9 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-    {ok, {{simple_one_for_one, 60, 3600}, [
-    	{users, {users_serv, start_link, []}, temporary, 1000, worker, [users_serv]}
-    ]}}.
+	{ok, {{simple_one_for_one, 60, 3600}, [
+		{users, {users_serv, start_link, []}, temporary, 1000, worker, [users_serv]}
+	]}}.
 
 %%
 %	@param User_data_list = [ Connection_pid , User_id ]

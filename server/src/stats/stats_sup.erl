@@ -2,15 +2,29 @@
 
 -behaviour(supervisor).
 
+%% API
 -export([start_link/0]).
--export([init/1 , start_new_user_process/1]).
 
--include("include/softstate.hrl").
+%% Supervisor callbacks
+-export([init/1]).
+
+%% Helper macro for declaring children of supervisor
+-define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+
+%% ===================================================================
+%% API functions
+%% ===================================================================
 
 start_link() ->
+	lager:info("stats_sup: comecei"),
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
+%% ===================================================================
+%% Supervisor callbacks
+%% ===================================================================
+
 init([]) ->
-    {ok, {{simple_one_for_one, 60, 3600}, [
-    	{users, {stats_serv, start_link, []}, permanent, 1000, worker, [stats_serv]}
-    ]}}.
+	lager:info("stats_sup: comecei"),
+	{ok, { {one_for_one, 5, 10}, [ ?CHILD(stats_serv, worker) ] } }.
+
+
