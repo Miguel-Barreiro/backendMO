@@ -16,7 +16,6 @@
 %% ===================================================================
 
 start_link() ->
-	lager:info("stats_sup: comecei"),
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %% ===================================================================
@@ -24,7 +23,6 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-	lager:info("stats_sup: comecei"),
 	{ok, { {one_for_one, 5, 10}, [ ?CHILD(stats_serv, worker) ] } }.
 
 

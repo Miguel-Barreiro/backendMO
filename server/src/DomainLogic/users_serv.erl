@@ -28,7 +28,6 @@ start_link(Connection_pid , User_id, Client_time ) ->
 	gen_server:start_link(?MODULE, [Connection_pid , User_id, Client_time ], []).
 
 init(InitData) ->
-	lager:info("users: comecei"),
 	gen_server:cast(self(), InitData),
 	{ok, #user_process_state{ session_start_time = swiss:unix_timestamp() }}.
 

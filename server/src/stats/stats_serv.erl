@@ -26,7 +26,6 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
-	lager:info("stats_serv: comecei"),
 	{ok, #stats_state{ }}.
 
 
@@ -35,21 +34,25 @@ handle_cast( Msg, State) ->
 	{noreply, State}.
 
 
-handle_info( get_connections_number, State = #stats_state{ number_connections = Connections_Number}) ->
-	{reply, {ok, Connections_Number },State};
 
-handle_info( add_connection, State = #stats_state{ number_connections = Connections_Number}) ->
-	{noreply, State#stats_state{ number_connections = Connections_Number + 1 }};
-
-handle_info( remove_connection, State = #stats_state{ number_connections = Connections_Number}) ->
-	{noreply, State#stats_state{ number_connections = Connections_Number - 1 }};
 
 
 handle_info(Msg,State) ->
 	lager:error("stats_serv: unhandled info ~p", [Msg]),
 	{noreply, State}.
 
+
+handle_call( get_connections_number, _From, State = #stats_state{ number_connections = Connections_Number}) ->
+	{reply, {ok, Connections_Number },State};
+
+handle_call( add_connection, _From, State = #stats_state{ number_connections = Connections_Number}) ->
+	{noreply, State#stats_state{ number_connections = Connections_Number + 1 }};
+
+handle_call( remove_connection, _From, State = #stats_state{ number_connections = Connections_Number}) ->
+	{noreply, State#stats_state{ number_connections = Connections_Number - 1 }};
+
 handle_call(_E, _From, State) ->
+	lager:error("stats_serv: unhandled call ",[]),
 	{noreply, State}.
 
 terminate(Reason, _State) ->
