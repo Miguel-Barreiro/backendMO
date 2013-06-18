@@ -40,7 +40,7 @@ process_pre_login_message(Msg) ->
 	end.
 
 process(Msg, User_process_pid) ->
-	lager:info("Message: ~p received", [Msg]),
+	lager:debug("Message: ~p received", [Msg]),
 	{Decoded} = ejson:decode(Msg),
 
 	case lists:keysearch(<<"code">>, 1, Decoded) of
@@ -166,6 +166,7 @@ process_message( ?MESSAGE_READY_CODE, User_process_pid, _Message_decoded, _Messa
 	{no_reply};
 
 process_message( ?MESSAGE_LOST_CODE, User_process_pid, _Message_decoded, _Message_encoded ) when User_process_pid =/= no_user_process->
+	lager:info("user ~p said he lost",[User_process_pid]),
 	gen_server:cast( User_process_pid, { lost_game, no_details }),
 	{no_reply};
 

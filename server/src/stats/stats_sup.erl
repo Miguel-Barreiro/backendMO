@@ -1,4 +1,4 @@
--module(server_sup).
+-module(stats_sup).
 
 -behaviour(supervisor).
 
@@ -16,6 +16,7 @@
 %% ===================================================================
 
 start_link() ->
+	lager:info("stats_sup: comecei"),
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %% ===================================================================
@@ -23,11 +24,7 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-	{ok, { {one_for_one, 5, 10}, [
-		?CHILD(sockserv_sup, supervisor),
-		?CHILD(users_sup, supervisor),
-		?CHILD(queue_sup, supervisor),
-		?CHILD(game_sup, supervisor),
-		?CHILD(stats_sup, supervisor)
-	]} }.
+	lager:info("stats_sup: comecei"),
+	{ok, { {one_for_one, 5, 10}, [ ?CHILD(stats_serv, worker) ] } }.
+
 

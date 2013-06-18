@@ -59,7 +59,7 @@ init([Socket, SSLSocket, Type]) ->
 handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Type}) ->
     %Packet = add_envelope(Reply),
 	Packet = Reply,
-	lager:info("sent message: ~p",[Packet]),
+	lager:debug("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -69,11 +69,12 @@ handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Ty
 handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = Socket, type = Type})  ->
 	%Packet = add_envelope(Reply),
 	Packet = Reply,
-	lager:info("sent message: ~p",[Packet]),
+	lager:debug("sent message(reply_with_disconnect): ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
 	end,
+	stats_serv:remove_connection(),
 	message_processor:handle_disconect(),
     {stop, normal, State};
 
@@ -85,7 +86,7 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 handle_cast( {send_start_message, { Opponnent_name , Start_date, Seed } }, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_start_message( { Opponnent_name , Start_date, Seed } ),
-	lager:info("sent message: ~p",[Packet]),
+	lager:debug("sent send_start_message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -94,7 +95,7 @@ handle_cast( {send_start_message, { Opponnent_name , Start_date, Seed } }, State
 
 handle_cast( {send_won_message, Won_details}, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_won_message(Won_details),
-	lager:info("sent message: ~p",[Packet]),
+	lager:debug("sent send_won_message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -103,7 +104,7 @@ handle_cast( {send_won_message, Won_details}, State = #connection_state{socket =
 
 handle_cast( {send_lost_message, Lost_details}, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_lost_message(Lost_details),
-	lager:info("sent message: ~p",[Packet]),
+	lager:debug("sent send_lost_message : ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -113,7 +114,7 @@ handle_cast( {send_lost_message, Lost_details}, State = #connection_state{socket
 
 handle_cast( {game_difficult_change, New_level}, State = #connection_state{socket = Socket, type = Type})  ->
 	Packet = message_processor:create_difficult_message(New_level),
-	lager:info("sent message: ~p",[Packet]),
+	lager:debug("sent game_difficult_change: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -131,7 +132,7 @@ handle_cast( { register_user_process, User_process_pid }, State = #connection_st
 	{ ok, User_id} = gen_server:call( User_process_pid, get_user_id),
 
 	Packet = message_processor:create_login_success( User_id ),
-	lager:info("sent message: ~p",[Packet]),
+	lager:debug("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -156,17 +157,15 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
 
 			lager:info("accepted another connection"),
 
-			MaxConnections = ?MAX_CONNECTIONS,
-
             % Launch another acceptor so AWS LB wont kill us
 			sockserv_sup:start_socket(Type),
 			
 			%for now :P
-			Connections  = 0,
+			Connections  = stats_serv:get_connections_number(),
 
-			case Connections > MaxConnections of
+			case Connections > ?MAX_CONNECTIONS of
 				true ->
-					lager:notice("number of connections ~p exeeds limit of ~p", [Connections, MaxConnections]),
+					lager:notice("number of connections ~p exeeds limit of ~p", [Connections, ?MAX_CONNECTIONS]),
 					timer:sleep(5000),
 					{stop, normal, State};
 				false ->
@@ -186,11 +185,13 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
 
 					message_processor:handle_connect(),
 
-					AuthTimeout = ?DEFAULT_AUTH_TIMEOUT,
+					%AuthTimeout = ?DEFAULT_AUTH_TIMEOUT,
 
-					%erlang:send_after(timer:seconds(60), self(), check_inactivity_timeout),
+					erlang:send_after(timer:seconds(60), self(), check_inactivity_timeout),
 					%erlang:send_after(timer:seconds(?DEFAULT_PING_TIMEOUT), self(), check_ping_timeout),
 					%erlang:send_after(timer:seconds(AuthTimeout), self(), check_auth_state),
+
+					stats_serv:add_connection(),
 
 					{noreply, State#connection_state{peer_ip = Name, socket = AcceptSocket, connstate = handshake}}
 			end;
@@ -223,15 +224,17 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #connection_sta
 handle_info({tcp, _Port, Msg}, State = #connection_state{socket=Socket}) ->
 	inet:setopts(Socket, [{active, once}]),
 	NewState = process(Msg, State),
-	{noreply, NewState};
+	{noreply, NewState#connection_state{ last_packet_time = swiss:unix_timestamp() } };
 
 handle_info({tcp_closed, _Port}, State) ->
 	lager:debug("connection closed", []),
+	stats_serv:remove_connection(),
 	message_processor:handle_disconect(),
 	{stop, normal, State};
 
 handle_info({tcp_error, _Port, Error}, State) ->
 	lager:error("tcp error ~p", [Error]),
+	stats_serv:remove_connection(),
 	message_processor:handle_disconect(),
 	{stop, normal, State};
 
@@ -242,16 +245,19 @@ handle_info({ssl, _Port, Msg}, State = #connection_state{socket=Socket}) ->
 
 handle_info({ssl_error, _Port, Error}, State) ->
 	lager:error("SSL error ~p", [Error]),
+	stats_serv:remove_connection(),
 	message_processor:handle_disconect(),
 	{stop, normal, State};
 
 handle_info({ssl_closed, _Port}, State) ->
 	lager:debug("SSL connection closed", []),
+	stats_serv:remove_connection(),
 	message_processor:handle_disconect(),
 	{stop, normal, State};
 
 handle_info(check_auth_state, State = #connection_state{connstate = Connstate}) when Connstate == unauthorized ->
 	lager:info("connection not authorized in time. terminating"),
+	stats_serv:remove_connection(),
 	message_processor:handle_disconect(),
 	{stop, normal, State};
 
@@ -268,16 +274,16 @@ handle_info(check_auth_state, State) ->
 handle_info(check_inactivity_timeout, State = #connection_state{last_packet_time = LastPacketTime}) ->
     Timeout = ?DEFAULT_INACTIVITY_TIMEOUT,
 
-    Ret = case swiss:unix_timestamp() - LastPacketTime > Timeout of
+    case swiss:unix_timestamp() - LastPacketTime > Timeout of
         true ->
-            lager:debug("dropping connection due to inactivity"),
+            lager:info("dropping connection due to inactivity"),
             message_processor:handle_disconect(),
             {stop, normal, State};
         false ->
             erlang:send_after(timer:seconds(60), self(), check_inactivity_timeout),
             {noreply, State}
-    end,
-    Ret;
+    end;
+
 
 handle_info(check_ping_timeout, State = #connection_state{last_ping_time = LastPingTime, last_packet_time = LastPacketTime}) ->
     LastActivity = max(LastPingTime, LastPacketTime),
@@ -309,16 +315,20 @@ handle_call(_E, _From, State) ->
     {noreply, State}.
 
 terminate(normal, #connection_state{connstate = CS}) when CS =/= undefined ->
+	stats_serv:remove_connection(),
     ok;
 
 terminate(normal, _State) ->
+	stats_serv:remove_connection(),
     ok;
 
 terminate(Reason, #connection_state{connstate = CS}) when CS =/= undefined ->
+	stats_serv:remove_connection(),
 	lager:error("terminate reason: ~p", [Reason]),
     ok;
 
 terminate(Reason, _State) ->
+	stats_serv:remove_connection(),
 	lager:error("terminate reason: ~p", [Reason]),
     ok.
 
