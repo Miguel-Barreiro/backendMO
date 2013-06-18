@@ -14,10 +14,12 @@ get_connections_number()->
 	gen_server:call(whereis(?MODULE), get_connections_number).
 
 add_connection()->
-	gen_server:call(whereis(?MODULE), add_connection).
+	gen_server:cast(whereis(?MODULE), add_connection),
+	ok.
 
 remove_connection()->
-	gen_server:call(whereis(?MODULE), remove_connection).
+	gen_server:cast(whereis(?MODULE), remove_connection),
+	ok.
 
 
 %------------------------- GEN SERVER ------------------------------------------
@@ -27,6 +29,13 @@ start_link() ->
 
 init([]) ->
 	{ok, #stats_state{ }}.
+
+
+handle_cast( add_connection, State = #stats_state{ number_connections = Connections_Number}) ->
+	{noreply, State#stats_state{ number_connections = Connections_Number + 1 }};
+
+handle_cast( remove_connection, State = #stats_state{ number_connections = Connections_Number}) ->
+	{noreply, State#stats_state{ number_connections = Connections_Number - 1 }};
 
 
 handle_cast( Msg, State) ->
@@ -45,11 +54,6 @@ handle_info(Msg,State) ->
 handle_call( get_connections_number, _From, State = #stats_state{ number_connections = Connections_Number}) ->
 	{reply, Connections_Number,State};
 
-handle_call( add_connection, _From, State = #stats_state{ number_connections = Connections_Number}) ->
-	{noreply, State#stats_state{ number_connections = Connections_Number + 1 }};
-
-handle_call( remove_connection, _From, State = #stats_state{ number_connections = Connections_Number}) ->
-	{noreply, State#stats_state{ number_connections = Connections_Number - 1 }};
 
 handle_call(_E, _From, State) ->
 	lager:error("stats_serv: unhandled call ",[]),
