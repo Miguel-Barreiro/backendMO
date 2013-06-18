@@ -43,7 +43,7 @@ handle_info(Msg,State) ->
 
 
 handle_call( get_connections_number, _From, State = #stats_state{ number_connections = Connections_Number}) ->
-	{reply, {ok, Connections_Number },State};
+	{reply, Connections_Number,State};
 
 handle_call( add_connection, _From, State = #stats_state{ number_connections = Connections_Number}) ->
 	{noreply, State#stats_state{ number_connections = Connections_Number + 1 }};
