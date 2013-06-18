@@ -1,7 +1,6 @@
 -module(stats_serv).
 
 -behaviour(gen_server).
--define(SERVER, ?MODULE).
 
 -export([get_connections_number/0,add_connection/0,remove_connection/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).

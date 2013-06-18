@@ -187,7 +187,7 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
 
 					%AuthTimeout = ?DEFAULT_AUTH_TIMEOUT,
 
-					erlang:send_after(timer:seconds(60), self(), check_inactivity_timeout),
+					erlang:send_after(timer:seconds(?DEFAULT_INACTIVITY_TIMEOUT), self(), check_inactivity_timeout),
 					%erlang:send_after(timer:seconds(?DEFAULT_PING_TIMEOUT), self(), check_ping_timeout),
 					%erlang:send_after(timer:seconds(AuthTimeout), self(), check_auth_state),
 
@@ -280,7 +280,7 @@ handle_info(check_inactivity_timeout, State = #connection_state{last_packet_time
             message_processor:handle_disconect(),
             {stop, normal, State};
         false ->
-            erlang:send_after(timer:seconds(60), self(), check_inactivity_timeout),
+            erlang:send_after(timer:seconds(timer:seconds(?DEFAULT_INACTIVITY_TIMEOUT)), self(), check_inactivity_timeout),
             {noreply, State}
     end;
 
