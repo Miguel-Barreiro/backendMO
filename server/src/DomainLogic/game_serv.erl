@@ -85,8 +85,6 @@ handle_cast( start_game, State = #game_state{ 	user1_pid = User_pid,
 
 
 
-
-
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, is_user2_ready = User2_ready, user1_pid = User1_pid } ) 
 				when User1_pid == User_pid, Game_State == waiting_payers ->
 	case User2_ready of
