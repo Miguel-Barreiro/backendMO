@@ -1,4 +1,0 @@
-message envelope {
-    optional int32 uncompressed_size = 4;
-};
-

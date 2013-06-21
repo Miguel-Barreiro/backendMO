@@ -1,0 +1,88 @@
+message MessageLogin{
+	required string userId = 1;
+	required int32 clientTime = 2;
+};
+
+message MessageloginSuccess{
+	required string userId = 1;
+};
+
+message MessageGameStart{
+	required int32 seed = 1;
+	required string opponentName = 2;
+	required int32 startLevel = 3;
+	required int32 startTimestamp = 4;
+};
+
+message MessageGameEnd{
+	required int32 reason = 1;
+};
+
+
+
+message MessageUpdatePiece{
+	required int32 x=1;
+	required int32 y=2;
+	required int32 state=3;
+};
+
+message MessagePlacePiece{
+	required int32 x=1;
+	required int32 y=2;
+	required int32 state=3;
+};
+
+
+message MessagePlaceGarbage{
+	repeated int32 garbagePosition = 1;
+};
+
+message MessagePlayerReady{ 
+	optional int32 unused = 1;
+};
+
+message MessagePlayerLost{  optional int32 unused = 1; };
+
+message MessageDisconect{ optional int32 unused = 1; };
+
+message MessageDifficultChange{ 
+	required int32 level = 1;
+};
+
+
+message Request {
+	
+	enum request_type{
+		MESSAGE_LOGIN_CODE = 1;
+		MESSAGE_PLACE_PIECE_CODE = 2;
+		MESSAGE_UPDATE_PIECE_CODE = 3;
+		MESSAGE_PLACE_GARBAGE_CODE = 4;
+		MESSAGE_GAME_END_CODE = 5;
+		MESSAGE_GAME_START_CODE = 6;
+		MESSAGE_READY_CODE = 7;
+		MESSAGE_LOST_GAME = 8;
+		MESSAGE_LOGIN_SUCESS = 9;
+		MESSAGE_DISCONECT = 10;
+		MESSAGE_DIFFICULT_CHANGE = 11;
+	}
+
+	required request_type type = 1;
+	
+	optional MessageLogin loginContent = 2;
+	optional MessagePlacePiece placePieceContent = 3;
+	optional MessageUpdatePiece updatePieceContent = 4;
+	optional MessagePlaceGarbage placeGarbageContent = 5;
+	optional MessageGameEnd gameEndContent = 6;
+	optional MessageGameStart gameStartContent = 7;
+	optional MessagePlayerReady playerReadyContent = 8;
+	optional MessagePlayerLost playerLostContent = 9;
+	optional MessageloginSuccess loginSucessContent = 10;
+	optional MessageDisconect disconectContent = 11;
+	optional MessageDifficultChange difficultChangeContent = 12;
+
+};
+
+
+
+
+

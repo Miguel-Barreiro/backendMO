@@ -1,0 +1,300 @@
+-module(protocol_pb).
+-include("protocol_pb.hrl").
+
+-export([
+  encode_message_login/1,decode_message_login/1,
+  encode_messagelogin_success/1,decode_messagelogin_success/1,
+  encode_message_game_start/1,decode_message_game_start/1,
+  encode_message_game_end/1,decode_message_game_end/1,
+  encode_message_update_piece/1,decode_message_update_piece/1,
+  encode_message_place_piece/1,decode_message_place_piece/1,
+  encode_message_place_garbage/1,decode_message_place_garbage/1,
+  encode_message_player_ready/1,decode_message_player_ready/1,
+  encode_message_player_lost/1,decode_message_player_lost/1,
+  encode_message_disconect/1,decode_message_disconect/1,
+  encode_message_difficult_change/1,decode_message_difficult_change/1,
+  to_request__request_type/1,from_request__request_type/1,
+  encode_request/1,decode_request/1]).
+
+decode_message_login(B) ->
+  case decode_message_login_impl(B) of
+    undefined -> #message_login{};
+    Any -> Any
+  end.
+
+decode_message_login_impl(<<>>) -> undefined;
+decode_message_login_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_login{},
+     fun(1,Val,Rec) -> Rec#message_login{user_id = protocol_buffers:cast(string,Val)};
+        (2,Val,Rec) -> Rec#message_login{client_time = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_login(undefined) -> undefined;
+encode_message_login(R) when is_record(R,message_login) ->
+  [
+    protocol_buffers:encode(1,length_encoded,R#message_login.user_id),
+    protocol_buffers:encode(2,int32,R#message_login.client_time)
+  ].
+
+decode_messagelogin_success(B) ->
+  case decode_messagelogin_success_impl(B) of
+    undefined -> #messagelogin_success{};
+    Any -> Any
+  end.
+
+decode_messagelogin_success_impl(<<>>) -> undefined;
+decode_messagelogin_success_impl(Binary) ->
+  protocol_buffers:decode(Binary,#messagelogin_success{},
+     fun(1,Val,Rec) -> Rec#messagelogin_success{user_id = protocol_buffers:cast(string,Val)}
+      end).
+
+encode_messagelogin_success(undefined) -> undefined;
+encode_messagelogin_success(R) when is_record(R,messagelogin_success) ->
+  [
+    protocol_buffers:encode(1,length_encoded,R#messagelogin_success.user_id)
+  ].
+
+decode_message_game_start(B) ->
+  case decode_message_game_start_impl(B) of
+    undefined -> #message_game_start{};
+    Any -> Any
+  end.
+
+decode_message_game_start_impl(<<>>) -> undefined;
+decode_message_game_start_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_game_start{},
+     fun(1,Val,Rec) -> Rec#message_game_start{seed = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#message_game_start{opponent_name = protocol_buffers:cast(string,Val)};
+        (3,Val,Rec) -> Rec#message_game_start{start_level = protocol_buffers:cast(int32,Val)};
+        (4,Val,Rec) -> Rec#message_game_start{start_timestamp = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_game_start(undefined) -> undefined;
+encode_message_game_start(R) when is_record(R,message_game_start) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_game_start.seed),
+    protocol_buffers:encode(2,length_encoded,R#message_game_start.opponent_name),
+    protocol_buffers:encode(3,int32,R#message_game_start.start_level),
+    protocol_buffers:encode(4,int32,R#message_game_start.start_timestamp)
+  ].
+
+decode_message_game_end(B) ->
+  case decode_message_game_end_impl(B) of
+    undefined -> #message_game_end{};
+    Any -> Any
+  end.
+
+decode_message_game_end_impl(<<>>) -> undefined;
+decode_message_game_end_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_game_end{},
+     fun(1,Val,Rec) -> Rec#message_game_end{reason = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_game_end(undefined) -> undefined;
+encode_message_game_end(R) when is_record(R,message_game_end) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_game_end.reason)
+  ].
+
+decode_message_update_piece(B) ->
+  case decode_message_update_piece_impl(B) of
+    undefined -> #message_update_piece{};
+    Any -> Any
+  end.
+
+decode_message_update_piece_impl(<<>>) -> undefined;
+decode_message_update_piece_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_update_piece{},
+     fun(1,Val,Rec) -> Rec#message_update_piece{x = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#message_update_piece{y = protocol_buffers:cast(int32,Val)};
+        (3,Val,Rec) -> Rec#message_update_piece{state = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_update_piece(undefined) -> undefined;
+encode_message_update_piece(R) when is_record(R,message_update_piece) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_update_piece.x),
+    protocol_buffers:encode(2,int32,R#message_update_piece.y),
+    protocol_buffers:encode(3,int32,R#message_update_piece.state)
+  ].
+
+decode_message_place_piece(B) ->
+  case decode_message_place_piece_impl(B) of
+    undefined -> #message_place_piece{};
+    Any -> Any
+  end.
+
+decode_message_place_piece_impl(<<>>) -> undefined;
+decode_message_place_piece_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_place_piece{},
+     fun(1,Val,Rec) -> Rec#message_place_piece{x = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#message_place_piece{y = protocol_buffers:cast(int32,Val)};
+        (3,Val,Rec) -> Rec#message_place_piece{state = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_place_piece(undefined) -> undefined;
+encode_message_place_piece(R) when is_record(R,message_place_piece) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_place_piece.x),
+    protocol_buffers:encode(2,int32,R#message_place_piece.y),
+    protocol_buffers:encode(3,int32,R#message_place_piece.state)
+  ].
+
+decode_message_place_garbage(B) ->
+  case decode_message_place_garbage_impl(B) of
+    undefined -> #message_place_garbage{};
+    Any -> Any
+  end.
+
+decode_message_place_garbage_impl(<<>>) -> undefined;
+decode_message_place_garbage_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_place_garbage{},
+     fun        (1,{length_encoded,_}=Val,#message_place_garbage{garbage_position=F}=Rec) when is_list(F) -> Rec#message_place_garbage{garbage_position = Rec#message_place_garbage.garbage_position ++ protocol_buffers:cast(int32,Val)};
+        (1,Val,#message_place_garbage{garbage_position=F}=Rec) when is_list(F) -> Rec#message_place_garbage{garbage_position = Rec#message_place_garbage.garbage_position ++ [protocol_buffers:cast(int32,Val)]}
+
+      end).
+
+encode_message_place_garbage(undefined) -> undefined;
+encode_message_place_garbage(R) when is_record(R,message_place_garbage) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_place_garbage.garbage_position)
+  ].
+
+decode_message_player_ready(B) ->
+  case decode_message_player_ready_impl(B) of
+    undefined -> #message_player_ready{};
+    Any -> Any
+  end.
+
+decode_message_player_ready_impl(<<>>) -> undefined;
+decode_message_player_ready_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_player_ready{},
+     fun(1,Val,Rec) -> Rec#message_player_ready{unused = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_player_ready(undefined) -> undefined;
+encode_message_player_ready(R) when is_record(R,message_player_ready) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_player_ready.unused)
+  ].
+
+decode_message_player_lost(B) ->
+  case decode_message_player_lost_impl(B) of
+    undefined -> #message_player_lost{};
+    Any -> Any
+  end.
+
+decode_message_player_lost_impl(<<>>) -> undefined;
+decode_message_player_lost_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_player_lost{},
+     fun(1,Val,Rec) -> Rec#message_player_lost{unused = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_player_lost(undefined) -> undefined;
+encode_message_player_lost(R) when is_record(R,message_player_lost) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_player_lost.unused)
+  ].
+
+decode_message_disconect(B) ->
+  case decode_message_disconect_impl(B) of
+    undefined -> #message_disconect{};
+    Any -> Any
+  end.
+
+decode_message_disconect_impl(<<>>) -> undefined;
+decode_message_disconect_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_disconect{},
+     fun(1,Val,Rec) -> Rec#message_disconect{unused = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_disconect(undefined) -> undefined;
+encode_message_disconect(R) when is_record(R,message_disconect) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_disconect.unused)
+  ].
+
+decode_message_difficult_change(B) ->
+  case decode_message_difficult_change_impl(B) of
+    undefined -> #message_difficult_change{};
+    Any -> Any
+  end.
+
+decode_message_difficult_change_impl(<<>>) -> undefined;
+decode_message_difficult_change_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_difficult_change{},
+     fun(1,Val,Rec) -> Rec#message_difficult_change{level = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_difficult_change(undefined) -> undefined;
+encode_message_difficult_change(R) when is_record(R,message_difficult_change) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_difficult_change.level)
+  ].
+
+to_request__request_type(1) -> message_login_code;
+to_request__request_type(2) -> message_place_piece_code;
+to_request__request_type(3) -> message_update_piece_code;
+to_request__request_type(4) -> message_place_garbage_code;
+to_request__request_type(5) -> message_game_end_code;
+to_request__request_type(6) -> message_game_start_code;
+to_request__request_type(7) -> message_ready_code;
+to_request__request_type(8) -> message_lost_game;
+to_request__request_type(9) -> message_login_sucess;
+to_request__request_type(10) -> message_disconect;
+to_request__request_type(11) -> message_difficult_change;
+to_request__request_type(undefined) -> undefined.
+
+from_request__request_type(message_login_code) -> 1;
+from_request__request_type(message_place_piece_code) -> 2;
+from_request__request_type(message_update_piece_code) -> 3;
+from_request__request_type(message_place_garbage_code) -> 4;
+from_request__request_type(message_game_end_code) -> 5;
+from_request__request_type(message_game_start_code) -> 6;
+from_request__request_type(message_ready_code) -> 7;
+from_request__request_type(message_lost_game) -> 8;
+from_request__request_type(message_login_sucess) -> 9;
+from_request__request_type(message_disconect) -> 10;
+from_request__request_type(message_difficult_change) -> 11;
+from_request__request_type(undefined) -> undefined.
+
+decode_request(B) ->
+  case decode_request_impl(B) of
+    undefined -> #request{};
+    Any -> Any
+  end.
+
+decode_request_impl(<<>>) -> undefined;
+decode_request_impl(Binary) ->
+  protocol_buffers:decode(Binary,#request{},
+     fun(1,{varint,Enum},Rec) -> Rec#request{type=to_request__request_type(Enum)};
+        (2,{length_encoded,Bin},Rec) -> Rec#request{login_content = decode_message_login_impl(Bin)};
+        (3,{length_encoded,Bin},Rec) -> Rec#request{place_piece_content = decode_message_place_piece_impl(Bin)};
+        (4,{length_encoded,Bin},Rec) -> Rec#request{update_piece_content = decode_message_update_piece_impl(Bin)};
+        (5,{length_encoded,Bin},Rec) -> Rec#request{place_garbage_content = decode_message_place_garbage_impl(Bin)};
+        (6,{length_encoded,Bin},Rec) -> Rec#request{game_end_content = decode_message_game_end_impl(Bin)};
+        (7,{length_encoded,Bin},Rec) -> Rec#request{game_start_content = decode_message_game_start_impl(Bin)};
+        (8,{length_encoded,Bin},Rec) -> Rec#request{player_ready_content = decode_message_player_ready_impl(Bin)};
+        (9,{length_encoded,Bin},Rec) -> Rec#request{player_lost_content = decode_message_player_lost_impl(Bin)};
+        (10,{length_encoded,Bin},Rec) -> Rec#request{login_sucess_content = decode_messagelogin_success_impl(Bin)};
+        (11,{length_encoded,Bin},Rec) -> Rec#request{disconect_content = decode_message_disconect_impl(Bin)};
+        (12,{length_encoded,Bin},Rec) -> Rec#request{difficult_change_content = decode_message_difficult_change_impl(Bin)}
+      end).
+
+encode_request(undefined) -> undefined;
+encode_request(R) when is_record(R,request) ->
+  [
+    protocol_buffers:encode(1,int32,from_request__request_type(R#request.type)),
+    protocol_buffers:encode(2,length_encoded,encode_message_login(R#request.login_content)),
+    protocol_buffers:encode(3,length_encoded,encode_message_place_piece(R#request.place_piece_content)),
+    protocol_buffers:encode(4,length_encoded,encode_message_update_piece(R#request.update_piece_content)),
+    protocol_buffers:encode(5,length_encoded,encode_message_place_garbage(R#request.place_garbage_content)),
+    protocol_buffers:encode(6,length_encoded,encode_message_game_end(R#request.game_end_content)),
+    protocol_buffers:encode(7,length_encoded,encode_message_game_start(R#request.game_start_content)),
+    protocol_buffers:encode(8,length_encoded,encode_message_player_ready(R#request.player_ready_content)),
+    protocol_buffers:encode(9,length_encoded,encode_message_player_lost(R#request.player_lost_content)),
+    protocol_buffers:encode(10,length_encoded,encode_messagelogin_success(R#request.login_sucess_content)),
+    protocol_buffers:encode(11,length_encoded,encode_message_disconect(R#request.disconect_content)),
+    protocol_buffers:encode(12,length_encoded,encode_message_difficult_change(R#request.difficult_change_content))
+  ].
+
