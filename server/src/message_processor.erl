@@ -29,36 +29,28 @@
 -define( GAME_END_OPPONNENT_DISCONECT , 3).
 
 process_pre_login_message(Msg) ->
-	lager:info("Message: ~p received", [Msg]),
-	{Decoded} = ejson:decode(Msg),
+	Request = protocol_pb:decode_request(Msg),
 
-	case lists:keysearch(<<"code">>, 1, Decoded) of
-		{ value, { <<"code">>, Message_code}} -> 
-			message_processor:process_message( Message_code , no_user_process , Decoded, Msg );
-		false ->
-			{reply_with_disconnect, create_disconect_message() }
-
+	case Request#request.type of
+		undefined -> {reply_with_disconnect, create_disconect_message() };
+		_other -> message_processor:process_message( Request#request.type , no_user_process , Request, Msg )
 	end.
+
+
 
 process(Msg, User_process_pid) ->
 	lager:debug("Message: ~p received", [Msg]),
-	{Decoded} = ejson:decode(Msg),
+	Request = protocol_pb:decode_request(Msg),
 
-	case lists:keysearch(<<"code">>, 1, Decoded) of
-		{ value, { <<"code">>, Message_code}} -> 
-			message_processor:process_message( Message_code , User_process_pid, Decoded, Msg );
-		false ->
-			{reply_with_disconnect, create_disconect_message() }
+	case Request#request.type of
+		undefined -> {reply_with_disconnect, create_disconect_message() };
+		_other -> message_processor:process_message( Request#request.type , User_process_pid , Request, Msg )
 	end.
-
-
 
 
 process_user_disconect( _Disconected_pid, User_pid, _Game_pid) ->
 	gen_server:cast( User_pid ,{send_won_message, disconect }),
 	ok.
-
-
 
 handle_connect() ->
 	ok.
@@ -74,11 +66,10 @@ handle_disconect() ->
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-create_login_success( _User_id ) ->
+create_login_success( User_id ) ->
 	Req = #request{ type = message_login_sucess,
-					login_content = #messagelogin_success{}},
+					login_sucess_content = #messagelogin_success{ user_id = User_id }},
 	protocol_pb:encode_request(Req).
-%	ejson:encode( {[ { <<"code">> , ?MESSAGE_LOGIN_SUCESS }, { <<"user_id">> , User_id } ]} ).
 
 create_start_message( { Opponnent_name , Start_date, Seed } ) ->
 	Req = #request{ type = message_game_start_code,
@@ -90,17 +81,11 @@ create_start_message( { Opponnent_name , Start_date, Seed } ) ->
 					}},
 	protocol_pb:encode_request(Req).
 
-	%ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_START_CODE }, 
-	%					{ <<"seed">> , Seed }, 
-	%					{ <<"opponent">> , Opponnent_name }, 
-	%					{ <<"startLevel">> , 0 }, 
-	%					{ <<"startTimestamp">> , Start_date } ]} ).
-
 create_lost_message(_Lost_details) ->
 	Req = #request{ type = message_game_end_code,
 					game_end_content = #message_game_end{ reason = ?GAME_END_OPPONNENT_WON } },
 	protocol_pb:encode_request(Req).
-%	ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_WON } ]} ).
+
 
 create_won_message(disconect) ->
 	Req = #request{ type = message_game_end_code,
@@ -108,22 +93,22 @@ create_won_message(disconect) ->
 						reason = ?GAME_END_OPPONNENT_DISCONECT
 					}},
 	protocol_pb:encode_request(Req);
-	%ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_DISCONECT } ]} );
+
+
 create_won_message(_Won_details) ->
 	Req = #request{ type = message_game_end_code,
 					game_end_content = #message_game_end{  
 						reason = ?GAME_END_OPPONNENT_LOST
 					}},
 	protocol_pb:encode_request(Req).
-	%ejson:encode( {[ { <<"code">> , ?MESSAGE_GAME_END_CODE }, { <<"reason">> , ?GAME_END_OPPONNENT_LOST } ]} ).
 
 create_difficult_message( Level ) ->
 	Req = #request{ type = message_difficult_change,
-					game_end_content = #message_difficult_change{  
+					difficult_change_content = #message_difficult_change{  
 						level = Level
 					}},
 	protocol_pb:encode_request(Req).
-	%ejson:encode( {[ { <<"code">> , ?MESSAGE_DIFFICULT_CHANGE }, { <<"level">> , Level } ]} ).
+
 
 create_disconect_message() ->
 	Req = #request{ type = message_disconect, disconect_content = #message_disconect{} },
@@ -136,17 +121,17 @@ create_disconect_message() ->
 
 
 
-process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Message_encoded ) ->
+process_message( message_login_code, 
+					_User_process_pid, 
+						_Message_decoded = #request{ login_content = #message_login{ client_time = Client_time , user_id = User_id} },
+							_Message_encoded ) ->
 
-	case lists:keysearch(<<"clientTime">>, 1, Message_decoded) of
-		{value ,{<<"clientTime">> ,Client_time}} -> 
-			ok;
-		false ->
-			Client_time = swiss:unix_timestamp()
-	end,
-	
-	case lists:keysearch(<<"userId">>, 1, Message_decoded) of
-		{value ,{<<"userId">> ,User_id}} ->
+	case {Client_time, User_id} of
+		{ _ , undefined } ->
+			{reply_with_disconnect, create_disconect_message() };
+		{undefined, _ } -> 
+			{reply_with_disconnect, create_disconect_message() };
+		_other ->
 			case server_db:get_user_data( User_id ) of 
 				{ error, no_user } ->
 					%% @WARNING: THIS SHOULD BE DONE INSIDE A TRANSATION SO if 2 people try to login at the same time with the same id 2 user processes dont get spawn
@@ -188,18 +173,16 @@ process_message( ?MESSAGE_LOGIN_CODE, _User_process_pid, Message_decoded, _Messa
 				{ error, Reason } ->
 					lager:error("Couldnt get user. ~p",[Reason]),
 					{no_reply}
-			end;
-		false ->
-			{reply_with_disconnect, create_disconect_message() }
+			end
 	end;
 
-process_message( ?MESSAGE_READY_CODE, User_process_pid, _Message_decoded, _Message_encoded ) 
+process_message( message_ready_code, User_process_pid, _Message_decoded, _Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 	lager:info("user ~p is ready",[User_process_pid]),
 	gen_server:cast( User_process_pid, { ready, no_details }),
 	{no_reply};
 
-process_message( ?MESSAGE_LOST_CODE, User_process_pid, _Message_decoded, _Message_encoded ) 
+process_message( message_lost_game, User_process_pid, _Message_decoded, _Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 	lager:info("user ~p said he lost",[User_process_pid]),
 	gen_server:cast( User_process_pid, { lost_game, no_details }),
