@@ -66,6 +66,7 @@ handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Ty
 	end,
 	{noreply, State};
 
+
 handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = Socket, type = Type})  ->
 	%Packet = add_envelope(Reply),
 	Packet = Reply,
@@ -126,10 +127,9 @@ handle_cast( {game_difficult_change, New_level}, State = #connection_state{socke
 
 
 
-handle_cast( { register_user_process, User_process_pid }, State = #connection_state{ socket = Socket, type = Type } ) ->
+handle_cast( { register_user_process, User_process_pid, User_id }, State = #connection_state{ socket = Socket, type = Type } ) ->
 	New_state = State#connection_state{ user_monitor =  monitor(process, User_process_pid ) , user_process_pid = User_process_pid },
 
-	{ ok, User_id} = gen_server:call( User_process_pid, get_user_id),
 
 	Packet = message_processor:create_login_success( User_id ),
 	lager:debug("sent message: ~p",[Packet]),

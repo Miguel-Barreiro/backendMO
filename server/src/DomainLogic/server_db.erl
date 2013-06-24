@@ -4,13 +4,8 @@
 -include("include/softstate.hrl").
 
 
--export([ start/0 ,get_user_data/1, push_user_data/1, delete_user_data/1, get_all_unmatched_users/0]).
+-export([ start/0 ,get_user_data/1, push_user_data/1, delete_user_data/1, login_user/3]).
 
-get_all_unmatched_users() ->
-	case mnesia:sync_transaction(fun () -> mnesia:match_object(user, {user, '_', '_', '_', '_', 'in_queue'}, read) end)  of
-		{atomic, Result } ->  			{ ok , Result };
-		{aborted, Reason} ->			{ error, Reason }
-	end.
 
 get_user_data( User_id )->
 	case mnesia:sync_transaction(fun () -> mnesia:read({user, User_id}) end) of
@@ -30,6 +25,32 @@ delete_user_data( User_id ) ->
 		{atomic, ok } -> 				ok;
 		{aborted, Reason} ->			{ error, Reason }
 	end.
+
+
+
+login_user( User_id , Login_function, Relogin_function) ->
+	
+	Function = fun() ->
+		case mnesia:read({user, User_id}) of
+			[] ->
+				mnesia:write(Login_function());
+
+			[Previous_user_data | _ ] ->
+				case Relogin_function( Previous_user_data ) of 
+
+					{save, User = #user{} } -> 	
+						mnesia:write(User);
+					_other ->
+						ok
+				end
+		end
+	end,
+
+	case mnesia:sync_transaction( Function ) of
+		{atomic, ok } -> 				ok;
+		{aborted, Reason} ->			{ error, Reason }
+	end.
+
 
 
 
@@ -60,10 +81,10 @@ create_tables() ->
 	mnesia:wait_for_tables([user], 60000),
 	lager:info("finished creating mnesia tables", []).
 
-add_mem_node(Master) ->
-	ok = mnesia:start(),
-	mnesia:change_config(extra_db_nodes, [Master]),
-	mnesia:change_table_copy_type(schema, node(), disc_copies),
-	mnesia:add_table_copy(user, node(), disc_copies),
-	mnesia:add_table_copy(broker_order, node(), disc_copies),
-	mnesia:wait_for_tables([user, broker_order], 60000).
+%add_mem_node(Master) ->
+%	ok = mnesia:start(),
+%	mnesia:change_config(extra_db_nodes, [Master]),
+%	mnesia:change_table_copy_type(schema, node(), disc_copies),
+%	mnesia:add_table_copy(user, node(), disc_copies),
+%	mnesia:add_table_copy(broker_order, node(), disc_copies),
+%	mnesia:wait_for_tables([user, broker_order], 60000).

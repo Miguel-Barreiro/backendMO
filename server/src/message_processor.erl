@@ -6,7 +6,7 @@
 -include("include/protocol_pb.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
--export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1, create_difficult_message/1]).
+-export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1, create_difficult_message/1,create_disconect_message/0]).
 
 -define(MESSAGE_LOGIN_CODE, 1).
 -define(MESSAGE_READY_CODE,7).
@@ -114,6 +114,7 @@ create_disconect_message() ->
 	Req = #request{ type = message_disconect, disconect_content = #message_disconect{} },
 	protocol_pb:encode_request(Req).
 
+
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 %%
 %%										MESSAGE PROCESSING
@@ -127,54 +128,39 @@ process_message( message_login_code,
 							_Message_encoded ) ->
 
 	case {Client_time, User_id} of
+
 		{ _ , undefined } ->
 			{reply_with_disconnect, create_disconect_message() };
+
 		{undefined, _ } -> 
 			{reply_with_disconnect, create_disconect_message() };
+
 		_other ->
-			case server_db:get_user_data( User_id ) of 
-				{ error, no_user } ->
-					%% @WARNING: THIS SHOULD BE DONE INSIDE A TRANSATION SO if 2 people try to login at the same time with the same id 2 user processes dont get spawn
-					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
-					User = #user{ 	user_id = User_id,
-									user_process_pid = Child_pid,
-									user_connection_pid = self(), 
-									state = in_queue },
 
-					ok = server_db:push_user_data(User),
+			User_creation_function = fun() -> 
+				{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
+				#user{ 	user_id = User_id, user_process_pid = Child_pid }
+			end,
+
+			Relogin_User_function = fun( #user{ user_process_pid = User_pid } ) ->
+				case is_process_alive( User_pid ) of
+					false ->
+						{save, User_creation_function() };
+					true ->
+						gen_server:cast( User_pid, { reconnecting , self() } ),
+						dont_save
+				end
+			end,
+
+			case server_db:login_user(User_id, User_creation_function, Relogin_User_function) of
+				ok ->
 					{no_reply};
-
-				{ ok, User_data = #user{  user_process_pid = User_pid } } when User_pid == undefined ->
-					{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
-
-					User = User_data#user{ 	user_process_pid = Child_pid,
-											user_connection_pid = self(), 
-											state = in_queue },
-
-					ok = server_db:push_user_data(User),
-
-					{no_reply};
-
-				{ ok, User_data = #user{ user_process_pid = User_pid } } ->
-					case is_process_alive( User_pid ) of
-						false->
-							{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
-							User = User_data#user{ 	user_process_pid = Child_pid,
-													user_connection_pid = self(), 
-													state = in_queue };
-						true->
-							gen_server:cast( User_pid, { reconnecting , User_id, self()} ),
-							User = User_data#user{  user_connection_pid = self(), 
-													state = in_queue }
-					end,
-					ok = server_db:push_user_data(User),
-					{no_reply};
-
 				{ error, Reason } ->
-					lager:error("Couldnt get user. ~p",[Reason]),
-					{no_reply}
+					lager:error( "login failed: ~p", [Reason] ),
+					{reply_with_disconnect, create_disconect_message() }
 			end
 	end;
+
 
 process_message( message_ready_code, User_process_pid, _Message_decoded, _Message_encoded ) 
 			when User_process_pid =/= no_user_process ->

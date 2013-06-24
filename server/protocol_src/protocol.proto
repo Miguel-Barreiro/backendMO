@@ -49,6 +49,20 @@ message MessageDifficultChange{
 	required int32 level = 1;
 };
 
+message MessageGetGameState{ optional int32 unused = 1; }
+
+
+message BlockPosition{
+	required int32 x = 1;
+	required int32 y = 2;
+	required int32 color = 3;
+}
+
+message MessageGameState{ 
+	repeated BlockPosition playerBlocks = 1;
+	repeated BlockPosition enemyBlocks = 2;
+}
+
 
 message Request {
 	
@@ -64,6 +78,8 @@ message Request {
 		MESSAGE_LOGIN_SUCESS = 9;
 		MESSAGE_DISCONECT = 10;
 		MESSAGE_DIFFICULT_CHANGE = 11;
+		MESSAGE_GET_GAME_STATE = 12;
+		MESSAGE_GAME_STATE = 13;
 	}
 
 	required request_type type = 1;
@@ -79,6 +95,8 @@ message Request {
 	optional MessageloginSuccess loginSucessContent = 10;
 	optional MessageDisconect disconectContent = 11;
 	optional MessageDifficultChange difficultChangeContent = 12;
+	optional MessageGetGameState getGameStateContent = 13;
+	optional MessageGameState gameStateContent = 14;
 
 };
 

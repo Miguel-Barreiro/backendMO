@@ -6,7 +6,6 @@
 -include("include/softstate.hrl").
 
 -type user_states() :: init | in_queue | playing_game.
--type connection_states() :: connected | disconnected.
 
 -record(user_process_state, {
 	session_start_time,
@@ -17,7 +16,6 @@
 	connection_monitor,
 	game_pid = undefined :: pid(),
 	game_monitor,
-	connection_state = connected ::connection_states(),
 	disconect_timer
 }).
 
@@ -36,22 +34,15 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 
 	lager:info("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
-	gen_server:cast( Connection_pid , {register_user_process,self()}),
+	gen_server:cast( Connection_pid , {register_user_process,self(), User_id }),
 	Connection_monitor = monitor(process, Connection_pid),
-
-	%cancels the timeout for disconect
-	case State#user_process_state.disconect_timer =/= undefined of
-		true -> erlang:cancel_timer(State#user_process_state.disconect_timer);
-		false -> ok
-	end,
 
 	{noreply, State#user_process_state{
 				client_start_time = Client_time,
 				connection_monitor = Connection_monitor,
 				user_id = User_id, 
 				connection_pid = Connection_pid,
-				disconect_timer = undefined,
-				connection_state = connected
+				disconect_timer = undefined
 			}
 	};
 
@@ -183,27 +174,35 @@ handle_cast( { register_game_process, Game_process_pid }, State = #user_process_
 
 
 
+handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ connection_pid = Previous_connection_pid, 
+																				connection_monitor = Previous_connection_monitor,
+																				disconect_timer = Disconect_timer,
+																				user_id = User_id } ) ->
 
+	lager:info("player '~p' reconnected" ,[self()]),
 
-handle_cast( { reconnecting , User_id, _Connection_pid }, State = #user_process_state{ user_id = Current_user_id } ) 
-				when Current_user_id =/= User_id ->
-	lager:info("player '~p' tried to connect to the wrong proccess" ,[User_id]),
-	{noreply, State};
+	%cancels the timeout for disconect
+	case Disconect_timer of 
+		undefined -> 
+			do_nothing;
+		_Other -> 
+			erlang:cancel_timer( Disconect_timer )
+	end,
+	
+	case Previous_connection_monitor of
+		undefined -> 	
+			do_nothing;
+		_other ->		
+			demonitor(Previous_connection_monitor),
+			gen_server:cast( Previous_connection_pid , {reply_with_disconnect, message_processor:create_disconect_message() } )
+	end,
 
-handle_cast( { reconnecting , User_id, _Connection_pid}, State = #user_process_state{ user_id = Current_user_id , connection_state = Connection_state } ) 
-				when Current_user_id == User_id, Connection_state == connected ->
-	lager:info("player '~p' tried to connect to a already connect user" ,[User_id]),
-	{noreply, State};
+	gen_server:cast( New_connection_pid , {register_user_process,self(), User_id}),
+	New_connection_monitor = monitor(process, New_connection_pid),
 
-handle_cast( { reconnecting , User_id, Connection_pid}, State = #user_process_state{ user_id = Current_user_id , connection_state = Connection_state } ) 
-				when Current_user_id == User_id, Connection_state == disconnected ->
-
-	lager:info("player '~p' reconnected" ,[User_id]),
-	gen_server:cast(self(), [ Connection_pid , User_id ]),
-
-	{noreply, State};
-
-
+	{noreply, State#user_process_state{ connection_monitor = New_connection_monitor,
+											connection_pid = New_connection_pid,
+												disconect_timer = undefined } };
 
 
 
@@ -218,9 +217,11 @@ handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_st
 				when Reference == Connection_monitor ->
 	lager:info("user connection went down", []),
 	demonitor(Connection_monitor),
-	%TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
-	%{noreply, State#user_process_state{connection_state = disconnected, disconect_timer = TimerRef}};
-	{stop, Reason, State};
+	TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
+	{noreply, State#user_process_state{ disconect_timer = TimerRef,
+											connection_monitor = undefined,  
+												connection_pid = undefined } };
+	%{stop, Reason, State};
 
 %%
 %	called when the game stops
@@ -246,9 +247,6 @@ handle_info(M,S) ->
 %%
 %		GETTERS
 %%
-
-handle_call( get_user_id, _From, State = #user_process_state{ user_id = User_id } ) ->
-	{reply,{ ok ,User_id},State};
 
 handle_call( get_game_pid, _From, State = #user_process_state{ game_pid = Game_pid } ) ->
 	{reply,{ ok , Game_pid},State};

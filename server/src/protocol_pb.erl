@@ -13,6 +13,9 @@
   encode_message_player_lost/1,decode_message_player_lost/1,
   encode_message_disconect/1,decode_message_disconect/1,
   encode_message_difficult_change/1,decode_message_difficult_change/1,
+  encode_message_get_game_state/1,decode_message_get_game_state/1,
+  encode_block_position/1,decode_block_position/1,
+  encode_message_game_state/1,decode_message_game_state/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -232,6 +235,68 @@ encode_message_difficult_change(R) when is_record(R,message_difficult_change) ->
     protocol_buffers:encode(1,int32,R#message_difficult_change.level)
   ].
 
+decode_message_get_game_state(B) ->
+  case decode_message_get_game_state_impl(B) of
+    undefined -> #message_get_game_state{};
+    Any -> Any
+  end.
+
+decode_message_get_game_state_impl(<<>>) -> undefined;
+decode_message_get_game_state_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_get_game_state{},
+     fun(1,Val,Rec) -> Rec#message_get_game_state{unused = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_get_game_state(undefined) -> undefined;
+encode_message_get_game_state(R) when is_record(R,message_get_game_state) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_get_game_state.unused)
+  ].
+
+decode_block_position(B) ->
+  case decode_block_position_impl(B) of
+    undefined -> #block_position{};
+    Any -> Any
+  end.
+
+decode_block_position_impl(<<>>) -> undefined;
+decode_block_position_impl(Binary) ->
+  protocol_buffers:decode(Binary,#block_position{},
+     fun(1,Val,Rec) -> Rec#block_position{x = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#block_position{y = protocol_buffers:cast(int32,Val)};
+        (3,Val,Rec) -> Rec#block_position{color = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_block_position(undefined) -> undefined;
+encode_block_position(R) when is_record(R,block_position) ->
+  [
+    protocol_buffers:encode(1,int32,R#block_position.x),
+    protocol_buffers:encode(2,int32,R#block_position.y),
+    protocol_buffers:encode(3,int32,R#block_position.color)
+  ].
+
+decode_message_game_state(B) ->
+  case decode_message_game_state_impl(B) of
+    undefined -> #message_game_state{};
+    Any -> Any
+  end.
+
+decode_message_game_state_impl(<<>>) -> undefined;
+decode_message_game_state_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_game_state{},
+     fun(1,{length_encoded,Bin},#message_game_state{player_blocks=F}=Rec) when is_list(F) -> Rec#message_game_state{player_blocks = Rec#message_game_state.player_blocks ++ [decode_block_position_impl(Bin)]}
+;
+        (2,{length_encoded,Bin},#message_game_state{enemy_blocks=F}=Rec) when is_list(F) -> Rec#message_game_state{enemy_blocks = Rec#message_game_state.enemy_blocks ++ [decode_block_position_impl(Bin)]}
+
+      end).
+
+encode_message_game_state(undefined) -> undefined;
+encode_message_game_state(R) when is_record(R,message_game_state) ->
+  [
+    [ protocol_buffers:encode(1,length_encoded,encode_block_position(X)) || X <- R#message_game_state.player_blocks],
+    [ protocol_buffers:encode(2,length_encoded,encode_block_position(X)) || X <- R#message_game_state.enemy_blocks]
+  ].
+
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -243,6 +308,8 @@ to_request__request_type(8) -> message_lost_game;
 to_request__request_type(9) -> message_login_sucess;
 to_request__request_type(10) -> message_disconect;
 to_request__request_type(11) -> message_difficult_change;
+to_request__request_type(12) -> message_get_game_state;
+to_request__request_type(13) -> message_game_state;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -256,6 +323,8 @@ from_request__request_type(message_lost_game) -> 8;
 from_request__request_type(message_login_sucess) -> 9;
 from_request__request_type(message_disconect) -> 10;
 from_request__request_type(message_difficult_change) -> 11;
+from_request__request_type(message_get_game_state) -> 12;
+from_request__request_type(message_game_state) -> 13;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -278,7 +347,9 @@ decode_request_impl(Binary) ->
         (9,{length_encoded,Bin},Rec) -> Rec#request{player_lost_content = decode_message_player_lost_impl(Bin)};
         (10,{length_encoded,Bin},Rec) -> Rec#request{login_sucess_content = decode_messagelogin_success_impl(Bin)};
         (11,{length_encoded,Bin},Rec) -> Rec#request{disconect_content = decode_message_disconect_impl(Bin)};
-        (12,{length_encoded,Bin},Rec) -> Rec#request{difficult_change_content = decode_message_difficult_change_impl(Bin)}
+        (12,{length_encoded,Bin},Rec) -> Rec#request{difficult_change_content = decode_message_difficult_change_impl(Bin)};
+        (13,{length_encoded,Bin},Rec) -> Rec#request{get_game_state_content = decode_message_get_game_state_impl(Bin)};
+        (14,{length_encoded,Bin},Rec) -> Rec#request{game_state_content = decode_message_game_state_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -295,6 +366,8 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(9,length_encoded,encode_message_player_lost(R#request.player_lost_content)),
     protocol_buffers:encode(10,length_encoded,encode_messagelogin_success(R#request.login_sucess_content)),
     protocol_buffers:encode(11,length_encoded,encode_message_disconect(R#request.disconect_content)),
-    protocol_buffers:encode(12,length_encoded,encode_message_difficult_change(R#request.difficult_change_content))
+    protocol_buffers:encode(12,length_encoded,encode_message_difficult_change(R#request.difficult_change_content)),
+    protocol_buffers:encode(13,length_encoded,encode_message_get_game_state(R#request.get_game_state_content)),
+    protocol_buffers:encode(14,length_encoded,encode_message_game_state(R#request.game_state_content))
   ].
 
