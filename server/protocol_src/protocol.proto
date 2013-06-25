@@ -1,3 +1,17 @@
+message BlockPosition{
+	required int32 position = 1;
+	required int32 color = 2;
+};
+
+message GameState{
+	required int32 currentRandom = 1;
+	required int32 currentPiecePosition = 2;
+	required int32 currentPieceState = 3;
+	required int32 currentPieceColor = 4;
+	repeated BlockPosition blocks = 5;
+};
+
+
 message MessageLogin{
 	required string userId = 1;
 	required int32 clientTime = 2;
@@ -30,11 +44,13 @@ message MessagePlacePiece{
 	required int32 x=1;
 	required int32 y=2;
 	required int32 state=3;
+	required GameState gameState = 4;
 };
 
 
 message MessagePlaceGarbage{
 	repeated int32 garbagePosition = 1;
+	required GameState gameState = 2;
 };
 
 message MessagePlayerReady{ 
@@ -42,26 +58,23 @@ message MessagePlayerReady{
 };
 
 message MessagePlayerLost{  optional int32 unused = 1; };
-
 message MessageDisconect{ optional int32 unused = 1; };
+message MessageGetGameState{ optional int32 unused = 1; };
+
 
 message MessageDifficultChange{ 
 	required int32 level = 1;
 };
 
-message MessageGetGameState{ optional int32 unused = 1; }
+message MessageGameState{
+	required GameState opponentState = 1;
+	required GameState playerState = 2;
+};
 
 
-message BlockPosition{
-	required int32 x = 1;
-	required int32 y = 2;
-	required int32 color = 3;
-}
-
-message MessageGameState{ 
-	repeated BlockPosition playerBlocks = 1;
-	repeated BlockPosition enemyBlocks = 2;
-}
+message MessageUserDisconected{
+	required string opponent = 1;
+};
 
 
 message Request {
@@ -80,6 +93,7 @@ message Request {
 		MESSAGE_DIFFICULT_CHANGE = 11;
 		MESSAGE_GET_GAME_STATE = 12;
 		MESSAGE_GAME_STATE = 13;
+		MESSAGE_USER_DISCONECTED = 14;
 	}
 
 	required request_type type = 1;
@@ -97,6 +111,7 @@ message Request {
 	optional MessageDifficultChange difficultChangeContent = 12;
 	optional MessageGetGameState getGameStateContent = 13;
 	optional MessageGameState gameStateContent = 14;
+	optional MessageUserDisconected userDisconectedContent = 15;
 
 };
 

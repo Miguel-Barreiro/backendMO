@@ -13,6 +13,8 @@
 
 -record(game_state, {
 	difficult_level = 0,
+	user1_game_state,
+	user2_game_state,
 	user1_pid :: pid(),
 	user2_pid :: pid(),
 	user1_monitor,
@@ -146,6 +148,54 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 			ok
 	end,
 	{noreply, State};
+
+
+
+
+
+handle_cast({ save_game_state, Game_state, User_pid } , State = #game_state{ user1_pid = User1_pid, user2_pid = User2_pid } ) ->
+	case User_pid of
+		User1_pid ->
+			{noreply, State#game_state{ user1_game_state = Game_state } };
+		User2_pid ->
+			{noreply, State#game_state{ user2_game_state = Game_state } };
+		_->
+			{noreply, State }
+	end;
+	
+
+
+handle_cast( {reconnecting, User_pid }, State = #game_state{ user1_pid = User1_pid,
+																user2_pid = User2_pid, 
+																	user1_game_state = Game_state1,
+																		user2_game_state = Game_state2 } ) ->
+	case User_pid of
+		User1_pid ->
+			Msg = message_processor:create_game_state_message(Game_state1, Game_state2);
+		User2_pid ->
+			Msg = message_processor:create_game_state_message(Game_state2, Game_state1)
+	end,
+
+	gen_server:cast(User_pid, {send_message, Msg }),
+
+	{noreply, State};
+
+
+handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ user1_pid = User1_pid, user2_pid = User2_pid }) ->
+	lager:info("user ~p disconected",[User_pid]),
+
+	Msg = message_processor:create_user_disconects_message(User_id),
+
+	case User_pid of
+		User1_pid ->
+			gen_server:cast(User2_pid, {send_message, Msg });
+		User2_pid ->
+			gen_server:cast(User1_pid, {send_message, Msg });
+		_->
+			ok
+	end,
+	{noreply, State};
+
 
 
 

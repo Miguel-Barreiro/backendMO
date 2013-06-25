@@ -8,18 +8,7 @@
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
 -export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1, create_difficult_message/1,create_disconect_message/0]).
 
--define(MESSAGE_LOGIN_CODE, 1).
--define(MESSAGE_READY_CODE,7).
--define(MESSAGE_LOST_CODE,8).
--define(MESSAGE_LOGIN_SUCESS,9).
--define(MESSAGE_GAME_END_CODE,5).
-
--define(MESSAGE_PLACE_PIECE_CODE,2).
--define(MESSAGE_GAME_START_CODE,6).
--define(MESSAGE_UPDATE_PIECE_CODE,3).
--define(MESSAGE_PLACE_GARBAGE_CODE,4).
-
--define(MESSAGE_DIFFICULT_CHANGE,11).
+-export([create_user_disconects_message/1, create_game_state_message/2]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -71,6 +60,7 @@ create_login_success( User_id ) ->
 					login_sucess_content = #messagelogin_success{ user_id = User_id }},
 	protocol_pb:encode_request(Req).
 
+
 create_start_message( { Opponnent_name , Start_date, Seed } ) ->
 	Req = #request{ type = message_game_start_code,
 					game_start_content = #message_game_start{  
@@ -80,6 +70,7 @@ create_start_message( { Opponnent_name , Start_date, Seed } ) ->
 						start_timestamp = Start_date
 					}},
 	protocol_pb:encode_request(Req).
+
 
 create_lost_message(_Lost_details) ->
 	Req = #request{ type = message_game_end_code,
@@ -111,7 +102,20 @@ create_difficult_message( Level ) ->
 
 
 create_disconect_message() ->
-	Req = #request{ type = message_disconect, disconect_content = #message_disconect{} },
+	Req = #request{ type = message_disconect, disconect_content = #message_disconect{ } },
+	protocol_pb:encode_request(Req).
+
+
+create_user_disconects_message( User_id ) ->
+	Req = #request{ type = message_user_disconected, user_disconected_content = #message_user_disconected{ opponent = User_id } },
+	protocol_pb:encode_request(Req).
+
+
+create_game_state_message( Player_game_state, Opponent_game_state ) ->
+	Req = #request{ type = message_game_state, 
+						user_disconected_content = #message_game_state{ opponent_state = Opponent_game_state, 
+																			player_state = Player_game_state } 
+					},
 	protocol_pb:encode_request(Req).
 
 
@@ -174,11 +178,29 @@ process_message( message_lost_game, User_process_pid, _Message_decoded, _Message
 	gen_server:cast( User_process_pid, { lost_game, no_details }),
 	{no_reply};
 
+process_message( message_place_piece_code, 
+					User_process_pid, 
+						#request{ place_piece_content = #message_place_piece{ game_state = Game_state } }, 
+							Message_encoded ) 
+			when User_process_pid =/= no_user_process ->
+
+	gen_server:cast( User_process_pid, { save_game_state , Game_state } ),
+	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+	{no_reply};
+
+process_message( place_garbage_content, 
+					User_process_pid, 
+						#request{ place_garbage_content = #message_place_garbage{ game_state = Game_state } }, 
+							Message_encoded ) 
+			when User_process_pid =/= no_user_process ->
+
+	gen_server:cast( User_process_pid, { save_game_state , Game_state } ),
+	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+	{no_reply};
+
+
 process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded )
-			when User_process_pid =/= no_user_process,
-					Client_message_code == message_update_piece_code orelse
-					Client_message_code == message_place_garbage_code orelse
-					Client_message_code == message_place_piece_code ->
+			when User_process_pid =/= no_user_process, Client_message_code == message_update_piece_code ->
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 

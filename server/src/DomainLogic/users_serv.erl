@@ -72,6 +72,13 @@ handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_p
 
 
 
+handle_cast( { save_game_state , Game_state } , State = #user_process_state{ game_pid = Game_pid } ) ->
+	gen_server:cast( Game_pid, { save_game_state, Game_state, self() } ),
+	{noreply, State};
+
+
+
+
 
 handle_cast( { send_lost_message, _Lost_details }, State = #user_process_state{ game_pid = Game_pid }) 
 				when Game_pid == undefined ->
@@ -177,7 +184,8 @@ handle_cast( { register_game_process, Game_process_pid }, State = #user_process_
 handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ connection_pid = Previous_connection_pid, 
 																				connection_monitor = Previous_connection_monitor,
 																				disconect_timer = Disconect_timer,
-																				user_id = User_id } ) ->
+																				user_id = User_id,
+																				game_pid = Game_process_pid } ) ->
 
 	lager:info("player '~p' reconnected" ,[self()]),
 
@@ -185,20 +193,27 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 	case Disconect_timer of 
 		undefined -> 
 			do_nothing;
-		_Other -> 
+		_ -> 
 			erlang:cancel_timer( Disconect_timer )
 	end,
 	
 	case Previous_connection_monitor of
-		undefined -> 	
+		undefined ->
 			do_nothing;
-		_other ->		
+		_ ->		
 			demonitor(Previous_connection_monitor),
 			gen_server:cast( Previous_connection_pid , {reply_with_disconnect, message_processor:create_disconect_message() } )
 	end,
-
-	gen_server:cast( New_connection_pid , {register_user_process,self(), User_id}),
+	
+	gen_server:cast( New_connection_pid , {send,self(), User_id}),
 	New_connection_monitor = monitor(process, New_connection_pid),
+
+	case Game_process_pid of
+		undefined ->
+			do_nothing;
+		_ ->
+			gen_server:cast( Game_process_pid , {reconnecting, self() } )
+	end,
 
 	{noreply, State#user_process_state{ connection_monitor = New_connection_monitor,
 											connection_pid = New_connection_pid,
@@ -213,11 +228,21 @@ handle_cast(accept, State ) ->
 %%
 %	called when the user connection stops
 %%
-handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{connection_monitor = Connection_monitor}) 
+handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_state{connection_monitor = Connection_monitor, 
+																						game_pid = Game_process_pid,
+																						user_id = User_id}) 
 				when Reference == Connection_monitor ->
 	lager:info("user connection went down", []),
 	demonitor(Connection_monitor),
 	TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
+
+	case Game_process_pid of 
+		undefined ->
+			do_nothing;
+		_alive ->
+			gen_server:cast(Game_process_pid, { user_disconected, self() , User_id })
+	end,
+
 	{noreply, State#user_process_state{ disconect_timer = TimerRef,
 											connection_monitor = undefined,  
 												connection_pid = undefined } };
