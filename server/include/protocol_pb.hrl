@@ -82,30 +82,6 @@
   garbage_position = [] :: [integer()],
   game_state :: #game_state{}}).
 
-%% @type message_player_ready_record() = #message_player_ready_record{
-%%   unused() = 'undefined' | integer()
-%% }.
--record(message_player_ready,{
-  unused :: 'undefined' | integer()}).
-
-%% @type message_player_lost_record() = #message_player_lost_record{
-%%   unused() = 'undefined' | integer()
-%% }.
--record(message_player_lost,{
-  unused :: 'undefined' | integer()}).
-
-%% @type message_disconect_record() = #message_disconect_record{
-%%   unused() = 'undefined' | integer()
-%% }.
--record(message_disconect,{
-  unused :: 'undefined' | integer()}).
-
-%% @type message_get_game_state_record() = #message_get_game_state_record{
-%%   unused() = 'undefined' | integer()
-%% }.
--record(message_get_game_state,{
-  unused :: 'undefined' | integer()}).
-
 %% @type message_difficult_change_record() = #message_difficult_change_record{
 %%   level() = integer()
 %% }.
@@ -137,12 +113,8 @@
 %%   place_garbage_content() = 'undefined' | #message_place_garbage{},
 %%   game_end_content() = 'undefined' | #message_game_end{},
 %%   game_start_content() = 'undefined' | #message_game_start{},
-%%   player_ready_content() = 'undefined' | #message_player_ready{},
-%%   player_lost_content() = 'undefined' | #message_player_lost{},
 %%   login_sucess_content() = 'undefined' | #messagelogin_success{},
-%%   disconect_content() = 'undefined' | #message_disconect{},
 %%   difficult_change_content() = 'undefined' | #message_difficult_change{},
-%%   get_game_state_content() = 'undefined' | #message_get_game_state{},
 %%   game_state_content() = 'undefined' | #message_game_state{},
 %%   user_disconected_content() = 'undefined' | #message_user_disconected{}
 %% }.
@@ -154,12 +126,8 @@
   place_garbage_content :: 'undefined' | #message_place_garbage{},
   game_end_content :: 'undefined' | #message_game_end{},
   game_start_content :: 'undefined' | #message_game_start{},
-  player_ready_content :: 'undefined' | #message_player_ready{},
-  player_lost_content :: 'undefined' | #message_player_lost{},
   login_sucess_content :: 'undefined' | #messagelogin_success{},
-  disconect_content :: 'undefined' | #message_disconect{},
   difficult_change_content :: 'undefined' | #message_difficult_change{},
-  get_game_state_content :: 'undefined' | #message_get_game_state{},
   game_state_content :: 'undefined' | #message_game_state{},
   user_disconected_content :: 'undefined' | #message_user_disconected{}}).
 

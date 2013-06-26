@@ -53,14 +53,6 @@ message MessagePlaceGarbage{
 	required GameState gameState = 2;
 };
 
-message MessagePlayerReady{ 
-	optional int32 unused = 1;
-};
-
-message MessagePlayerLost{  optional int32 unused = 1; };
-message MessageDisconect{ optional int32 unused = 1; };
-message MessageGetGameState{ optional int32 unused = 1; };
-
 
 message MessageDifficultChange{ 
 	required int32 level = 1;
@@ -104,14 +96,10 @@ message Request {
 	optional MessagePlaceGarbage placeGarbageContent = 5;
 	optional MessageGameEnd gameEndContent = 6;
 	optional MessageGameStart gameStartContent = 7;
-	optional MessagePlayerReady playerReadyContent = 8;
-	optional MessagePlayerLost playerLostContent = 9;
-	optional MessageloginSuccess loginSucessContent = 10;
-	optional MessageDisconect disconectContent = 11;
-	optional MessageDifficultChange difficultChangeContent = 12;
-	optional MessageGetGameState getGameStateContent = 13;
-	optional MessageGameState gameStateContent = 14;
-	optional MessageUserDisconected userDisconectedContent = 15;
+	optional MessageloginSuccess loginSucessContent = 8;
+	optional MessageDifficultChange difficultChangeContent = 9;
+	optional MessageGameState gameStateContent = 10;
+	optional MessageUserDisconected userDisconectedContent = 11;
 
 };
 

@@ -102,7 +102,7 @@ create_difficult_message( Level ) ->
 
 
 create_disconect_message() ->
-	Req = #request{ type = message_disconect, disconect_content = #message_disconect{ } },
+	Req = #request{ type = message_disconect },
 	protocol_pb:encode_request(Req).
 
 
@@ -111,10 +111,23 @@ create_user_disconects_message( User_id ) ->
 	protocol_pb:encode_request(Req).
 
 
+
+
+
 create_game_state_message( Player_game_state, Opponent_game_state ) ->
+	Player_message_state = 
+	case Player_game_state of 
+		undefined ->	 #game_state{};
+		_ -> 			Player_game_state
+	end,
+	Opponent_message_state = 
+	case Opponent_game_state of 
+		undefined ->	#game_state{};
+		_ ->			Opponent_game_state
+	end,
 	Req = #request{ type = message_game_state, 
-						user_disconected_content = #message_game_state{ opponent_state = Opponent_game_state, 
-																			player_state = Player_game_state } 
+						game_state_content = #message_game_state{ opponent_state = Player_message_state, 
+																			player_state = Opponent_message_state } 
 					},
 	protocol_pb:encode_request(Req).
 

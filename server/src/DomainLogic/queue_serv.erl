@@ -5,10 +5,11 @@
 
 -record(queue_state, {
 	queued_user_pid = undefined :: pid(),
+	queued_user_id,
 	user_monitor
 }).
 
--export([enter/1,leave/1]).
+-export([enter/2,leave/2]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).
 
 start_link() ->
@@ -18,37 +19,39 @@ init([]) ->
 	{ok, #queue_state{ }}.
 
 
-enter(User_pid) ->
-	gen_server:cast(whereis(?MODULE), {add_user, User_pid}).
+enter(User_pid, User_id) ->
+	gen_server:cast(whereis(?MODULE), {add_user, User_pid, User_id}).
 
-leave(User_pid) ->
-	gen_server:cast(whereis(?MODULE), {remove_user, User_pid}).
+leave(User_pid, User_id) ->
+	gen_server:cast(whereis(?MODULE), {remove_user, User_pid, User_id}).
 
 
 
-handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) 
+handle_cast( { add_user , User_pid, User_id }, State = #queue_state{ queued_user_pid = Queued_user }) 
 				when Queued_user == undefined ->
 
 	lager:info("queue_serv: added a new user (~p) to the queue",[User_pid]),
 	User_monitor = monitor(process, User_pid),
-	{noreply, State#queue_state{ queued_user_pid = User_pid, user_monitor = User_monitor }};
+	{noreply, State#queue_state{ queued_user_pid = User_pid, queued_user_id = User_id, user_monitor = User_monitor }};
 
 handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) 
 				when Queued_user =/= undefined, Queued_user == User_pid ->
 	{noreply, State};
 
-handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user, user_monitor = User_monitor })
+handle_cast( { add_user , User_pid, User_id }, State = #queue_state{ queued_user_pid = Queued_user, 
+																		queued_user_id = Queued_user_id, 
+																			user_monitor = User_monitor })
 				 when Queued_user =/= undefined, Queued_user =/= User_pid ->
 	
 	case User_monitor of
 		disconnected ->
 			lager:info("queue_serv: added a new user (~p) to the queue",[User_pid]),
 			New_user_monitor = monitor(process, User_pid),
-			{noreply, State#queue_state{ queued_user_pid = User_pid, user_monitor = New_user_monitor }};
+			{noreply, State#queue_state{ queued_user_pid = User_pid, queued_user_id = User_id, user_monitor = New_user_monitor }};
 		_ ->
 			lager:info("queue_serv: added a new user (~p) and started a game",[User_pid]),
 			demonitor(User_monitor),
-			game_sup:start_new_game_process( [ Queued_user, User_pid ] ),
+			game_sup:start_new_game_process( [ Queued_user, Queued_user_id, User_pid, User_id ] ),
 			{noreply, State#queue_state{ queued_user_pid = undefined , user_monitor = undefined}}
 	end;
 

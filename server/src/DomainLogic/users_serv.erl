@@ -116,10 +116,10 @@ handle_cast( {game_difficult_change , New_level }, State = #user_process_state{ 
 
 
 
-handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state }) 
+handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state, user_id = User_id }) 
 				when User_state == init, Game_pid == undefined ->
 	lager:info("users_serv: ready to place in queue"),
-	queue_serv:enter( self() ),
+	queue_serv:enter( self(), User_id ),
 	{noreply, State#user_process_state{ game_state = in_queue }};
 
 handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid,  game_state = User_state }) 
@@ -205,7 +205,7 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 			gen_server:cast( Previous_connection_pid , {reply_with_disconnect, message_processor:create_disconect_message() } )
 	end,
 	
-	gen_server:cast( New_connection_pid , {send,self(), User_id}),
+	gen_server:cast( New_connection_pid , {register_user_process,self(), User_id } ),
 	New_connection_monitor = monitor(process, New_connection_pid),
 
 	case Game_process_pid of
