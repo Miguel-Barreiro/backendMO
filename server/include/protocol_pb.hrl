@@ -90,11 +90,15 @@
 
 %% @type message_game_state_record() = #message_game_state_record{
 %%   opponent_state() = #game_state{},
-%%   player_state() = #game_state{}
+%%   player_state() = #game_state{},
+%%   starting_seed() = integer(),
+%%   opponent_name() = binary()
 %% }.
 -record(message_game_state,{
   opponent_state :: #game_state{},
-  player_state :: #game_state{}}).
+  player_state :: #game_state{},
+  starting_seed :: integer(),
+  opponent_name :: binary()}).
 
 %% @type message_user_disconected_record() = #message_user_disconected_record{
 %%   opponent() = binary()

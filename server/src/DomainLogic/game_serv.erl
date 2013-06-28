@@ -9,7 +9,7 @@
 
 -define( COUNTDOWN_TO_START_SECONDS , 5).
 
--type game_state_type() :: running | waiting_payers.
+-type game_state_type() :: running | waiting_players.
 
 
 -record( game_user, {
@@ -18,16 +18,18 @@
 	user_id = undefined,
 	monitor = undefined,
 	victories = 0,
-	is_ready = true
+	is_ready = true,
+	is_connected = true
 	}).
 
 -record(game_state, {
 	difficult_level = 0,
+	starting_seed,
 
 	user1 = #game_user{} :: #game_user{},
 	user2 = #game_user{} :: #game_user{},
 
-	state = waiting_payers :: game_state_type()
+	state = waiting_players :: game_state_type()
 }).
 
 
@@ -56,20 +58,20 @@ handle_cast([User_pid, User_id, User_pid2, User_id2], State = #game_state{ }) ->
 	{noreply, State#game_state{
 				user1 = #game_user{ pid = User_pid, monitor = Connection_monitor1, user_id = User_id },
 				user2 = #game_user{ pid = User_pid2, monitor = Connection_monitor2, user_id = User_id2 },
-				state = waiting_payers
+				state = waiting_players
 			}
 	};
 
 
 
 handle_cast( start_game, State = #game_state{ user1 = User1, user2 = User2, state = Game_State} ) 
-				when Game_State == waiting_payers,
+				when Game_State == waiting_players,
 						User1#game_user.is_ready == true,
 							User2#game_user.is_ready == true ->
 	
 	StartTime = swiss:unix_timestamp() + ?COUNTDOWN_TO_START_SECONDS, 	%the game will start in <COUNTDOWN_TO_START_SECONDS> seconds
 	{A1,A2,A3} = now(),
-	random:seed(A1, A2, A3), 
+	random:seed(A1, A2, A3),
 	Seed = random:uniform(2147483646),
 
 	gen_server:cast( User1#game_user.pid , {game_start , User2#game_user.user_id , StartTime, Seed } ),
@@ -77,15 +79,25 @@ handle_cast( start_game, State = #game_state{ user1 = User1, user2 = User2, stat
 
 	erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
 
-	{ noreply, State#game_state{ difficult_level = 0, 
-									state = running, 
-										user1 = User1#game_user{ is_ready = false}, 
-											user2 = User2#game_user{ is_ready = false} } };
+	{ noreply, State#game_state{ difficult_level = 0,
+									starting_seed = Seed, 
+										state = running, 
+											user1 = User1#game_user{ is_ready = false}, 
+												user2 = User2#game_user{ is_ready = false} } };
 
+
+
+%handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
+%				when User1#game_user.pid == User_pid, Game_State == running, User1#game_user.is_connected == false ->
+%	{ noreply, State };
+
+%handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
+%				when User2#game_user.pid == User_pid, Game_State == running, User2#game_user.is_connected == false ->
+%	{ noreply, State };
 
 
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
-				when User1#game_user.pid == User_pid, Game_State == waiting_payers ->
+				when User1#game_user.pid == User_pid, Game_State == waiting_players ->
 	case User2#game_user.is_ready of
 		true ->
 			lager:info("game ~p is going to start (rematch)",[self()]),
@@ -98,7 +110,7 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 
 
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user1 = User1, user2 = User2 } ) 
-				when User2#game_user.pid == User_pid, Game_State == waiting_payers ->
+				when User2#game_user.pid == User_pid, Game_State == waiting_players ->
 	case User1#game_user.is_ready of
 		true ->
 			lager:info("game ~p is going to start (rematch)",[self()]),
@@ -116,7 +128,7 @@ handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = Us
 	lager:info("game ~p is going to end",[self()]),
 	gen_server:cast(User2#game_user.pid, {send_won_message , no_reason}),
 	gen_server:cast(User1#game_user.pid, {send_lost_message , no_reason}),
-	{noreply, State#game_state{ state = waiting_payers, 
+	{noreply, State#game_state{ state = waiting_players, 
 									user1 = User1#game_user{ is_ready = false}, 
 										user2 = User2#game_user{ is_ready = false} } };
 
@@ -125,7 +137,7 @@ handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = Us
 	lager:info("game ~p is going to end",[self()]),
 	gen_server:cast(User2#game_user.pid, {send_lost_message , no_reason}),
 	gen_server:cast(User1#game_user.pid, {send_won_message , no_reason}),		
-	{noreply, State#game_state{ state = waiting_payers, 
+	{noreply, State#game_state{ state = waiting_players, 
 									user1 = User1#game_user{ is_ready = false}, 
 										user2 = User2#game_user{ is_ready = false} } };
 
@@ -161,15 +173,17 @@ handle_cast({ save_game_state, Game_state, User_pid } , State = #game_state{ use
 
 
 
-handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2 } ) 
+handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed }  ) 
 				when User_pid == User1#game_user.pid ->
-	Msg = message_processor:create_game_state_message( User1#game_user.game_state, User2#game_user.game_state),
+	Msg = message_processor:create_game_state_message( User1#game_user.game_state, User2#game_user.game_state, Seed, User2#game_user.user_id),
+	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast(User_pid, {send_message, Msg }),
 	{noreply, State};
 
-handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2 } ) 
+handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed } ) 
 				when User_pid == User2#game_user.pid ->
-	Msg = message_processor:create_game_state_message( User2#game_user.game_state, User1#game_user.game_state),
+	Msg = message_processor:create_game_state_message( User2#game_user.game_state, User1#game_user.game_state, Seed, User1#game_user.user_id),
+	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast(User_pid, {send_message, Msg }),
 	{noreply, State};
 
@@ -182,14 +196,14 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ user
 	lager:info("user ~p disconected",[User_pid]),
 	Msg = message_processor:create_user_disconects_message(User_id),
 	gen_server:cast(User2#game_user.pid, {send_message, Msg }),
-	{noreply, State};
+	{noreply, State#game_state{ user1 = User1#game_user{ is_connected = false } }};
 
 handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ user1 = User1 , user2 = User2 } )
 				when User_pid == User2#game_user.pid ->
 	lager:info("user ~p disconected",[User_pid]),
 	Msg = message_processor:create_user_disconects_message(User_id),
 	gen_server:cast(User1#game_user.pid, {send_message, Msg }),
-	{noreply, State};
+	{noreply, State#game_state{ user2 = User2#game_user{ is_connected = false } }};
 
 
 

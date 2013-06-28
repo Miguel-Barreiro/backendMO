@@ -8,7 +8,7 @@
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
 -export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1, create_difficult_message/1,create_disconect_message/0]).
 
--export([create_user_disconects_message/1, create_game_state_message/2]).
+-export([create_user_disconects_message/1, create_game_state_message/4]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -112,9 +112,7 @@ create_user_disconects_message( User_id ) ->
 
 
 
-
-
-create_game_state_message( Player_game_state, Opponent_game_state ) ->
+create_game_state_message( Player_game_state, Opponent_game_state, Starting_seed, Oppponent_user_id ) ->
 	Player_message_state = 
 	case Player_game_state of 
 		undefined ->	 #game_state{};
@@ -125,9 +123,11 @@ create_game_state_message( Player_game_state, Opponent_game_state ) ->
 		undefined ->	#game_state{};
 		_ ->			Opponent_game_state
 	end,
-	Req = #request{ type = message_game_state, 
-						game_state_content = #message_game_state{ opponent_state = Player_message_state, 
-																			player_state = Opponent_message_state } 
+	Req = #request{ type = message_game_state,
+						game_state_content = #message_game_state{ player_state = Player_message_state, 
+																	opponent_state = Opponent_message_state,
+																		starting_seed = Starting_seed,
+																			opponent_name = Oppponent_user_id } 
 					},
 	protocol_pb:encode_request(Req).
 
@@ -201,7 +201,7 @@ process_message( message_place_piece_code,
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 
-process_message( place_garbage_content, 
+process_message( message_place_garbage_code, 
 					User_process_pid, 
 						#request{ place_garbage_content = #message_place_garbage{ game_state = Game_state } }, 
 							Message_encoded ) 

@@ -61,6 +61,8 @@ message MessageDifficultChange{
 message MessageGameState{
 	required GameState opponentState = 1;
 	required GameState playerState = 2;
+	required int32 startingSeed = 3;
+	required string opponentName = 4;
 };
 
 

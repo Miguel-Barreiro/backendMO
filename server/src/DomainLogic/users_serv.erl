@@ -50,11 +50,13 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% GAME LOGIC DEPENDANT
 
-handle_cast( {send_message, _Msg }, State = #user_process_state{ connection_pid = Connection_pid }) 
+handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid }) 
 				when Connection_pid == undefined ->
+	lager:info("users_serv: tried sending msg ~p but connection is down",[Msg]),
 	{noreply, State};
 
 handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid })->
+	lager:info("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
 	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State};
 
@@ -191,18 +193,14 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 
 	%cancels the timeout for disconect
 	case Disconect_timer of 
-		undefined -> 
-			do_nothing;
-		_ -> 
-			erlang:cancel_timer( Disconect_timer )
+		undefined -> 	do_nothing;
+		_ -> 			erlang:cancel_timer( Disconect_timer )
 	end,
 	
 	case Previous_connection_monitor of
-		undefined ->
-			do_nothing;
-		_ ->		
-			demonitor(Previous_connection_monitor),
-			gen_server:cast( Previous_connection_pid , {reply_with_disconnect, message_processor:create_disconect_message() } )
+		undefined ->	do_nothing;
+		_ ->			demonitor(Previous_connection_monitor),
+						gen_server:cast( Previous_connection_pid , {reply_with_disconnect, message_processor:create_disconect_message() } )
 	end,
 	
 	gen_server:cast( New_connection_pid , {register_user_process,self(), User_id } ),

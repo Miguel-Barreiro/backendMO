@@ -240,14 +240,18 @@ decode_message_game_state_impl(<<>>) -> undefined;
 decode_message_game_state_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_game_state{},
      fun(1,{length_encoded,Bin},Rec) -> Rec#message_game_state{opponent_state = decode_game_state_impl(Bin)};
-        (2,{length_encoded,Bin},Rec) -> Rec#message_game_state{player_state = decode_game_state_impl(Bin)}
+        (2,{length_encoded,Bin},Rec) -> Rec#message_game_state{player_state = decode_game_state_impl(Bin)};
+        (3,Val,Rec) -> Rec#message_game_state{starting_seed = protocol_buffers:cast(int32,Val)};
+        (4,Val,Rec) -> Rec#message_game_state{opponent_name = protocol_buffers:cast(string,Val)}
       end).
 
 encode_message_game_state(undefined) -> undefined;
 encode_message_game_state(R) when is_record(R,message_game_state) ->
   [
     protocol_buffers:encode(1,length_encoded,encode_game_state(R#message_game_state.opponent_state)),
-    protocol_buffers:encode(2,length_encoded,encode_game_state(R#message_game_state.player_state))
+    protocol_buffers:encode(2,length_encoded,encode_game_state(R#message_game_state.player_state)),
+    protocol_buffers:encode(3,int32,R#message_game_state.starting_seed),
+    protocol_buffers:encode(4,length_encoded,R#message_game_state.opponent_name)
   ].
 
 decode_message_user_disconected(B) ->
