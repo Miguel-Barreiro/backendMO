@@ -27,6 +27,9 @@
 	difficult_level = 0,
 	starting_seed,
 
+	game_difficult_change_timer = undefined,
+	time_difficult_change_left = 0,
+
 	user1 = #game_user{} :: #game_user{},
 	user2 = #game_user{} :: #game_user{},
 
@@ -77,13 +80,20 @@ handle_cast( start_game, State = #game_state{ user1 = User1, user2 = User2, stat
 	gen_server:cast( User1#game_user.pid , {game_start , User2#game_user.user_id , StartTime, Seed } ),
 	gen_server:cast( User2#game_user.pid , {game_start , User1#game_user.user_id , StartTime, Seed } ),
 
-	erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
+	Game_difficult_timer = erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
 
 	{ noreply, State#game_state{ difficult_level = 0,
 									starting_seed = Seed, 
-										state = running, 
-											user1 = User1#game_user{ is_ready = false}, 
-												user2 = User2#game_user{ is_ready = false} } };
+										state = running,
+											game_difficult_change_timer = Game_difficult_timer,
+												user1 = User1#game_user{ is_ready = false}, 
+													user2 = User2#game_user{ is_ready = false} } };
+
+
+
+
+
+
 
 
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
@@ -96,6 +106,7 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 		false ->
 			nothing_happens
 	end,
+
 	{ noreply, State#game_state{ user1 = User1#game_user{is_ready = true} } };
 
 
@@ -114,23 +125,40 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 
 
 
-handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = User1, user2 = User2 } ) 
+
+
+
+
+
+
+handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ game_difficult_change_timer = Game_difficult_timer, user1 = User1, user2 = User2 } ) 
 				when Lost_user_pid == User1#game_user.pid ->
 	lager:info("game ~p is going to end",[self()]),
 	gen_server:cast(User2#game_user.pid, {send_won_message , no_reason}),
 	gen_server:cast(User1#game_user.pid, {send_lost_message , no_reason}),
-	{noreply, State#game_state{ state = waiting_players, 
-									user1 = User1#game_user{ is_ready = false}, 
-										user2 = User2#game_user{ is_ready = false} } };
 
-handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = User1, user2 = User2 } ) 
+	erlang:cancel_timer(Game_difficult_timer),
+
+	{noreply, State#game_state{ state = waiting_players,
+									game_difficult_change_timer = undefined,
+										user1 = User1#game_user{ is_ready = false }, 
+											user2 = User2#game_user{ is_ready = false } } };
+
+handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ game_difficult_change_timer = Game_difficult_timer, user1 = User1, user2 = User2 } ) 
 				when Lost_user_pid == User2#game_user.pid ->
 	lager:info("game ~p is going to end",[self()]),
 	gen_server:cast(User2#game_user.pid, {send_lost_message , no_reason}),
-	gen_server:cast(User1#game_user.pid, {send_won_message , no_reason}),		
+	gen_server:cast(User1#game_user.pid, {send_won_message , no_reason}),
+
+	erlang:cancel_timer(Game_difficult_timer),
+
 	{noreply, State#game_state{ state = waiting_players, 
-									user1 = User1#game_user{ is_ready = false}, 
-										user2 = User2#game_user{ is_ready = false} } };
+									game_difficult_change_timer = undefined,
+										user1 = User1#game_user{ is_ready = false }, 
+											user2 = User2#game_user{ is_ready = false } } };
+
+
+
 
 
 
@@ -181,7 +209,10 @@ handle_cast({ save_game_state, Game_state, User_pid } , State = #game_state{ use
 
 
 
-handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed }  ) 
+
+
+
+handle_cast( {reconnecting, User_pid }, State = #game_state{ time_difficult_change_left = Time_left, user1 = User1 , user2 = User2, starting_seed = Seed }  ) 
 				when User_pid == User1#game_user.pid ->
 	Msg = message_processor:create_game_state_message( User1#game_user.game_state, 
 															User2#game_user.game_state, 
@@ -195,9 +226,11 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 	Reconect_msg = message_processor:create_user_reconects_message(User2#game_user.user_id),
 	gen_server:cast(User2#game_user.pid, {send_message, Reconect_msg }),
 
-	{noreply, State};
+	Game_difficult_timer = erlang:send_after(Time_left, self(), difficult_change),
 
-handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed } ) 
+	{noreply,  State#game_state{ game_difficult_change_timer = Game_difficult_timer } };
+
+handle_cast( {reconnecting, User_pid }, State = #game_state{ time_difficult_change_left = Time_left, user1 = User1 , user2 = User2, starting_seed = Seed } ) 
 				when User_pid == User2#game_user.pid ->
 	Msg = message_processor:create_game_state_message( User2#game_user.game_state, 
 															User1#game_user.game_state, 
@@ -211,25 +244,54 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 	Reconect_msg = message_processor:create_user_reconects_message(User1#game_user.user_id),
 	gen_server:cast(User1#game_user.pid, {send_message, Reconect_msg }),
 
-	{noreply, State};
+	Game_difficult_timer = erlang:send_after(Time_left, self(), difficult_change),
+
+	{noreply, State#game_state{ game_difficult_change_timer = Game_difficult_timer } };
 
 
 
 
 
-handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ user1 = User1 , user2 = User2 } )
+
+
+
+
+
+
+handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game_difficult_change_timer = Game_difficult_timer, 
+																				user1 = User1 , 
+																					user2 = User2 } )
 				when User_pid == User1#game_user.pid ->
 	lager:info("user ~p disconected",[User_pid]),
 	Msg = message_processor:create_user_disconects_message(User_id),
 	gen_server:cast(User2#game_user.pid, {send_message, Msg }),
-	{noreply, State#game_state{ user1 = User1#game_user{ is_connected = false } }};
 
-handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ user1 = User1 , user2 = User2 } )
+	case Game_difficult_timer of
+		undefined ->
+			{noreply, State#game_state{ game_difficult_change_timer = undefined, user1 = User1#game_user{ is_connected = false } }};
+		_ ->
+			Time_left = erlang:cancel_timer(Game_difficult_timer),
+			{noreply, State#game_state{ time_difficult_change_left = Time_left, game_difficult_change_timer = undefined, user1 = User1#game_user{ is_connected = false } }}
+	end;
+
+
+handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game_difficult_change_timer = Game_difficult_timer,
+																				user1 = User1 , 
+																					user2 = User2 } )
 				when User_pid == User2#game_user.pid ->
 	lager:info("user ~p disconected",[User_pid]),
 	Msg = message_processor:create_user_disconects_message(User_id),
 	gen_server:cast(User1#game_user.pid, {send_message, Msg }),
-	{noreply, State#game_state{ user2 = User2#game_user{ is_connected = false } }};
+	
+	case Game_difficult_timer of
+		undefined ->
+			{noreply, State#game_state{ game_difficult_change_timer = undefined, user2 = User2#game_user{ is_connected = false } }};
+		_ ->
+			Time_left = erlang:cancel_timer(Game_difficult_timer),
+			{noreply, State#game_state{ time_difficult_change_left = Time_left, game_difficult_change_timer = undefined, user2 = User2#game_user{ is_connected = false } }}
+	end;
+
+
 
 
 
@@ -250,10 +312,12 @@ handle_info( difficult_change , State = #game_state{ state = Game_State } )
 			when Game_State =/= running ->
 	{ noreply, State#game_state{ } };
 
-
-
-handle_info( difficult_change , State = #game_state{ state = Game_State, difficult_level = Level, user1 = User1 , user2 = User2 } ) 
-			when Game_State == running ->
+handle_info( difficult_change , State = #game_state{ state = Game_State,
+														difficult_level = Level, 
+															user1 = User1 , 
+																user2 = User2, 
+																	game_difficult_change_timer = Game_difficult_timer } ) 
+			when Game_State == running, Game_difficult_timer =/= undefined ->
 
 	New_level = Level + 1,
 
@@ -261,8 +325,10 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, difficu
 	gen_server:cast( User2#game_user.pid , {game_difficult_change , New_level } ),
 
 	lager:info("game_serv: GAME DIFFICULT CHANGED TO ~p",[New_level]),
-	erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
-	{ noreply, State#game_state{ difficult_level = New_level } };
+
+	New_game_difficult_timer = erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
+
+	{ noreply, State#game_state{ difficult_level = New_level, game_difficult_change_timer = New_game_difficult_timer } };
 
 
 
