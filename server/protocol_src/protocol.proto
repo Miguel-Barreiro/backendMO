@@ -75,6 +75,10 @@ message MessageUserDisconected{
 	required string opponent = 1;
 };
 
+message MessageUserReconected{
+	required string opponent = 1;
+};
+
 
 message Request {
 	
@@ -93,6 +97,7 @@ message Request {
 		MESSAGE_GET_GAME_STATE = 12;
 		MESSAGE_GAME_STATE = 13;
 		MESSAGE_USER_DISCONECTED = 14;
+		MESSAGE_USER_RECONECTED = 15;
 	}
 
 	required request_type type = 1;
@@ -107,7 +112,7 @@ message Request {
 	optional MessageDifficultChange difficultChangeContent = 9;
 	optional MessageGameState gameStateContent = 10;
 	optional MessageUserDisconected userDisconectedContent = 11;
-
+	optional MessageUserReconected userReconectedContent = 12;
 };
 
 

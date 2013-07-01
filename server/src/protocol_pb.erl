@@ -15,6 +15,7 @@
   encode_message_difficult_change/1,decode_message_difficult_change/1,
   encode_message_game_state/1,decode_message_game_state/1,
   encode_message_user_disconected/1,decode_message_user_disconected/1,
+  encode_message_user_reconected/1,decode_message_user_reconected/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -292,6 +293,24 @@ encode_message_user_disconected(R) when is_record(R,message_user_disconected) ->
     protocol_buffers:encode(1,length_encoded,R#message_user_disconected.opponent)
   ].
 
+decode_message_user_reconected(B) ->
+  case decode_message_user_reconected_impl(B) of
+    undefined -> #message_user_reconected{};
+    Any -> Any
+  end.
+
+decode_message_user_reconected_impl(<<>>) -> undefined;
+decode_message_user_reconected_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_user_reconected{},
+     fun(1,Val,Rec) -> Rec#message_user_reconected{opponent = protocol_buffers:cast(string,Val)}
+      end).
+
+encode_message_user_reconected(undefined) -> undefined;
+encode_message_user_reconected(R) when is_record(R,message_user_reconected) ->
+  [
+    protocol_buffers:encode(1,length_encoded,R#message_user_reconected.opponent)
+  ].
+
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -306,6 +325,7 @@ to_request__request_type(11) -> message_difficult_change;
 to_request__request_type(12) -> message_get_game_state;
 to_request__request_type(13) -> message_game_state;
 to_request__request_type(14) -> message_user_disconected;
+to_request__request_type(15) -> message_user_reconected;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -322,6 +342,7 @@ from_request__request_type(message_difficult_change) -> 11;
 from_request__request_type(message_get_game_state) -> 12;
 from_request__request_type(message_game_state) -> 13;
 from_request__request_type(message_user_disconected) -> 14;
+from_request__request_type(message_user_reconected) -> 15;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -343,7 +364,8 @@ decode_request_impl(Binary) ->
         (8,{length_encoded,Bin},Rec) -> Rec#request{login_sucess_content = decode_messagelogin_success_impl(Bin)};
         (9,{length_encoded,Bin},Rec) -> Rec#request{difficult_change_content = decode_message_difficult_change_impl(Bin)};
         (10,{length_encoded,Bin},Rec) -> Rec#request{game_state_content = decode_message_game_state_impl(Bin)};
-        (11,{length_encoded,Bin},Rec) -> Rec#request{user_disconected_content = decode_message_user_disconected_impl(Bin)}
+        (11,{length_encoded,Bin},Rec) -> Rec#request{user_disconected_content = decode_message_user_disconected_impl(Bin)};
+        (12,{length_encoded,Bin},Rec) -> Rec#request{user_reconected_content = decode_message_user_reconected_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -359,6 +381,7 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(8,length_encoded,encode_messagelogin_success(R#request.login_sucess_content)),
     protocol_buffers:encode(9,length_encoded,encode_message_difficult_change(R#request.difficult_change_content)),
     protocol_buffers:encode(10,length_encoded,encode_message_game_state(R#request.game_state_content)),
-    protocol_buffers:encode(11,length_encoded,encode_message_user_disconected(R#request.user_disconected_content))
+    protocol_buffers:encode(11,length_encoded,encode_message_user_disconected(R#request.user_disconected_content)),
+    protocol_buffers:encode(12,length_encoded,encode_message_user_reconected(R#request.user_reconected_content))
   ].
 

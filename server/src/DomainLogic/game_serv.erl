@@ -191,6 +191,10 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 																			User2#game_user.garbage_list),
 	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast(User_pid, {send_message, Msg }),
+
+	Reconect_msg = message_processor:create_user_reconects_message(User2#game_user.user_id),
+	gen_server:cast(User2#game_user.pid, {send_message, Reconect_msg }),
+
 	{noreply, State};
 
 handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed } ) 
@@ -203,6 +207,10 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 																			User1#game_user.garbage_list),
 	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast(User_pid, {send_message, Msg }),
+
+	Reconect_msg = message_processor:create_user_reconects_message(User1#game_user.user_id),
+	gen_server:cast(User1#game_user.pid, {send_message, Reconect_msg }),
+
 	{noreply, State};
 
 
