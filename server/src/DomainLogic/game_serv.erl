@@ -1,12 +1,12 @@
 -module(game_serv).
 -behaviour(gen_server).
 
--define(CONNECTION_TIMEOUT, 40000).
-
--define(DIFFICULT_CHANGE_SECONDS, 30).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/4]).
 
 -include("include/softstate.hrl").
 
+-define(CONNECTION_TIMEOUT, 40000).
+-define(DIFFICULT_CHANGE_SECONDS, 30).
 -define( COUNTDOWN_TO_START_SECONDS , 5).
 
 -type game_state_type() :: running | waiting_players.
@@ -19,8 +19,9 @@
 	monitor = undefined,
 	victories = 0,
 	is_ready = true,
-	is_connected = true
-	}).
+	is_connected = true,
+	garbage_list = []
+}).
 
 -record(game_state, {
 	difficult_level = 0,
@@ -33,7 +34,6 @@
 }).
 
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/4]).
 
 start_link( User_pid, User_id, User_pid2, User_id2  ) ->
     gen_server:start_link(?MODULE, [ User_pid, User_id, User_pid2, User_id2 ], []).
@@ -86,18 +86,9 @@ handle_cast( start_game, State = #game_state{ user1 = User1, user2 = User2, stat
 												user2 = User2#game_user{ is_ready = false} } };
 
 
-
-%handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
-%				when User1#game_user.pid == User_pid, Game_State == running, User1#game_user.is_connected == false ->
-%	{ noreply, State };
-
-%handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
-%				when User2#game_user.pid == User_pid, Game_State == running, User2#game_user.is_connected == false ->
-%	{ noreply, State };
-
-
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
-				when User1#game_user.pid == User_pid, Game_State == waiting_players ->
+				when User1#game_user.pid == User_pid, 
+						Game_State == waiting_players ->
 	case User2#game_user.is_ready of
 		true ->
 			lager:info("game ~p is going to start (rematch)",[self()]),
@@ -160,13 +151,30 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 
 
 
+handle_cast({ add_garbage, Garbage_list_message, User_pid }, State = #game_state{ user1 = User1 } )
+				when User_pid == User1#game_user.pid ->
+	lager:info("user1 garbages till now are ~p",[[Garbage_list_message | User1#game_user.garbage_list]]),
+	{noreply, State#game_state{ user1 = User1#game_user{ garbage_list = [Garbage_list_message | User1#game_user.garbage_list] } } };
+
+handle_cast({ add_garbage, Garbage_list_message, User_pid } , State = #game_state{ user2 = User2 } ) 
+				when User_pid == User2#game_user.pid ->
+	lager:info("user2 garbages till now are ~p",[[Garbage_list_message | User2#game_user.garbage_list]]),
+	{noreply, State#game_state{ user2 = User2#game_user{ garbage_list = [Garbage_list_message | User2#game_user.garbage_list] } } };
+
+
+
+
+
+
 handle_cast({ save_game_state, Game_state, User_pid } , State = #game_state{ user1 = User1 } ) 
 				when User_pid == User1#game_user.pid ->
-	{noreply, State#game_state{ user1 = User1#game_user{ game_state = Game_state } } };
+	lager:info("user1 save garbage, and reset garbage list"),
+	{noreply, State#game_state{ user1 = User1#game_user{ game_state = Game_state, garbage_list = [] } } };
 
 handle_cast({ save_game_state, Game_state, User_pid } , State = #game_state{ user2 = User2 } ) 
 				when User_pid == User2#game_user.pid ->
-	{noreply, State#game_state{ user2 = User2#game_user{ game_state = Game_state } } };
+	lager:info("user2 save garbage, and reset garbage list"),
+	{noreply, State#game_state{ user2 = User2#game_user{ game_state = Game_state, garbage_list = [] } } };
 
 
 
@@ -175,14 +183,24 @@ handle_cast({ save_game_state, Game_state, User_pid } , State = #game_state{ use
 
 handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed }  ) 
 				when User_pid == User1#game_user.pid ->
-	Msg = message_processor:create_game_state_message( User1#game_user.game_state, User2#game_user.game_state, Seed, User2#game_user.user_id),
+	Msg = message_processor:create_game_state_message( User1#game_user.game_state, 
+															User2#game_user.game_state, 
+																Seed, 
+																	User2#game_user.user_id, 
+																		User1#game_user.garbage_list, 
+																			User2#game_user.garbage_list),
 	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast(User_pid, {send_message, Msg }),
 	{noreply, State};
 
 handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed } ) 
 				when User_pid == User2#game_user.pid ->
-	Msg = message_processor:create_game_state_message( User2#game_user.game_state, User1#game_user.game_state, Seed, User1#game_user.user_id),
+	Msg = message_processor:create_game_state_message( User2#game_user.game_state, 
+															User1#game_user.game_state, 
+																Seed, 
+																	User1#game_user.user_id, 
+																		User2#game_user.garbage_list, 
+																			User1#game_user.garbage_list),
 	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast(User_pid, {send_message, Msg }),
 	{noreply, State};

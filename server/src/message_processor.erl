@@ -8,7 +8,7 @@
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
 -export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1, create_difficult_message/1,create_disconect_message/0]).
 
--export([create_user_disconects_message/1, create_game_state_message/4]).
+-export([create_user_disconects_message/1, create_game_state_message/6]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -112,10 +112,10 @@ create_user_disconects_message( User_id ) ->
 
 
 
-create_game_state_message( Player_game_state, Opponent_game_state, Starting_seed, Oppponent_user_id ) ->
+create_game_state_message( Player_game_state, Opponent_game_state, Starting_seed, Oppponent_user_id, Player_garbage_messages_list, Opponent_garbage_messages_list ) ->
 	Player_message_state = 
 	case Player_game_state of 
-		undefined ->	 #game_state{};
+		undefined ->	#game_state{};
 		_ -> 			Player_game_state
 	end,
 	Opponent_message_state = 
@@ -123,9 +123,13 @@ create_game_state_message( Player_game_state, Opponent_game_state, Starting_seed
 		undefined ->	#game_state{};
 		_ ->			Opponent_game_state
 	end,
+
+	lager:info("RECONECT: opponent_garbage_list ~p",[Opponent_garbage_messages_list]),
+	lager:info("RECONECT: Player_garbage_messages_list ~p",[Player_garbage_messages_list]),
+
 	Req = #request{ type = message_game_state,
-						game_state_content = #message_game_state{ player_state = Player_message_state, 
-																	opponent_state = Opponent_message_state,
+						game_state_content = #message_game_state{ player_state = Player_message_state#game_state{ garbage_message_list = Player_garbage_messages_list }, 
+																	opponent_state = Opponent_message_state#game_state{ garbage_message_list = Opponent_garbage_messages_list },
 																		starting_seed = Starting_seed,
 																			opponent_name = Oppponent_user_id } 
 					},
@@ -203,11 +207,11 @@ process_message( message_place_piece_code,
 
 process_message( message_place_garbage_code, 
 					User_process_pid, 
-						#request{ place_garbage_content = #message_place_garbage{ game_state = Game_state } }, 
+						#request{ place_garbage_content = #message_place_garbage{ garbage = Garbage_message } }, 
 							Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 
-	gen_server:cast( User_process_pid, { save_game_state , Game_state } ),
+	gen_server:cast( User_process_pid, { add_garbage , Garbage_message } ),
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 

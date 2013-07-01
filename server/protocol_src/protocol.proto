@@ -3,12 +3,17 @@ message BlockPosition{
 	required int32 color = 2;
 };
 
+message MessageGarbageList{
+	repeated int32 garbagePosition = 1;	
+};
+
 message GameState{
 	required int32 currentRandom = 1;
 	required int32 currentPiecePosition = 2;
 	required int32 currentPieceState = 3;
 	required int32 currentPieceColor = 4;
 	repeated BlockPosition blocks = 5;
+	repeated MessageGarbageList garbage_message_list = 6;
 };
 
 
@@ -48,9 +53,9 @@ message MessagePlacePiece{
 };
 
 
+
 message MessagePlaceGarbage{
-	repeated int32 garbagePosition = 1;
-	required GameState gameState = 2;
+	required MessageGarbageList garbage = 1;
 };
 
 

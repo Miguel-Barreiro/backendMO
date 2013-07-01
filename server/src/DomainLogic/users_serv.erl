@@ -1,7 +1,7 @@
 -module(users_serv).
 -behaviour(gen_server).
 
--define(CONNECTION_TIMEOUT, 40000).
+-define(CONNECTION_TIMEOUT, 60000).
 
 -include("include/softstate.hrl").
 
@@ -72,6 +72,12 @@ handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_p
 	{noreply, State};
 
 
+
+
+
+handle_cast( { add_garbage , Garbage_list_message } , State = #user_process_state{ game_pid = Game_pid } ) ->
+	gen_server:cast( Game_pid, { add_garbage, Garbage_list_message, self() } ),
+	{noreply, State};
 
 
 handle_cast( { save_game_state , Game_state } , State = #user_process_state{ game_pid = Game_pid } ) ->

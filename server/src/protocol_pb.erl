@@ -3,6 +3,7 @@
 
 -export([
   encode_block_position/1,decode_block_position/1,
+  encode_message_garbage_list/1,decode_message_garbage_list/1,
   encode_game_state/1,decode_game_state/1,
   encode_message_login/1,decode_message_login/1,
   encode_messagelogin_success/1,decode_messagelogin_success/1,
@@ -37,6 +38,26 @@ encode_block_position(R) when is_record(R,block_position) ->
     protocol_buffers:encode(2,int32,R#block_position.color)
   ].
 
+decode_message_garbage_list(B) ->
+  case decode_message_garbage_list_impl(B) of
+    undefined -> #message_garbage_list{};
+    Any -> Any
+  end.
+
+decode_message_garbage_list_impl(<<>>) -> undefined;
+decode_message_garbage_list_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_garbage_list{},
+     fun        (1,{length_encoded,_}=Val,#message_garbage_list{garbage_position=F}=Rec) when is_list(F) -> Rec#message_garbage_list{garbage_position = Rec#message_garbage_list.garbage_position ++ protocol_buffers:cast(int32,Val)};
+        (1,Val,#message_garbage_list{garbage_position=F}=Rec) when is_list(F) -> Rec#message_garbage_list{garbage_position = Rec#message_garbage_list.garbage_position ++ [protocol_buffers:cast(int32,Val)]}
+
+      end).
+
+encode_message_garbage_list(undefined) -> undefined;
+encode_message_garbage_list(R) when is_record(R,message_garbage_list) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_garbage_list.garbage_position)
+  ].
+
 decode_game_state(B) ->
   case decode_game_state_impl(B) of
     undefined -> #game_state{};
@@ -51,6 +72,8 @@ decode_game_state_impl(Binary) ->
         (3,Val,Rec) -> Rec#game_state{current_piece_state = protocol_buffers:cast(int32,Val)};
         (4,Val,Rec) -> Rec#game_state{current_piece_color = protocol_buffers:cast(int32,Val)};
         (5,{length_encoded,Bin},#game_state{blocks=F}=Rec) when is_list(F) -> Rec#game_state{blocks = Rec#game_state.blocks ++ [decode_block_position_impl(Bin)]}
+;
+        (6,{length_encoded,Bin},#game_state{garbage_message_list=F}=Rec) when is_list(F) -> Rec#game_state{garbage_message_list = Rec#game_state.garbage_message_list ++ [decode_message_garbage_list_impl(Bin)]}
 
       end).
 
@@ -61,7 +84,8 @@ encode_game_state(R) when is_record(R,game_state) ->
     protocol_buffers:encode(2,int32,R#game_state.current_piece_position),
     protocol_buffers:encode(3,int32,R#game_state.current_piece_state),
     protocol_buffers:encode(4,int32,R#game_state.current_piece_color),
-    [ protocol_buffers:encode(5,length_encoded,encode_block_position(X)) || X <- R#game_state.blocks]
+    [ protocol_buffers:encode(5,length_encoded,encode_block_position(X)) || X <- R#game_state.blocks],
+    [ protocol_buffers:encode(6,length_encoded,encode_message_garbage_list(X)) || X <- R#game_state.garbage_message_list]
   ].
 
 decode_message_login(B) ->
@@ -199,17 +223,13 @@ decode_message_place_garbage(B) ->
 decode_message_place_garbage_impl(<<>>) -> undefined;
 decode_message_place_garbage_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_place_garbage{},
-     fun        (1,{length_encoded,_}=Val,#message_place_garbage{garbage_position=F}=Rec) when is_list(F) -> Rec#message_place_garbage{garbage_position = Rec#message_place_garbage.garbage_position ++ protocol_buffers:cast(int32,Val)};
-        (1,Val,#message_place_garbage{garbage_position=F}=Rec) when is_list(F) -> Rec#message_place_garbage{garbage_position = Rec#message_place_garbage.garbage_position ++ [protocol_buffers:cast(int32,Val)]}
-;
-        (2,{length_encoded,Bin},Rec) -> Rec#message_place_garbage{game_state = decode_game_state_impl(Bin)}
+     fun(1,{length_encoded,Bin},Rec) -> Rec#message_place_garbage{garbage = decode_message_garbage_list_impl(Bin)}
       end).
 
 encode_message_place_garbage(undefined) -> undefined;
 encode_message_place_garbage(R) when is_record(R,message_place_garbage) ->
   [
-    protocol_buffers:encode(1,int32,R#message_place_garbage.garbage_position),
-    protocol_buffers:encode(2,length_encoded,encode_game_state(R#message_place_garbage.game_state))
+    protocol_buffers:encode(1,length_encoded,encode_message_garbage_list(R#message_place_garbage.garbage))
   ].
 
 decode_message_difficult_change(B) ->
