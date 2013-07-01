@@ -112,14 +112,14 @@
 -record(message_user_disconected,{
   opponent :: binary()}).
 
-%% @type message_user_reconected_record() = #message_user_reconected_record{
+%% @type message_restart_game_record() = #message_restart_game_record{
 %%   opponent() = binary()
 %% }.
--record(message_user_reconected,{
+-record(message_restart_game,{
   opponent :: binary()}).
 
-%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_user_reconected.
--type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_user_reconected.
+%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_game_restart.
+-type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_game_restart.
 
 %% @type request_record() = #request_record{
 %%   type() = request__request_type(),
@@ -133,7 +133,7 @@
 %%   difficult_change_content() = 'undefined' | #message_difficult_change{},
 %%   game_state_content() = 'undefined' | #message_game_state{},
 %%   user_disconected_content() = 'undefined' | #message_user_disconected{},
-%%   user_reconected_content() = 'undefined' | #message_user_reconected{}
+%%   restart_game_content() = 'undefined' | #message_restart_game{}
 %% }.
 -record(request,{
   type :: request__request_type(),
@@ -147,5 +147,5 @@
   difficult_change_content :: 'undefined' | #message_difficult_change{},
   game_state_content :: 'undefined' | #message_game_state{},
   user_disconected_content :: 'undefined' | #message_user_disconected{},
-  user_reconected_content :: 'undefined' | #message_user_reconected{}}).
+  restart_game_content :: 'undefined' | #message_restart_game{}}).
 

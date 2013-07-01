@@ -8,7 +8,7 @@
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
 -export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1, create_difficult_message/1,create_disconect_message/0]).
 
--export([create_user_disconects_message/1, create_game_state_message/6, create_user_reconects_message/1]).
+-export([create_user_disconects_message/1, create_game_state_message/6, create_game_restarts_message/1]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -106,8 +106,8 @@ create_disconect_message() ->
 	protocol_pb:encode_request(Req).
 
 
-create_user_reconects_message( User_id ) ->
-	Req = #request{ type = message_user_reconected, user_reconected_content = #message_user_reconected{ opponent = User_id } },
+create_game_restarts_message( User_id ) ->
+	Req = #request{ type = message_game_restart, restart_game_content = #message_restart_game{ opponent = User_id } },
 	protocol_pb:encode_request(Req).
 	
 

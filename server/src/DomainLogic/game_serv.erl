@@ -9,7 +9,7 @@
 -define(DIFFICULT_CHANGE_SECONDS, 30).
 -define( COUNTDOWN_TO_START_SECONDS , 5).
 
--type game_state_type() :: running | waiting_players.
+-type game_state_type() :: running | waiting_players | waiting_players_reconect.
 
 
 -record( game_user, {
@@ -212,7 +212,10 @@ handle_cast({ save_game_state, Game_state, User_pid } , State = #game_state{ use
 
 
 
-handle_cast( {reconnecting, User_pid }, State = #game_state{ time_difficult_change_left = Time_left, user1 = User1 , user2 = User2, starting_seed = Seed }  ) 
+
+
+
+handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed }  ) 
 				when User_pid == User1#game_user.pid ->
 	Msg = message_processor:create_game_state_message( User1#game_user.game_state, 
 															User2#game_user.game_state, 
@@ -222,15 +225,14 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ time_difficult_chan
 																			User2#game_user.garbage_list),
 	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast(User_pid, {send_message, Msg }),
+	gen_server:cast( self(), check_game_restart),
 
-	Reconect_msg = message_processor:create_user_reconects_message(User2#game_user.user_id),
-	gen_server:cast(User2#game_user.pid, {send_message, Reconect_msg }),
+	{noreply, State#game_state{ user1 = User1#game_user{ is_connected = true } } };
 
-	Game_difficult_timer = erlang:send_after(Time_left, self(), difficult_change),
 
-	{noreply,  State#game_state{ game_difficult_change_timer = Game_difficult_timer } };
 
-handle_cast( {reconnecting, User_pid }, State = #game_state{ time_difficult_change_left = Time_left, user1 = User1 , user2 = User2, starting_seed = Seed } ) 
+
+handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed } ) 
 				when User_pid == User2#game_user.pid ->
 	Msg = message_processor:create_game_state_message( User2#game_user.game_state, 
 															User1#game_user.game_state, 
@@ -240,13 +242,41 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ time_difficult_chan
 																			User1#game_user.garbage_list),
 	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast(User_pid, {send_message, Msg }),
+	gen_server:cast( self(), check_game_restart),
 
-	Reconect_msg = message_processor:create_user_reconects_message(User1#game_user.user_id),
-	gen_server:cast(User1#game_user.pid, {send_message, Reconect_msg }),
+	{noreply, State#game_state{ user2 = User2#game_user{ is_connected = true } } };
+
+
+
+
+
+
+
+
+
+
+
+
+handle_cast( check_game_restart, State = #game_state{ time_difficult_change_left = Time_left, user1 = User1 , user2 = User2 } ) 
+				when User1#game_user.is_connected == true, User2#game_user.is_connected == true->
+
+	Reconect_user1_msg = message_processor:create_game_restarts_message(User1#game_user.user_id),
+	gen_server:cast(User1#game_user.pid, {send_message, Reconect_user1_msg }),
+
+	Reconect_user2_msg = message_processor:create_game_restarts_message(User2#game_user.user_id),
+	gen_server:cast(User2#game_user.pid, {send_message, Reconect_user2_msg }),
 
 	Game_difficult_timer = erlang:send_after(Time_left, self(), difficult_change),
 
-	{noreply, State#game_state{ game_difficult_change_timer = Game_difficult_timer } };
+	{noreply, State#game_state{ state = running, game_difficult_change_timer = Game_difficult_timer } };
+
+
+handle_cast( check_game_restart, State = #game_state{ } ) -> 
+	{noreply, State };
+
+
+
+
 
 
 
@@ -266,13 +296,14 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 	Msg = message_processor:create_user_disconects_message(User_id),
 	gen_server:cast(User2#game_user.pid, {send_message, Msg }),
 
-	case Game_difficult_timer of
+	New_state = case Game_difficult_timer of
 		undefined ->
-			{noreply, State#game_state{ game_difficult_change_timer = undefined, user1 = User1#game_user{ is_connected = false } }};
+			State#game_state{ user1 = User1#game_user{ is_connected = false } };
 		_ ->
 			Time_left = erlang:cancel_timer(Game_difficult_timer),
-			{noreply, State#game_state{ time_difficult_change_left = Time_left, game_difficult_change_timer = undefined, user1 = User1#game_user{ is_connected = false } }}
-	end;
+			State#game_state{ time_difficult_change_left = Time_left, user1 = User1#game_user{ is_connected = false } }
+	end,
+	{noreply, New_state#game_state{ game_difficult_change_timer = undefined, state = waiting_players_reconect } };
 
 
 handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game_difficult_change_timer = Game_difficult_timer,
@@ -283,14 +314,14 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 	Msg = message_processor:create_user_disconects_message(User_id),
 	gen_server:cast(User1#game_user.pid, {send_message, Msg }),
 	
-	case Game_difficult_timer of
+	New_state = case Game_difficult_timer of
 		undefined ->
-			{noreply, State#game_state{ game_difficult_change_timer = undefined, user2 = User2#game_user{ is_connected = false } }};
+			State#game_state{  user2 = User2#game_user{ is_connected = false } };
 		_ ->
 			Time_left = erlang:cancel_timer(Game_difficult_timer),
-			{noreply, State#game_state{ time_difficult_change_left = Time_left, game_difficult_change_timer = undefined, user2 = User2#game_user{ is_connected = false } }}
-	end;
-
+			State#game_state{ time_difficult_change_left = Time_left, user2 = User2#game_user{ is_connected = false } }
+	end,
+	{noreply, New_state#game_state{ game_difficult_change_timer = undefined, state = waiting_players_reconect  } };
 
 
 
@@ -315,9 +346,8 @@ handle_info( difficult_change , State = #game_state{ state = Game_State } )
 handle_info( difficult_change , State = #game_state{ state = Game_State,
 														difficult_level = Level, 
 															user1 = User1 , 
-																user2 = User2, 
-																	game_difficult_change_timer = Game_difficult_timer } ) 
-			when Game_State == running, Game_difficult_timer =/= undefined ->
+																user2 = User2 } ) 
+			when Game_State == running ->
 
 	New_level = Level + 1,
 
