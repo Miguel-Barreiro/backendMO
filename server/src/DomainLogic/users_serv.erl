@@ -238,7 +238,7 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_s
 				when Reference == Connection_monitor ->
 	lager:info("user connection went down", []),
 	demonitor(Connection_monitor),
-	%TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
+	TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
 
 	case Game_process_pid of 
 		undefined ->
@@ -247,10 +247,10 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_s
 			gen_server:cast(Game_process_pid, { user_disconected, self() , User_id })
 	end,
 
-	{noreply, State#user_process_state{ %disconect_timer = TimerRef,
+	{noreply, State#user_process_state{ disconect_timer = TimerRef,
 											connection_monitor = undefined,  
 												connection_pid = undefined } };
-	%{stop, Reason, State};
+
 
 %%
 %	called when the game stops

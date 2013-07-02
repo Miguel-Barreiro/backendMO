@@ -46,6 +46,12 @@ init(InitData) ->
 	{ok, #game_state{ }}.
 
 
+
+
+
+
+
+
 handle_cast([User_pid, User_id, User_pid2, User_id2], State = #game_state{ }) ->
 
 	lager:info("new game with user_id ~p user ~p",[User_pid,User_pid2]),
@@ -64,6 +70,12 @@ handle_cast([User_pid, User_id, User_pid2, User_id2], State = #game_state{ }) ->
 				state = waiting_players
 			}
 	};
+
+
+
+
+
+
 
 
 
@@ -96,6 +108,9 @@ handle_cast( start_game, State = #game_state{ user1 = User1, user2 = User2, stat
 
 
 
+
+
+
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
 				when User1#game_user.pid == User_pid, 
 						Game_State == waiting_players ->
@@ -109,8 +124,6 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 
 	{ noreply, State#game_state{ user1 = User1#game_user{is_ready = true} } };
 
-
-
 handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user1 = User1, user2 = User2 } ) 
 				when User2#game_user.pid == User_pid, Game_State == waiting_players ->
 	case User1#game_user.is_ready of
@@ -121,6 +134,8 @@ handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game
 			nothing_happens
 	end,
 	{ noreply, State#game_state{ user2 = User2#game_user{is_ready = true} } };
+
+
 
 
 
@@ -179,6 +194,8 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 
 
 
+
+
 handle_cast({ add_garbage, Garbage_list_message, User_pid }, State = #game_state{ user1 = User1 } )
 				when User_pid == User1#game_user.pid ->
 	lager:info("user1 garbages till now are ~p",[[Garbage_list_message | User1#game_user.garbage_list]]),
@@ -188,6 +205,8 @@ handle_cast({ add_garbage, Garbage_list_message, User_pid } , State = #game_stat
 				when User_pid == User2#game_user.pid ->
 	lager:info("user2 garbages till now are ~p",[[Garbage_list_message | User2#game_user.garbage_list]]),
 	{noreply, State#game_state{ user2 = User2#game_user{ garbage_list = [Garbage_list_message | User2#game_user.garbage_list] } } };
+
+
 
 
 
@@ -228,9 +247,6 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 	gen_server:cast( self(), check_game_restart),
 
 	{noreply, State#game_state{ user1 = User1#game_user{ is_connected = true } } };
-
-
-
 
 handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed } ) 
 				when User_pid == User2#game_user.pid ->
@@ -330,9 +346,16 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 
 
 
+
 handle_cast(Msg, State ) ->
 	lager:error("game_serv: unknown cast ~p received when state was ~p", [Msg, State]),
 	{noreply, State}.
+
+
+
+
+
+
 
 
 
