@@ -36,11 +36,16 @@
   user_id :: binary(),
   client_time :: integer()}).
 
+%% @type messagelogin_success__previous_state() = lobby | playing_game.
+-type messagelogin_success__previous_state() :: lobby | playing_game.
+
 %% @type messagelogin_success_record() = #messagelogin_success_record{
-%%   user_id() = binary()
+%%   user_id() = binary(),
+%%   previous_state() = messagelogin_success__previous_state()
 %% }.
 -record(messagelogin_success,{
-  user_id :: binary()}).
+  user_id :: binary(),
+  previous_state :: messagelogin_success__previous_state()}).
 
 %% @type message_game_start_record() = #message_game_start_record{
 %%   seed() = integer(),

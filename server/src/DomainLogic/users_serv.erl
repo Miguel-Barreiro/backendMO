@@ -34,7 +34,7 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 
 	lager:info("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
-	gen_server:cast( Connection_pid , {register_user_process,self(), User_id }),
+	gen_server:cast( Connection_pid , {register_user_process,self(), User_id, undefined }),
 	Connection_monitor = monitor(process, Connection_pid),
 
 	{noreply, State#user_process_state{
@@ -209,7 +209,7 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 						gen_server:cast( Previous_connection_pid , {reply_with_disconnect, message_processor:create_disconect_message() } )
 	end,
 	
-	gen_server:cast( New_connection_pid , {register_user_process,self(), User_id } ),
+	gen_server:cast( New_connection_pid , {register_user_process,self(), User_id, Game_process_pid } ),
 	New_connection_monitor = monitor(process, New_connection_pid),
 
 	case Game_process_pid of

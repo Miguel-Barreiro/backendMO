@@ -6,6 +6,7 @@
   encode_message_garbage_list/1,decode_message_garbage_list/1,
   encode_game_state/1,decode_game_state/1,
   encode_message_login/1,decode_message_login/1,
+  to_messagelogin_success__previous_state/1,from_messagelogin_success__previous_state/1,
   encode_messagelogin_success/1,decode_messagelogin_success/1,
   encode_message_game_start/1,decode_message_game_start/1,
   encode_message_game_end/1,decode_message_game_end/1,
@@ -109,6 +110,14 @@ encode_message_login(R) when is_record(R,message_login) ->
     protocol_buffers:encode(2,int32,R#message_login.client_time)
   ].
 
+to_messagelogin_success__previous_state(1) -> lobby;
+to_messagelogin_success__previous_state(2) -> playing_game;
+to_messagelogin_success__previous_state(undefined) -> undefined.
+
+from_messagelogin_success__previous_state(lobby) -> 1;
+from_messagelogin_success__previous_state(playing_game) -> 2;
+from_messagelogin_success__previous_state(undefined) -> undefined.
+
 decode_messagelogin_success(B) ->
   case decode_messagelogin_success_impl(B) of
     undefined -> #messagelogin_success{};
@@ -118,13 +127,15 @@ decode_messagelogin_success(B) ->
 decode_messagelogin_success_impl(<<>>) -> undefined;
 decode_messagelogin_success_impl(Binary) ->
   protocol_buffers:decode(Binary,#messagelogin_success{},
-     fun(1,Val,Rec) -> Rec#messagelogin_success{user_id = protocol_buffers:cast(string,Val)}
+     fun(1,Val,Rec) -> Rec#messagelogin_success{user_id = protocol_buffers:cast(string,Val)};
+        (2,{varint,Enum},Rec) -> Rec#messagelogin_success{previous_state=to_messagelogin_success__previous_state(Enum)}
       end).
 
 encode_messagelogin_success(undefined) -> undefined;
 encode_messagelogin_success(R) when is_record(R,messagelogin_success) ->
   [
-    protocol_buffers:encode(1,length_encoded,R#messagelogin_success.user_id)
+    protocol_buffers:encode(1,length_encoded,R#messagelogin_success.user_id),
+    protocol_buffers:encode(2,int32,from_messagelogin_success__previous_state(R#messagelogin_success.previous_state))
   ].
 
 decode_message_game_start(B) ->

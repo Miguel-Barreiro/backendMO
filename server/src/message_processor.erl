@@ -6,7 +6,7 @@
 -include("include/protocol_pb.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
--export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/1, create_difficult_message/1,create_disconect_message/0]).
+-export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/2, create_difficult_message/1,create_disconect_message/0]).
 
 -export([create_user_disconects_message/1, create_game_state_message/6, create_game_restarts_message/1]).
 
@@ -55,10 +55,16 @@ handle_disconect() ->
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-create_login_success( User_id ) ->
+create_login_success( User_id, was_lobby ) ->
 	Req = #request{ type = message_login_sucess,
-					login_sucess_content = #messagelogin_success{ user_id = User_id }},
+					login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = lobby }},
+	protocol_pb:encode_request(Req);
+
+create_login_success( User_id, was_playing_game ) ->
+	Req = #request{ type = message_login_sucess,
+					login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = playing_game }},
 	protocol_pb:encode_request(Req).
+
 
 
 create_start_message( { Opponnent_name , Start_date, Seed } ) ->
@@ -128,9 +134,6 @@ create_game_state_message( Player_game_state, Opponent_game_state, Starting_seed
 		undefined ->	#game_state{};
 		_ ->			Opponent_game_state
 	end,
-
-	lager:info("RECONECT: opponent_garbage_list ~p",[Opponent_garbage_messages_list]),
-	lager:info("RECONECT: Player_garbage_messages_list ~p",[Player_garbage_messages_list]),
 
 	Req = #request{ type = message_game_state,
 						game_state_content = #message_game_state{ player_state = Player_message_state#game_state{ garbage_message_list = Player_garbage_messages_list }, 

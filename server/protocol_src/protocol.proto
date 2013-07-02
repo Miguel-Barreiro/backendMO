@@ -23,7 +23,14 @@ message MessageLogin{
 };
 
 message MessageloginSuccess{
+	
+	enum previous_state{
+		LOBBY = 1;
+		PLAYING_GAME = 2;
+	}
+
 	required string userId = 1;
+	required previous_state previousState = 2;
 };
 
 message MessageGameStart{
