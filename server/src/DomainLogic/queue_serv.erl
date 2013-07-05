@@ -3,6 +3,7 @@
 
 -define(CONNECTION_TIMEOUT, 40000).
 
+-define(GAME_SIZE, 2).
 
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).
@@ -57,7 +58,7 @@ leave(User_pid, User_id) ->
 
 
 test() ->
-	gen_server:cast(whereis(?MODULE), match_make_test ).
+	gen_server:cast(whereis(?MODULE), match_make ).
 
 
 
@@ -88,25 +89,35 @@ remove_user_by_pid( User_pid, State = #queue_state{})->
 
 
 handle_cast( match_make_test , State = #queue_state{} ) ->
-	Fun = fun( X, Sum ) ->
+	Fun = fun( X, _Sum ) ->
 
 		{ League_name , League } = X,
 		%{ League_by_pid , Leagues } = Sum,
 
-		Fun = fun( User ) ->
-			User#queue_user.user_id
-		end,
-		New_list = lists:map(Fun, gb_sets:to_list( League#queue_league.user_list )),  
-		%New_list = League#queue_league.user_list,
-		{ Matches , Non_matched_user_list }	= match_make:match_users( New_list , fun calculate_match_desire_ratio/1 , 4 ),
+		%Fun = fun( User ) ->
+		%	User#queue_user.user_id
+		%end,
+		%New_list = lists:map(Fun, gb_sets:to_list( League#queue_league.user_list )),  
+		New_list = gb_sets:to_list(League#queue_league.user_list),
+		{ Matches , _Non_matched_user_list }	= match_make:match_users( New_list , fun calculate_match_desire_ratio/1 , ?GAME_SIZE ),
 		
-		lager:info("for ~p matched ~p and couldnt match ~p",[League_name, Matches , Non_matched_user_list ]),
 
+		Print_match = fun( Matched_user_list ) ->
+			
+			Print_user = fun( User ) -> lager:info("~p ",[User#queue_user.user_id]) end,
+			lager:info("---"),
+			lists:foreach(Print_user, Matched_user_list),
+			lager:info("---")
+		end,
+
+		lager:info("for ~p ",[League_name]),
+		lists:foreach(Print_match, Matches), 
+
+		
 		ok
 	end,
 
-	Matrix = lists:foldl(Fun, {[],[]}, State#queue_state.league_list),
-
+	lists:foldl(Fun, {[],[]}, State#queue_state.league_list),
 
 	%{ League_by_pid , Leagues } = lists:foldl(Fun, {[],[]}, State#queue_state.league_list),
 
@@ -122,8 +133,16 @@ handle_cast( match_make , State = #queue_state{} ) ->
 		{ League_name , League } = X,
 		{ League_by_pid , Leagues } = Sum,
 
-		Sorted_users = lists:keysort( #queue_user.elo , gb_sets:to_list(League#queue_league.user_list)),
-		Unmatched_user_list = match_users( Sorted_users ),
+		New_list = gb_sets:to_list(League#queue_league.user_list),
+		{ Matches , Unmatched_user_list } = match_make:match_users( New_list , fun calculate_match_desire_ratio/1 , ?GAME_SIZE ),
+
+
+		Match_users = fun( [ User1, User2 ] )->
+			lager:info("new game with ~p and ~p",[User1#queue_user.user_id, User2#queue_user.user_id])
+			%game_sup:start_new_game_process( [User1#queue_user.user_pid, User1#queue_user.user_id, User2#queue_user.user_pid, User2#queue_user.user_id] )
+		end,
+		lists:foreach(Match_users, Matches),
+
 
 		Unmatched_user_leagues_by_pid = [{ User#queue_user.user_pid , League_name} || User <- Unmatched_user_list ],
 		New_league = #queue_league{ user_list = gb_sets:from_list(Unmatched_user_list), tier_level = League_name },
@@ -141,7 +160,7 @@ handle_cast( match_make , State = #queue_state{} ) ->
 
 	lager:info("new state is going to be, League_by_pid ~p",[ League_by_pid ]),
 
-	{noreply, State};
+	{noreply, State#queue_state{ league_list = Leagues, league_by_pid = League_by_pid }};
 
 
 
@@ -202,27 +221,33 @@ code_change(_OldVsn, State, _Extra) ->
 
 
 
-match_users( [ User1 | [ User2 | Rest_users] ] ) -> 
-	%game_sup:start_new_game_process( [User1#queue_user.user_pid, User1#queue_user.user_id, User2#queue_user.user_pid, User2#queue_user.user_id] ),
-	lager:info("MATCH ( ~p vs ~p ) ", [User1#queue_user.user_id , User2#queue_user.user_id] ),
-	match_users( Rest_users );
-
-match_users( Last_user_list ) -> 
-	Last_user_list.
-
-
-
 
 
 
 
 
 calculate_match_desire_ratio( User_list ) ->
-	lists:sum(User_list).
-%	Fun = fun( User , Accumulator ) ->
-%		[ User#queue_user.user_id | Accumulator]
-%	end,
-%	lists:foldl( Fun, [], User_list).
+%	lists:sum(User_list).
+	Get_max = fun( User , Accumulator ) ->
+		case User#queue_user.elo > Accumulator of 
+			true-> User#queue_user.elo;
+			false-> Accumulator
+		end
+	end,
+
+	Get_min = fun( User , Accumulator ) ->
+		case User#queue_user.elo < Accumulator of 
+			true-> User#queue_user.elo;
+			false-> Accumulator
+		end
+	end,
+
+	Max_elo = lists:foldl( Get_max, 0, User_list),
+	Min_elo = lists:foldl( Get_min, 1000, User_list),
+
+	Dif_elo = Max_elo - Min_elo,
+
+	1000 - Dif_elo.
 
 
 

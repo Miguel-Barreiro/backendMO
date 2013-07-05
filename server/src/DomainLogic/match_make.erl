@@ -9,7 +9,7 @@
 match_users( User_list , Match_Rate_Function , Game_size ) ->
 	Matrix = calculate_desirable_matrix( User_list, Game_size, Match_Rate_Function ),
 
-	lager:info("MATRIX is ~p",[Matrix]),
+	%lager:info("MATRIX is ~p",[Matrix]),
 
 	Matches = match_users_from_matrix( Matrix ),
 
@@ -68,7 +68,10 @@ remove_match_from_matrix( Users_matched, Sorted_matrix ) ->
 
 
 calculate_desirable_matrix( User_list, Game_size, Match_Rate_Function ) ->
-	calculate_desirable_matrix_for_users(  [], 0 , User_list, Game_size, Match_Rate_Function ).
+	
+	lager:info("user list ~p",[User_list]),
+
+	calculate_desirable_matrix_for_users(  [], 0, User_list, Game_size, Match_Rate_Function ).
 
 
 
