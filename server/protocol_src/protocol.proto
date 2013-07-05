@@ -3,9 +3,11 @@ message BlockPosition{
 	required int32 color = 2;
 };
 
+
 message MessageGarbageList{
 	repeated int32 garbagePosition = 1;	
 };
+
 
 message GameState{
 	required int32 currentRandom = 1;
@@ -22,6 +24,7 @@ message MessageLogin{
 	required int32 clientTime = 2;
 };
 
+
 message MessageloginSuccess{
 	
 	enum previous_state{
@@ -33,6 +36,7 @@ message MessageloginSuccess{
 	required previous_state previousState = 2;
 };
 
+
 message MessageGameStart{
 	required int32 seed = 1;
 	required string opponentName = 2;
@@ -40,10 +44,10 @@ message MessageGameStart{
 	required int32 startTimestamp = 4;
 };
 
+
 message MessageGameEnd{
 	required int32 reason = 1;
 };
-
 
 
 message MessageUpdatePiece{
@@ -66,9 +70,12 @@ message MessagePlaceGarbage{
 };
 
 
+
 message MessageDifficultChange{ 
 	required int32 level = 1;
 };
+
+
 
 message MessageGameState{
 	required GameState opponentState = 1;
@@ -82,9 +89,11 @@ message MessageUserDisconected{
 	required string opponent = 1;
 };
 
+
 message MessageRestartGame{
 	required string opponent = 1;
 };
+
 
 
 message Request {

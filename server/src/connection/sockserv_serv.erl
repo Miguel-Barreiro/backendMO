@@ -8,7 +8,7 @@
 
 -define(MAX_PACKET_SIZE, 4000).
 -define(COMPRESS_TRESHOLD, 80).
--define(DEFAULT_INACTIVITY_TIMEOUT, 600).
+-define(DEFAULT_INACTIVITY_TIMEOUT, 36000).
 -define(DEFAULT_PING_TIMEOUT, 65).
 -define(DEFAULT_AUTH_TIMEOUT,3600).
 
@@ -281,6 +281,7 @@ handle_info(check_inactivity_timeout, State = #connection_state{last_packet_time
     case swiss:unix_timestamp() - LastPacketTime > Timeout of
         true ->
             lager:info("dropping connection due to inactivity"),
+            stats_serv:remove_connection(),
             message_processor:handle_disconect(),
             {stop, normal, State};
         false ->
@@ -294,6 +295,7 @@ handle_info(check_ping_timeout, State = #connection_state{last_ping_time = LastP
     Ret = case swiss:unix_timestamp() - LastActivity > ?DEFAULT_PING_TIMEOUT of
         true ->
             lager:debug("dropping connection due to ping timeout"),
+            stats_serv:remove_connection(),
             message_processor:handle_disconect(),
             {stop, normal, State};
         false ->
