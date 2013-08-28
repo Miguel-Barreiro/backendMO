@@ -34,9 +34,6 @@ message MessageloginSuccess{
 };
 
 message MessageGameStart{
-	required int32 seed = 1;
-	required string opponentName = 2;
-	required int32 startLevel = 3;
 	required int32 startTimestamp = 4;
 };
 
@@ -86,6 +83,20 @@ message MessageRestartGame{
 	required string opponent = 1;
 };
 
+message MessageGenericPower{
+	required int32 type = 1;
+	optional string powerData = 2;
+};
+
+message MessageEnterQueue{
+	required int32 tier = 1;
+}
+
+message MessageMatchFound{
+	required int32 seed = 1;
+	required string opponentName = 2;
+	required int32 startLevel = 3;
+}
 
 message Request {
 	
@@ -105,6 +116,9 @@ message Request {
 		MESSAGE_GAME_STATE = 13;
 		MESSAGE_USER_DISCONECTED = 14;
 		MESSAGE_GAME_RESTART = 15;
+		MESSAGE_GENERIC_POWER = 16;
+		MESSAGE_ENTER_QUEUE = 17;
+		MESSAGE_MATCH_FOUND = 18;
 	}
 
 	required request_type type = 1;
@@ -120,6 +134,9 @@ message Request {
 	optional MessageGameState gameStateContent = 10;
 	optional MessageUserDisconected userDisconectedContent = 11;
 	optional MessageRestartGame restartGameContent = 12;
+	optional MessageGenericPower powerContent = 13;
+	optional MessageEnterQueue enterQueueContent = 14;
+	optional MessageMatchFound matchFoundContent = 15;
 };
 
 

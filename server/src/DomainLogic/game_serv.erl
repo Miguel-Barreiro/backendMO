@@ -9,7 +9,7 @@
 -define(DIFFICULT_CHANGE_SECONDS, 30).
 -define( COUNTDOWN_TO_START_SECONDS , 5).
 
--type game_state_type() :: running | waiting_players | waiting_players_reconect.
+-type game_state_type() :: init | running | waiting_players | waiting_players_reconect.
 
 
 -record( game_user, {
@@ -33,7 +33,7 @@
 	user1 = #game_user{} :: #game_user{},
 	user2 = #game_user{} :: #game_user{},
 
-	state = waiting_players :: game_state_type()
+	state = init :: game_state_type()
 }).
 
 
@@ -62,15 +62,62 @@ handle_cast([User_pid, User_id, User_pid2, User_id2], State = #game_state{ }) ->
 	gen_server:cast( User_pid2 , {register_game_process,self()}),
 	Connection_monitor2 = monitor(process, User_pid2),
 
-	gen_server:cast(self() , start_game ),
+	gen_server:cast(self() , game_created ),
 
 	{noreply, State#game_state{
 				user1 = #game_user{ pid = User_pid, monitor = Connection_monitor1, user_id = User_id },
 				user2 = #game_user{ pid = User_pid2, monitor = Connection_monitor2, user_id = User_id2 },
-				state = waiting_players
+				state = init
 			}
 	};
 
+
+
+
+
+
+
+handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, state = Game_State} ) 
+				when Game_State == init,
+						User1#game_user.is_ready == false,
+							User2#game_user.is_ready == false ->
+	{A1,A2,A3} = now(),
+	random:seed(A1, A2, A3),
+	Seed = random:uniform(2147483646),
+
+	gen_server:cast( User1#game_user.pid , { enter_game, self(), User2#game_user.user_id, Seed } ),
+	gen_server:cast( User2#game_user.pid , { enter_game, self(), User1#game_user.user_id, Seed } ),
+
+	{ noreply, State#game_state{ difficult_level = 0,
+									starting_seed = Seed,
+										state = waiting_players } };
+
+
+
+
+
+
+
+handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
+				when User1#game_user.pid == User_pid, 
+						Game_State == waiting_players ->
+
+	case User2#game_user.is_ready of
+		true ->		gen_server:cast(self() , start_game );
+		false ->	nothing_happens
+	end,
+	{ noreply, State#game_state{ user1 = User1#game_user{ is_ready = true} } };
+
+
+handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
+				when User1#game_user.pid == User_pid, 
+						Game_State == waiting_players ->
+
+	case User1#game_user.is_ready of
+		true ->		gen_server:cast(self() , start_game );
+		false ->	nothing_happens
+	end,
+	{ noreply, State#game_state{ user2 = User2#game_user{ is_ready = true} } };
 
 
 
@@ -84,60 +131,19 @@ handle_cast( start_game, State = #game_state{ user1 = User1, user2 = User2, stat
 						User1#game_user.is_ready == true,
 							User2#game_user.is_ready == true ->
 	
-	StartTime = swiss:unix_timestamp() + ?COUNTDOWN_TO_START_SECONDS, 	%the game will start in <COUNTDOWN_TO_START_SECONDS> seconds
-	{A1,A2,A3} = now(),
-	random:seed(A1, A2, A3),
-	Seed = random:uniform(2147483646),
+	lager:info("game ~p is going to start",[self()]),
 
-	gen_server:cast( User1#game_user.pid , {game_start , User2#game_user.user_id , StartTime, Seed } ),
-	gen_server:cast( User2#game_user.pid , {game_start , User1#game_user.user_id , StartTime, Seed } ),
+	StartTime = swiss:unix_timestamp() + ?COUNTDOWN_TO_START_SECONDS, 	%the game will start in <COUNTDOWN_TO_START_SECONDS> seconds
+
+	gen_server:cast( User1#game_user.pid , {game_start , StartTime} ),
+	gen_server:cast( User2#game_user.pid , {game_start , StartTime} ),
 
 	Game_difficult_timer = erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
 
-	{ noreply, State#game_state{ difficult_level = 0,
-									starting_seed = Seed, 
-										state = running,
-											game_difficult_change_timer = Game_difficult_timer,
-												user1 = User1#game_user{ is_ready = false}, 
-													user2 = User2#game_user{ is_ready = false} } };
-
-
-
-
-
-
-
-
-
-
-
-handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
-				when User1#game_user.pid == User_pid, 
-						Game_State == waiting_players ->
-	case User2#game_user.is_ready of
-		true ->
-			lager:info("game ~p is going to start (rematch)",[self()]),
-			gen_server:cast(self() , start_game );
-		false ->
-			nothing_happens
-	end,
-
-	{ noreply, State#game_state{ user1 = User1#game_user{is_ready = true} } };
-
-handle_cast( { user_ready_rematch, User_pid} , State = #game_state{ state = Game_State, user1 = User1, user2 = User2 } ) 
-				when User2#game_user.pid == User_pid, Game_State == waiting_players ->
-	case User1#game_user.is_ready of
-		true ->
-			lager:info("game ~p is going to start (rematch)",[self()]),
-			gen_server:cast(self() , start_game );
-		false ->
-			nothing_happens
-	end,
-	{ noreply, State#game_state{ user2 = User2#game_user{is_ready = true} } };
-
-
-
-
+	{ noreply, State#game_state{  state = running,
+									game_difficult_change_timer = Game_difficult_timer,
+										user1 = User1#game_user{ is_ready = false}, 
+											user2 = User2#game_user{ is_ready = false} } };
 
 
 
@@ -247,6 +253,7 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 	gen_server:cast( self(), check_game_restart),
 
 	{noreply, State#game_state{ user1 = User1#game_user{ is_connected = true } } };
+
 
 handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, starting_seed = Seed } ) 
 				when User_pid == User2#game_user.pid ->
@@ -401,6 +408,7 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{ use
 	message_processor:process_user_disconect(Pid, User2#game_user.pid, self()),
 	
 	{stop, normal, State};
+
 
 %%
 %	called when the user2 connection stops

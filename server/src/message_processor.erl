@@ -6,8 +6,8 @@
 -include("include/protocol_pb.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
--export([create_lost_message/1,create_won_message/1, create_start_message/1, create_login_success/2, create_difficult_message/1,create_disconect_message/0]).
-
+-export([create_lost_message/1,create_won_message/1, create_login_success/2, create_difficult_message/1,create_disconect_message/0]).
+-export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_state_message/6, create_game_restarts_message/1]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
@@ -66,13 +66,19 @@ create_login_success( User_id, was_playing_game ) ->
 	protocol_pb:encode_request(Req).
 
 
-
-create_start_message( { Opponnent_name , Start_date, Seed } ) ->
-	Req = #request{ type = message_game_start_code,
-					game_start_content = #message_game_start{  
+create_match_found_message( Opponnent_name , Seed  ) ->
+	Req = #request{ type = message_match_found,
+					game_start_content = #message_match_found{  
 						seed = Seed,
 						opponent_name = Opponnent_name,
-						start_level = 0,
+						start_level = 0
+					}},
+	protocol_pb:encode_request(Req).
+
+
+create_start_message( Start_date ) ->
+	Req = #request{ type = message_game_start_code,
+					game_start_content = #message_game_start{  
 						start_timestamp = Start_date
 					}},
 	protocol_pb:encode_request(Req).
@@ -191,17 +197,33 @@ process_message( message_login_code,
 	end;
 
 
+
 process_message( message_ready_code, User_process_pid, _Message_decoded, _Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 	lager:info("user ~p is ready",[User_process_pid]),
 	gen_server:cast( User_process_pid, { ready, no_details }),
 	{no_reply};
 
+
+
+process_message( message_enter_queue, User_process_pid, 
+					#request{ place_piece_content = #message_enter_queue{ tier = Tier } }, 
+						_Message_encoded ) 
+			when User_process_pid =/= no_user_process ->
+
+	lager:info("user ~p enters the queue",[User_process_pid]),
+	gen_server:cast( User_process_pid, { enter_queue, Tier }),
+	{no_reply};
+
+
+
 process_message( message_lost_game, User_process_pid, _Message_decoded, _Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 	lager:info("user ~p said he lost",[User_process_pid]),
 	gen_server:cast( User_process_pid, { lost_game, no_details }),
 	{no_reply};
+
+
 
 process_message( message_place_piece_code, 
 					User_process_pid, 
@@ -212,6 +234,8 @@ process_message( message_place_piece_code,
 	gen_server:cast( User_process_pid, { save_game_state , Game_state } ),
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
+
+
 
 process_message( message_place_garbage_code, 
 					User_process_pid, 
@@ -224,16 +248,24 @@ process_message( message_place_garbage_code,
 	{no_reply};
 
 
+
 process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded )
 			when User_process_pid =/= no_user_process, Client_message_code == message_update_piece_code ->
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 
 
+
+process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded )
+			when User_process_pid =/= no_user_process, Client_message_code == message_generic_power ->
+	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+	{no_reply};
+
+
+
 process_message( Other_code, _User_process_pid, _Message_decoded, _Message_encoded ) ->	
 	lager:error("I ~p , received unkown message code ~p ",[self(),Other_code]),
 	{reply_with_disconnect, create_disconect_message() }.
-%	{reply, Response }.
 
 
 

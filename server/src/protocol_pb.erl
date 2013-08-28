@@ -17,6 +17,9 @@
   encode_message_game_state/1,decode_message_game_state/1,
   encode_message_user_disconected/1,decode_message_user_disconected/1,
   encode_message_restart_game/1,decode_message_restart_game/1,
+  encode_message_generic_power/1,decode_message_generic_power/1,
+  encode_message_enter_queue/1,decode_message_enter_queue/1,
+  encode_message_match_found/1,decode_message_match_found/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -147,18 +150,12 @@ decode_message_game_start(B) ->
 decode_message_game_start_impl(<<>>) -> undefined;
 decode_message_game_start_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_game_start{},
-     fun(1,Val,Rec) -> Rec#message_game_start{seed = protocol_buffers:cast(int32,Val)};
-        (2,Val,Rec) -> Rec#message_game_start{opponent_name = protocol_buffers:cast(string,Val)};
-        (3,Val,Rec) -> Rec#message_game_start{start_level = protocol_buffers:cast(int32,Val)};
-        (4,Val,Rec) -> Rec#message_game_start{start_timestamp = protocol_buffers:cast(int32,Val)}
+     fun(4,Val,Rec) -> Rec#message_game_start{start_timestamp = protocol_buffers:cast(int32,Val)}
       end).
 
 encode_message_game_start(undefined) -> undefined;
 encode_message_game_start(R) when is_record(R,message_game_start) ->
   [
-    protocol_buffers:encode(1,int32,R#message_game_start.seed),
-    protocol_buffers:encode(2,length_encoded,R#message_game_start.opponent_name),
-    protocol_buffers:encode(3,int32,R#message_game_start.start_level),
     protocol_buffers:encode(4,int32,R#message_game_start.start_timestamp)
   ].
 
@@ -322,6 +319,66 @@ encode_message_restart_game(R) when is_record(R,message_restart_game) ->
     protocol_buffers:encode(1,length_encoded,R#message_restart_game.opponent)
   ].
 
+decode_message_generic_power(B) ->
+  case decode_message_generic_power_impl(B) of
+    undefined -> #message_generic_power{};
+    Any -> Any
+  end.
+
+decode_message_generic_power_impl(<<>>) -> undefined;
+decode_message_generic_power_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_generic_power{},
+     fun(1,Val,Rec) -> Rec#message_generic_power{type = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#message_generic_power{power_data = protocol_buffers:cast(string,Val)}
+      end).
+
+encode_message_generic_power(undefined) -> undefined;
+encode_message_generic_power(R) when is_record(R,message_generic_power) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_generic_power.type),
+    protocol_buffers:encode(2,length_encoded,R#message_generic_power.power_data)
+  ].
+
+decode_message_enter_queue(B) ->
+  case decode_message_enter_queue_impl(B) of
+    undefined -> #message_enter_queue{};
+    Any -> Any
+  end.
+
+decode_message_enter_queue_impl(<<>>) -> undefined;
+decode_message_enter_queue_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_enter_queue{},
+     fun(1,Val,Rec) -> Rec#message_enter_queue{tier = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_enter_queue(undefined) -> undefined;
+encode_message_enter_queue(R) when is_record(R,message_enter_queue) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_enter_queue.tier)
+  ].
+
+decode_message_match_found(B) ->
+  case decode_message_match_found_impl(B) of
+    undefined -> #message_match_found{};
+    Any -> Any
+  end.
+
+decode_message_match_found_impl(<<>>) -> undefined;
+decode_message_match_found_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_match_found{},
+     fun(1,Val,Rec) -> Rec#message_match_found{seed = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#message_match_found{opponent_name = protocol_buffers:cast(string,Val)};
+        (3,Val,Rec) -> Rec#message_match_found{start_level = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_message_match_found(undefined) -> undefined;
+encode_message_match_found(R) when is_record(R,message_match_found) ->
+  [
+    protocol_buffers:encode(1,int32,R#message_match_found.seed),
+    protocol_buffers:encode(2,length_encoded,R#message_match_found.opponent_name),
+    protocol_buffers:encode(3,int32,R#message_match_found.start_level)
+  ].
+
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -337,6 +394,9 @@ to_request__request_type(12) -> message_get_game_state;
 to_request__request_type(13) -> message_game_state;
 to_request__request_type(14) -> message_user_disconected;
 to_request__request_type(15) -> message_game_restart;
+to_request__request_type(16) -> message_generic_power;
+to_request__request_type(17) -> message_enter_queue;
+to_request__request_type(18) -> message_match_found;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -354,6 +414,9 @@ from_request__request_type(message_get_game_state) -> 12;
 from_request__request_type(message_game_state) -> 13;
 from_request__request_type(message_user_disconected) -> 14;
 from_request__request_type(message_game_restart) -> 15;
+from_request__request_type(message_generic_power) -> 16;
+from_request__request_type(message_enter_queue) -> 17;
+from_request__request_type(message_match_found) -> 18;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -376,7 +439,10 @@ decode_request_impl(Binary) ->
         (9,{length_encoded,Bin},Rec) -> Rec#request{difficult_change_content = decode_message_difficult_change_impl(Bin)};
         (10,{length_encoded,Bin},Rec) -> Rec#request{game_state_content = decode_message_game_state_impl(Bin)};
         (11,{length_encoded,Bin},Rec) -> Rec#request{user_disconected_content = decode_message_user_disconected_impl(Bin)};
-        (12,{length_encoded,Bin},Rec) -> Rec#request{restart_game_content = decode_message_restart_game_impl(Bin)}
+        (12,{length_encoded,Bin},Rec) -> Rec#request{restart_game_content = decode_message_restart_game_impl(Bin)};
+        (13,{length_encoded,Bin},Rec) -> Rec#request{power_content = decode_message_generic_power_impl(Bin)};
+        (14,{length_encoded,Bin},Rec) -> Rec#request{enter_queue_content = decode_message_enter_queue_impl(Bin)};
+        (15,{length_encoded,Bin},Rec) -> Rec#request{match_found_content = decode_message_match_found_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -393,6 +459,9 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(9,length_encoded,encode_message_difficult_change(R#request.difficult_change_content)),
     protocol_buffers:encode(10,length_encoded,encode_message_game_state(R#request.game_state_content)),
     protocol_buffers:encode(11,length_encoded,encode_message_user_disconected(R#request.user_disconected_content)),
-    protocol_buffers:encode(12,length_encoded,encode_message_restart_game(R#request.restart_game_content))
+    protocol_buffers:encode(12,length_encoded,encode_message_restart_game(R#request.restart_game_content)),
+    protocol_buffers:encode(13,length_encoded,encode_message_generic_power(R#request.power_content)),
+    protocol_buffers:encode(14,length_encoded,encode_message_enter_queue(R#request.enter_queue_content)),
+    protocol_buffers:encode(15,length_encoded,encode_message_match_found(R#request.match_found_content))
   ].
 
