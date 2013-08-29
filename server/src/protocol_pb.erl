@@ -5,6 +5,7 @@
   encode_block_position/1,decode_block_position/1,
   encode_message_garbage_list/1,decode_message_garbage_list/1,
   encode_game_state/1,decode_game_state/1,
+  encode_message_game_state/1,decode_message_game_state/1,
   encode_message_login/1,decode_message_login/1,
   to_messagelogin_success__previous_state/1,from_messagelogin_success__previous_state/1,
   encode_messagelogin_success/1,decode_messagelogin_success/1,
@@ -14,7 +15,6 @@
   encode_message_place_piece/1,decode_message_place_piece/1,
   encode_message_place_garbage/1,decode_message_place_garbage/1,
   encode_message_difficult_change/1,decode_message_difficult_change/1,
-  encode_message_game_state/1,decode_message_game_state/1,
   encode_message_user_disconected/1,decode_message_user_disconected/1,
   encode_message_restart_game/1,decode_message_restart_game/1,
   encode_message_generic_power/1,decode_message_generic_power/1,
@@ -93,6 +93,30 @@ encode_game_state(R) when is_record(R,game_state) ->
     [ protocol_buffers:encode(6,length_encoded,encode_message_garbage_list(X)) || X <- R#game_state.garbage_message_list]
   ].
 
+decode_message_game_state(B) ->
+  case decode_message_game_state_impl(B) of
+    undefined -> #message_game_state{};
+    Any -> Any
+  end.
+
+decode_message_game_state_impl(<<>>) -> undefined;
+decode_message_game_state_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_game_state{},
+     fun(1,{length_encoded,Bin},Rec) -> Rec#message_game_state{opponent_state = decode_game_state_impl(Bin)};
+        (2,{length_encoded,Bin},Rec) -> Rec#message_game_state{player_state = decode_game_state_impl(Bin)};
+        (3,Val,Rec) -> Rec#message_game_state{starting_seed = protocol_buffers:cast(int32,Val)};
+        (4,Val,Rec) -> Rec#message_game_state{opponent_name = protocol_buffers:cast(string,Val)}
+      end).
+
+encode_message_game_state(undefined) -> undefined;
+encode_message_game_state(R) when is_record(R,message_game_state) ->
+  [
+    protocol_buffers:encode(1,length_encoded,encode_game_state(R#message_game_state.opponent_state)),
+    protocol_buffers:encode(2,length_encoded,encode_game_state(R#message_game_state.player_state)),
+    protocol_buffers:encode(3,int32,R#message_game_state.starting_seed),
+    protocol_buffers:encode(4,length_encoded,R#message_game_state.opponent_name)
+  ].
+
 decode_message_login(B) ->
   case decode_message_login_impl(B) of
     undefined -> #message_login{};
@@ -131,14 +155,16 @@ decode_messagelogin_success_impl(<<>>) -> undefined;
 decode_messagelogin_success_impl(Binary) ->
   protocol_buffers:decode(Binary,#messagelogin_success{},
      fun(1,Val,Rec) -> Rec#messagelogin_success{user_id = protocol_buffers:cast(string,Val)};
-        (2,{varint,Enum},Rec) -> Rec#messagelogin_success{previous_state=to_messagelogin_success__previous_state(Enum)}
+        (2,{varint,Enum},Rec) -> Rec#messagelogin_success{previous_state=to_messagelogin_success__previous_state(Enum)};
+        (3,{length_encoded,Bin},Rec) -> Rec#messagelogin_success{game_state = decode_message_game_state_impl(Bin)}
       end).
 
 encode_messagelogin_success(undefined) -> undefined;
 encode_messagelogin_success(R) when is_record(R,messagelogin_success) ->
   [
     protocol_buffers:encode(1,length_encoded,R#messagelogin_success.user_id),
-    protocol_buffers:encode(2,int32,from_messagelogin_success__previous_state(R#messagelogin_success.previous_state))
+    protocol_buffers:encode(2,int32,from_messagelogin_success__previous_state(R#messagelogin_success.previous_state)),
+    protocol_buffers:encode(3,length_encoded,encode_message_game_state(R#messagelogin_success.game_state))
   ].
 
 decode_message_game_start(B) ->
@@ -257,30 +283,6 @@ encode_message_difficult_change(undefined) -> undefined;
 encode_message_difficult_change(R) when is_record(R,message_difficult_change) ->
   [
     protocol_buffers:encode(1,int32,R#message_difficult_change.level)
-  ].
-
-decode_message_game_state(B) ->
-  case decode_message_game_state_impl(B) of
-    undefined -> #message_game_state{};
-    Any -> Any
-  end.
-
-decode_message_game_state_impl(<<>>) -> undefined;
-decode_message_game_state_impl(Binary) ->
-  protocol_buffers:decode(Binary,#message_game_state{},
-     fun(1,{length_encoded,Bin},Rec) -> Rec#message_game_state{opponent_state = decode_game_state_impl(Bin)};
-        (2,{length_encoded,Bin},Rec) -> Rec#message_game_state{player_state = decode_game_state_impl(Bin)};
-        (3,Val,Rec) -> Rec#message_game_state{starting_seed = protocol_buffers:cast(int32,Val)};
-        (4,Val,Rec) -> Rec#message_game_state{opponent_name = protocol_buffers:cast(string,Val)}
-      end).
-
-encode_message_game_state(undefined) -> undefined;
-encode_message_game_state(R) when is_record(R,message_game_state) ->
-  [
-    protocol_buffers:encode(1,length_encoded,encode_game_state(R#message_game_state.opponent_state)),
-    protocol_buffers:encode(2,length_encoded,encode_game_state(R#message_game_state.player_state)),
-    protocol_buffers:encode(3,int32,R#message_game_state.starting_seed),
-    protocol_buffers:encode(4,length_encoded,R#message_game_state.opponent_name)
   ].
 
 decode_message_user_disconected(B) ->

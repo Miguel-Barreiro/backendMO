@@ -28,6 +28,18 @@
   blocks = [] :: [#block_position{}],
   garbage_message_list = [] :: [#message_garbage_list{}]}).
 
+%% @type message_game_state_record() = #message_game_state_record{
+%%   opponent_state() = #game_state{},
+%%   player_state() = #game_state{},
+%%   starting_seed() = integer(),
+%%   opponent_name() = binary()
+%% }.
+-record(message_game_state,{
+  opponent_state :: #game_state{},
+  player_state :: #game_state{},
+  starting_seed :: integer(),
+  opponent_name :: binary()}).
+
 %% @type message_login_record() = #message_login_record{
 %%   user_id() = binary(),
 %%   client_time() = integer()
@@ -41,11 +53,13 @@
 
 %% @type messagelogin_success_record() = #messagelogin_success_record{
 %%   user_id() = binary(),
-%%   previous_state() = messagelogin_success__previous_state()
+%%   previous_state() = messagelogin_success__previous_state(),
+%%   game_state() = 'undefined' | #message_game_state{}
 %% }.
 -record(messagelogin_success,{
   user_id :: binary(),
-  previous_state :: messagelogin_success__previous_state()}).
+  previous_state :: messagelogin_success__previous_state(),
+  game_state :: 'undefined' | #message_game_state{}}).
 
 %% @type message_game_start_record() = #message_game_start_record{
 %%   start_timestamp() = integer()
@@ -92,18 +106,6 @@
 %% }.
 -record(message_difficult_change,{
   level :: integer()}).
-
-%% @type message_game_state_record() = #message_game_state_record{
-%%   opponent_state() = #game_state{},
-%%   player_state() = #game_state{},
-%%   starting_seed() = integer(),
-%%   opponent_name() = binary()
-%% }.
--record(message_game_state,{
-  opponent_state :: #game_state{},
-  player_state :: #game_state{},
-  starting_seed :: integer(),
-  opponent_name :: binary()}).
 
 %% @type message_user_disconected_record() = #message_user_disconected_record{
 %%   opponent() = binary()

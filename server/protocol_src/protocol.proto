@@ -17,6 +17,15 @@ message GameState{
 };
 
 
+message MessageGameState{
+	required GameState opponentState = 1;
+	required GameState playerState = 2;
+	required int32 startingSeed = 3;
+	required string opponentName = 4;
+};
+
+
+
 message MessageLogin{
 	required string userId = 1;
 	required int32 clientTime = 2;
@@ -31,6 +40,7 @@ message MessageloginSuccess{
 
 	required string userId = 1;
 	required previous_state previousState = 2;
+	optional MessageGameState gameState = 3;
 };
 
 message MessageGameStart{
@@ -66,14 +76,6 @@ message MessagePlaceGarbage{
 message MessageDifficultChange{ 
 	required int32 level = 1;
 };
-
-message MessageGameState{
-	required GameState opponentState = 1;
-	required GameState playerState = 2;
-	required int32 startingSeed = 3;
-	required string opponentName = 4;
-};
-
 
 message MessageUserDisconected{
 	required string opponent = 1;
