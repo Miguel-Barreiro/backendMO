@@ -167,7 +167,6 @@ create_user_disconects_message( User_id ) ->
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-
 process_message( message_login_code, 
 					_User_process_pid, 
 						_Message_decoded = #request{ login_content = #message_login{ client_time = Client_time , user_id = User_id} },
@@ -176,35 +175,14 @@ process_message( message_login_code,
 	case {Client_time, User_id} of
 
 		{ _ , undefined } ->
-			{ reply_with_disconnect, create_disconect_message() };
+			{ ok, New_guest_id } = persistent_db:create_user( "guest" ),
+			login_guest_user( New_guest_id , Client_time );
 
 		{undefined, _ } -> 
 			{ reply_with_disconnect, create_disconect_message() };
 
 		_other ->
-
-			User_creation_function = fun() -> 
-				{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
-				#user{ 	user_id = User_id, user_process_pid = Child_pid }
-			end,
-
-			Relogin_User_function = fun( #user{ user_process_pid = User_pid } ) ->
-				case is_process_alive( User_pid ) of
-					false ->
-						{save, User_creation_function() };
-					true ->
-						gen_server:cast( User_pid, { reconnecting , self() } ),
-						dont_save
-				end
-			end,
-
-			case server_db:login_user(User_id, User_creation_function, Relogin_User_function) of
-				ok ->
-					{no_reply};
-				{ error, Reason } ->
-					lager:error( "login failed: ~p", [Reason] ),
-					{reply_with_disconnect, create_disconect_message() }
-			end
+			login_guest_user( User_id , Client_time )
 	end;
 
 
@@ -284,6 +262,35 @@ process_message( Other_code, User_process_pid, _Message_decoded, _Message_encode
 
 
 
+%%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+%%
+%%										PRIVATE FUNCTIONS
+%%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+login_guest_user( User_id , Client_time ) ->
+	User_creation_function = fun() -> 
+		{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
+		#user{ 	user_id = User_id, user_process_pid = Child_pid }
+	end,
+
+	Relogin_User_function = fun( #user{ user_process_pid = User_pid } ) ->
+		case is_process_alive( User_pid ) of
+			false ->
+				{save, User_creation_function() };
+			true ->
+				gen_server:cast( User_pid, { reconnecting , self() } ),
+				dont_save
+		end
+	end,
+
+	case server_db:login_user(User_id, User_creation_function, Relogin_User_function) of
+		ok ->
+			{no_reply};
+		{ error, Reason } ->
+			lager:error( "login failed: ~p", [Reason] ),
+			{reply_with_disconnect, create_disconect_message() }
+	end.
 
 
 

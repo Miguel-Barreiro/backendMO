@@ -3,7 +3,6 @@
 
 -include("include/softstate.hrl").
 
-
 -export([ start/0 ,get_user_data/1, push_user_data/1, delete_user_data/1, login_user/3]).
 
 
