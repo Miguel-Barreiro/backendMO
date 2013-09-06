@@ -34,8 +34,11 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 
 	lager:info("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
-	gen_server:cast( Connection_pid , {register_user_process,self(), User_id, undefined }),
+	gen_server:cast( Connection_pid , {register_user_process, self() }),
 	Connection_monitor = monitor(process, Connection_pid),
+
+	Msg =  message_processor:create_login_success( User_id ),
+	gen_server:cast( Connection_pid , { reply, Msg }),
 
 	{noreply, State#user_process_state{
 				client_start_time = Client_time,
@@ -63,6 +66,8 @@ handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid =
 
 
 
+
+
 handle_cast( { send_message_to_other, _Msg }, State = #user_process_state{ game_pid = Game_pid }) 
 				when Game_pid == undefined ->
 	{noreply, State};
@@ -80,6 +85,9 @@ handle_cast( { add_garbage , Garbage_list_message } , State = #user_process_stat
 	{noreply, State};
 
 
+
+
+
 handle_cast( { save_game_state , Game_state } , State = #user_process_state{ game_pid = Game_pid } ) ->
 	gen_server:cast( Game_pid, { save_game_state, Game_state, self() } ),
 	{noreply, State};
@@ -88,59 +96,93 @@ handle_cast( { save_game_state , Game_state } , State = #user_process_state{ gam
 
 
 
-handle_cast( { send_lost_message, _Lost_details }, State = #user_process_state{ game_pid = Game_pid }) 
-				when Game_pid == undefined ->
-	{noreply, State};
 
 handle_cast( { send_lost_message, Lost_details }, State = #user_process_state{ connection_pid = Connection_pid, game_state = Game_state }) 
 				when Game_state == playing_game ->
-	gen_server:cast( Connection_pid, {send_lost_message,Lost_details} ),
+	Msg = message_processor:create_lost_message(Lost_details),
+	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State};
 
 
 
 
 
-handle_cast( { send_won_message, _Won_details }, State = #user_process_state{ game_pid = Game_pid }) 
-				when Game_pid == undefined ->
-	{noreply, State};
 
 handle_cast( { send_won_message, Won_details }, State = #user_process_state{ connection_pid = Connection_pid , game_state = Game_state }) 
 				when Game_state == playing_game ->
-	gen_server:cast( Connection_pid, {send_won_message,Won_details} ),
+	Msg = message_processor:create_won_message(Won_details),
+	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State};
 
 
 
-handle_cast( {game_difficult_change , _New_level } ,  State = #user_process_state{ game_pid = Game_pid } )
-				when Game_pid == undefined ->
-	{noreply, State};
+
+
 
 handle_cast( {game_difficult_change , New_level }, State = #user_process_state{ connection_pid = Connection_pid , game_state = Game_state }) 
 				when Game_state == playing_game ->
-	gen_server:cast( Connection_pid, {game_difficult_change, New_level} ),
+	Msg = message_processor:create_difficult_message(New_level),
+	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State};
 
 
 
 
-handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state, user_id = User_id }) 
+
+handle_cast( {game_start , StartTime }, 
+					State = #user_process_state{ connection_pid = Connection_pid, 
+														session_start_time = Session_start,
+														client_start_time = Client_time }) ->
+
+	Client_start_time = Client_time + ( StartTime - Session_start ),
+	Msg = message_processor:create_start_message( Client_start_time ),
+	gen_server:cast( Connection_pid, {reply, Msg}),
+	{noreply, State};
+
+
+
+
+
+
+handle_cast( { enter_queue, _Tier }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state, user_id = User_id }) 
 				when User_state == init, Game_pid == undefined ->
 	lager:info("users_serv: ready to place in queue"),
 	queue_serv:enter( self(), User_id ),
 	{noreply, State#user_process_state{ game_state = in_queue }};
 
+
+
+
+
+
+
+handle_cast( { enter_game , Game_process_pid, Opponnent_name, Seed } , State = #user_process_state{ connection_pid = Connection_pid, game_state = User_state }) 
+				when User_state == in_queue ->
+
+	Msg = message_processor:create_match_found_message( Opponnent_name, Seed ),
+	gen_server:cast( Connection_pid, {reply, Msg}),
+
+	lager:info("i am now monitoring game ~p",[Game_process_pid]),
+	New_state = State#user_process_state{ 	game_monitor =  monitor(process, Game_process_pid ) , 
+											game_pid = Game_process_pid, 
+											game_state = playing_game },
+	{noreply, New_state};
+
+
+
+
+
+
+
 handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid,  game_state = User_state }) 
 				when User_state == playing_game, Game_pid =/= undefined ->
-	lager:info("users_serv: ready rematch"),
-	gen_server:cast( Game_pid , { user_ready_rematch, self()}),
+	gen_server:cast( Game_pid , { user_ready, self()}),
 	{noreply, State};
 
-handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_state = User_state }) 
-				when User_state =/= init ->
-	lager:error("users_serv: ready sent but user is not in correct ready state"),
-	{noreply, State};
 
+handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
+	lager:info("ready message sent at wrong time "),
+	{noreply, State};
 
 
 
@@ -159,28 +201,6 @@ handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ }) ->
 
 
 
-handle_cast( {game_start , Opponnent_name , Start_date, Seed }, 
-					State = #user_process_state{ connection_pid = Connection_pid, 
-														session_start_time = Session_start,
-														client_start_time = Client_time }) ->
-	
-
-	Client_start_time = Client_time + ( Start_date - Session_start),
-	gen_server:cast( Connection_pid, {send_start_message , { Opponnent_name , Client_start_time, Seed }}),
-	{noreply, State};
-
-
-
-
-
-
-handle_cast( { register_game_process, Game_process_pid }, State = #user_process_state{ } ) ->
-	lager:info("i am now monitoring game ~p",[Game_process_pid]),
-	New_state = State#user_process_state{ 	game_monitor =  monitor(process, Game_process_pid ) , 
-											game_pid = Game_process_pid, 
-											game_state = playing_game },
-	{noreply, New_state};
-
 
 
 
@@ -194,7 +214,6 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 																				disconect_timer = Disconect_timer,
 																				user_id = User_id,
 																				game_pid = Game_process_pid } ) ->
-
 	lager:info("player '~p' reconnected" ,[self()]),
 
 	%cancels the timeout for disconect
@@ -206,27 +225,29 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 	case Previous_connection_monitor of
 		undefined ->	do_nothing;
 		_ ->			demonitor(Previous_connection_monitor),
-						gen_server:cast( Previous_connection_pid , {reply_with_disconnect, message_processor:create_disconect_message() } )
+						gen_server:cast( Previous_connection_pid , { reply_with_disconnect, message_processor:create_disconect_message() } )
 	end,
-	
-	gen_server:cast( New_connection_pid , {register_user_process,self(), User_id, Game_process_pid } ),
+
+	gen_server:cast( New_connection_pid , { register_user_process, self() } ),
 	New_connection_monitor = monitor(process, New_connection_pid),
 
 	case Game_process_pid of
-		undefined ->
-			do_nothing;
-		_ ->
-			gen_server:cast( Game_process_pid , {reconnecting, self() } )
-	end,
+		undefined ->	Msg = message_processor:create_login_success( User_id ),
+						gen_server:cast( New_connection_pid , { reply, Msg });
 
+		_ ->			gen_server:cast( Game_process_pid , { reconnecting, self() } )
+
+	end,
 	{noreply, State#user_process_state{ connection_monitor = New_connection_monitor,
 											connection_pid = New_connection_pid,
 												disconect_timer = undefined } };
 
 
 
+
 handle_cast(accept, State ) ->
 	{noreply, State}.
+
 
 
 %%

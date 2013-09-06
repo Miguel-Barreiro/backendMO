@@ -8,7 +8,7 @@
 
 -define(MAX_PACKET_SIZE, 4000).
 -define(COMPRESS_TRESHOLD, 80).
--define(DEFAULT_INACTIVITY_TIMEOUT, 600).
+-define(DEFAULT_INACTIVITY_TIMEOUT, 6000).
 -define(DEFAULT_PING_TIMEOUT, 65).
 -define(DEFAULT_AUTH_TIMEOUT,3600).
 
@@ -84,64 +84,9 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 
 
-
-handle_cast( {send_start_message, { Opponnent_name , Start_date, Seed } }, State = #connection_state{socket = Socket, type = Type})  ->
-	Packet = message_processor:create_start_message( { Opponnent_name , Start_date, Seed } ),
-	lager:debug("sent send_start_message: ~p",[Packet]),
-	case Type of
-		tcp -> gen_tcp:send(Socket, Packet);
-		ssl -> ssl:send(Socket, Packet)
-	end,
-	{noreply, State};
-
-handle_cast( {send_won_message, Won_details}, State = #connection_state{socket = Socket, type = Type})  ->
-	Packet = message_processor:create_won_message(Won_details),
-	lager:debug("sent send_won_message: ~p",[Packet]),
-	case Type of
-		tcp -> gen_tcp:send(Socket, Packet);
-		ssl -> ssl:send(Socket, Packet)
-	end,
-	{noreply, State};
-
-handle_cast( {send_lost_message, Lost_details}, State = #connection_state{socket = Socket, type = Type})  ->
-	Packet = message_processor:create_lost_message(Lost_details),
-	lager:debug("sent send_lost_message : ~p",[Packet]),
-	case Type of
-		tcp -> gen_tcp:send(Socket, Packet);
-		ssl -> ssl:send(Socket, Packet)
-	end,
-	{noreply, State};
-
-
-handle_cast( {game_difficult_change, New_level}, State = #connection_state{socket = Socket, type = Type})  ->
-	Packet = message_processor:create_difficult_message(New_level),
-	lager:debug("sent game_difficult_change: ~p",[Packet]),
-	case Type of
-		tcp -> gen_tcp:send(Socket, Packet);
-		ssl -> ssl:send(Socket, Packet)
-	end,
-	{noreply, State};
-
-
-
-
-
-
-handle_cast( { register_user_process, User_process_pid, User_id, Game_process_pid }, State = #connection_state{ socket = Socket, type = Type } ) ->
+handle_cast( { register_user_process, User_process_pid }, State = #connection_state{ } ) ->
+	lager:info(" register_user_process called ~p with ~p",[self(),User_process_pid]),
 	New_state = State#connection_state{ user_monitor =  monitor(process, User_process_pid ) , user_process_pid = User_process_pid },
-
-	Packet = case Game_process_pid of 
-		undefined ->
-			message_processor:create_login_success( User_id, was_lobby );
-		_ ->
-			message_processor:create_login_success( User_id, was_playing_game )
-	end,
-	
-	case Type of
-		tcp -> gen_tcp:send(Socket, Packet);
-		ssl -> ssl:send(Socket, Packet)
-	end,
-
 	{noreply, New_state};
 
 
