@@ -8,7 +8,7 @@
 
 -define(MAX_PACKET_SIZE, 4000).
 -define(COMPRESS_TRESHOLD, 80).
--define(DEFAULT_INACTIVITY_TIMEOUT, 600).
+-define(DEFAULT_INACTIVITY_TIMEOUT, 6000).
 -define(DEFAULT_PING_TIMEOUT, 65).
 -define(DEFAULT_AUTH_TIMEOUT,3600).
 
@@ -85,9 +85,9 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 
 handle_cast( { register_user_process, User_process_pid }, State = #connection_state{ } ) ->
+	lager:info(" register_user_process called ~p with ~p",[self(),User_process_pid]),
 	New_state = State#connection_state{ user_monitor =  monitor(process, User_process_pid ) , user_process_pid = User_process_pid },
 	{noreply, New_state};
-
 
 
 

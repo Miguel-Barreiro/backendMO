@@ -34,11 +34,10 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 
 	lager:info("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
-	gen_server:cast( Connection_pid , {register_user_process,self(), User_id, undefined }),
+	gen_server:cast( Connection_pid , {register_user_process, self() }),
 	Connection_monitor = monitor(process, Connection_pid),
 
-	%message_processor:create_login_success( User_id, was_playing_game )
-	Msg =  message_processor:create_login_success( User_id, was_lobby ),
+	Msg =  message_processor:create_login_success( User_id ),
 	gen_server:cast( Connection_pid , { reply, Msg }),
 
 	{noreply, State#user_process_state{
@@ -130,13 +129,13 @@ handle_cast( {game_difficult_change , New_level }, State = #user_process_state{ 
 
 
 
-handle_cast( {game_start , Opponnent_name , Start_date, Seed }, 
+handle_cast( {game_start , StartTime }, 
 					State = #user_process_state{ connection_pid = Connection_pid, 
 														session_start_time = Session_start,
 														client_start_time = Client_time }) ->
 
-	Client_start_time = Client_time + ( Start_date - Session_start),
-	Msg = message_processor:create_start_message( Opponnent_name , Client_start_time, Seed ),
+	Client_start_time = Client_time + ( StartTime - Session_start ),
+	Msg = message_processor:create_start_message( Client_start_time ),
 	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State};
 
@@ -181,7 +180,9 @@ handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = 
 	{noreply, State};
 
 
-
+handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
+	lager:info("ready message sent at wrong time "),
+	{noreply, State};
 
 
 
@@ -231,7 +232,7 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 	New_connection_monitor = monitor(process, New_connection_pid),
 
 	case Game_process_pid of
-		undefined ->	Msg = message_processor:create_login_success( User_id, was_lobby ),
+		undefined ->	Msg = message_processor:create_login_success( User_id ),
 						gen_server:cast( New_connection_pid , { reply, Msg });
 
 		_ ->			gen_server:cast( Game_process_pid , { reconnecting, self() } )

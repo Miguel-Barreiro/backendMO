@@ -78,12 +78,12 @@ create_login_success( User_id, Player_game_state, Opponent_game_state,
 		_ ->			Opponent_game_state
 	end,
 
-	Game_state = #message_game_state{ player_state = Player_message_state#game_state{ garbage_message_list = Player_garbage_messages_list }, 
-														opponent_state = Opponent_message_state#game_state{ garbage_message_list = Opponent_garbage_messages_list },
-															starting_seed = Starting_seed,
-																opponent_name = Oppponent_user_id },
+	%Game_state = #message_game_state{ player_state = Player_message_state#game_state{ garbage_message_list = Player_garbage_messages_list }, 
+	%													opponent_state = Opponent_message_state#game_state{ garbage_message_list = Opponent_garbage_messages_list },
+	%														starting_seed = Starting_seed,
+	%															opponent_name = Oppponent_user_id },
 	Req = #request{ type = message_login_sucess,
-					login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = Game_state }},
+					login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = lobby }},
 	protocol_pb:encode_request(Req).
 
 
@@ -91,7 +91,7 @@ create_login_success( User_id, Player_game_state, Opponent_game_state,
 
 create_match_found_message( Opponnent_name , Seed  ) ->
 	Req = #request{ type = message_match_found,
-					game_start_content = #message_match_found{  
+					match_found_content = #message_match_found{  
 						seed = Seed,
 						opponent_name = Opponnent_name,
 						start_level = 0
@@ -218,7 +218,7 @@ process_message( message_ready_code, User_process_pid, _Message_decoded, _Messag
 
 
 process_message( message_enter_queue, User_process_pid, 
-					#request{ place_piece_content = #message_enter_queue{ tier = Tier } }, 
+					#request{ enter_queue_content = #message_enter_queue{ tier = Tier } }, 
 						_Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 
@@ -260,22 +260,23 @@ process_message( message_place_garbage_code,
 
 
 
-process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded )
-			when User_process_pid =/= no_user_process, Client_message_code == message_update_piece_code ->
+process_message( message_update_piece_code, User_process_pid, _Message_decoded, Message_encoded )
+			when User_process_pid =/= no_user_process ->
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 
 
 
-process_message( Client_message_code, User_process_pid, _Message_decoded, Message_encoded )
-			when User_process_pid =/= no_user_process, Client_message_code == message_generic_power ->
+process_message( message_generic_power, User_process_pid, _Message_decoded, Message_encoded )
+			when User_process_pid =/= no_user_process ->
+	lager:info("generic power received ~p",[self()]),
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 
 
 
-process_message( Other_code, _User_process_pid, _Message_decoded, _Message_encoded ) ->	
-	lager:error("I ~p , received unkown message code ~p ",[self(),Other_code]),
+process_message( Other_code, User_process_pid, _Message_decoded, _Message_encoded ) ->	
+	lager:error("I ~p , received unkown message code ~p when user is ~p",[self(),Other_code,User_process_pid]),
 	{reply_with_disconnect, create_disconect_message() }.
 
 
