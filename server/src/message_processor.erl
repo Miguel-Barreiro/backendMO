@@ -182,7 +182,15 @@ process_message( message_login_code,
 			{ reply_with_disconnect, create_disconect_message() };
 
 		_other ->
-			login_guest_user( User_id , Client_time )
+
+			lager:info("User id no login e ~p",[User_id]),
+
+			User_id_list = binary_to_list(User_id),
+			case persistent_db:get_user_by_guest_id( User_id_list ) of
+				{ error, _error } ->	{ ok, New_guest_id } = persistent_db:create_user( "Guest" ),
+										login_guest_user( New_guest_id , Client_time );
+				{ok, _user } ->			login_guest_user( User_id_list , Client_time )
+			end
 	end;
 
 

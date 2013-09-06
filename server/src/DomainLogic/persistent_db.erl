@@ -3,42 +3,14 @@
 -include("../deps/emysql/include/emysql.hrl").
 -include("include/softstate.hrl").
 
--export([ database_connect/0, create_user/1, get_user_by_name/1 ]).
+-export([ database_connect/0, create_user/1 ]).
+-export([ get_user_by_name/1, get_user_by_guest_id/1 ]).
+
 
 -define( DB_POOL_NAME , miniorbs_db_pool).
 
-%persistent_db:create_user("Name")
 
-%returns {ok, guest_id} or {error, _ }
-create_user( Name ) ->
-	Query = "call user_create(\'" ++ Name ++ "\' )",
-	case  (catch emysql:execute(?DB_POOL_NAME, list_to_binary(Query) )) of
-		Ok_packet when is_record(Ok_packet, ok_packet) ->		{error, user_not_created};
-		[Result | _ ] ->
-			case Result#result_packet.rows of
-				[] ->											{error, user_not_created};
-				[ [New_user_id] ] ->							{ok, New_user_id}
-			end
-	end.
 
-get_user_by_name( Name ) ->
-	Query = "call user_search_by_name(\'" ++ Name ++ "\' )",
-	case (catch emysql:execute(?DB_POOL_NAME, list_to_binary(Query) )) of
-
-		Ok_packet when is_record(Ok_packet, ok_packet) ->
-			lager:error("user ~p wasnt found",[Name]),
-			{error, user_not_found};
-
-		[Result | _ ] ->
-			case emysql_util:as_record(Result, persistent_user, record_info(fields, persistent_user) ) of
-				[]->				lager:error("user ~p wasnt found",[Name]),
-									{error, user_not_found};
-				[ User | _ ] ->		{ok, User}
-			end;
-		{'EXIT',{mysql_timeout, _ , _ } } ->
-			lager:error("couldnt query to database , timeout reached"),
-			{error, query_timeout}
-	end.
 
 
 
@@ -69,4 +41,90 @@ database_connect() ->
 			io:format("i have connected to database: ~p", [Db_host]),
 			ok
 	end.
+
+%%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+%%
+%%										SETTERS
+%%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+%persistent_db:create_user("Name")
+
+%returns {ok, guest_id} or {error, _ }
+create_user( Name ) ->
+	Query = "call user_create(\'" ++ Name ++ "\' )",
+	case  (catch emysql:execute(?DB_POOL_NAME, list_to_binary(Query) )) of
+		Ok_packet when is_record(Ok_packet, ok_packet) ->		{error, user_not_created};
+		[Result | _ ] ->
+			case Result#result_packet.rows of
+				[] ->											{error, user_not_created};
+				[ [New_user_id] ] ->							{ok, New_user_id}
+			end
+	end.
+
+
+
+
+
+
+%%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+%%
+%%										GETTERS
+%%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+get_user_by_guest_id( Guest_id ) ->
+	Query = "call user_search_by_guest_id(\'" ++ Guest_id ++ "\' )",
+	case (catch emysql:execute(?DB_POOL_NAME, list_to_binary(Query) )) of
+
+		Ok_packet when is_record(Ok_packet, ok_packet) ->
+			lager:error("user with guest_id ~p wasnt found",[Guest_id]),
+			{error, user_not_found};
+
+		[Result | _ ] ->
+			case emysql_util:as_record(Result, persistent_user, record_info(fields, persistent_user) ) of
+				[]->				lager:error("user with guest_id ~p wasnt found",[Guest_id]),
+									{error, user_not_found};
+				[ User | _ ] ->		{ok, User}
+			end;
+		{'EXIT',{mysql_timeout, _ , _ } } ->
+			lager:error("couldnt query to database , timeout reached"),
+			{error, query_timeout}
+	end.
+
+
+
+
+
+
+get_user_by_name( Name ) ->
+	Query = "call user_search_by_name(\'" ++ Name ++ "\' )",
+	case (catch emysql:execute(?DB_POOL_NAME, list_to_binary(Query) )) of
+
+		Ok_packet when is_record(Ok_packet, ok_packet) ->
+			lager:error("user ~p wasnt found",[Name]),
+			{error, user_not_found};
+
+		[Result | _ ] ->
+			case emysql_util:as_record(Result, persistent_user, record_info(fields, persistent_user) ) of
+				[]->				lager:error("user ~p wasnt found",[Name]),
+									{error, user_not_found};
+				[ User | _ ] ->		{ok, User}
+			end;
+		{'EXIT',{mysql_timeout, _ , _ } } ->
+			lager:error("couldnt query to database , timeout reached"),
+			{error, query_timeout}
+	end.
+
+
+
+
+
+
+
+
+
+
+
+
 

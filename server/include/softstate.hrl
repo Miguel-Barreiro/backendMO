@@ -15,5 +15,6 @@
 
 -record(  persistent_user, {
 	id,
-	name
+	name,
+	guest_id
 }).
