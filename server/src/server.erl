@@ -15,6 +15,7 @@ start(_StartType, _StartArgs) ->
 
 	random:seed(),
 
+	ok = persistent_db:database_connect(),
     server_db:start(),
  	sockserv_sup:launch_empty_listeners(),
 

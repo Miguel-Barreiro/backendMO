@@ -41,11 +41,11 @@
   opponent_name :: binary()}).
 
 %% @type message_login_record() = #message_login_record{
-%%   user_id() = binary(),
+%%   user_id() = 'undefined' | binary(),
 %%   client_time() = integer()
 %% }.
 -record(message_login,{
-  user_id :: binary(),
+  user_id :: 'undefined' | binary(),
   client_time :: integer()}).
 
 %% @type messagelogin_success__previous_state() = lobby | playing_game.
