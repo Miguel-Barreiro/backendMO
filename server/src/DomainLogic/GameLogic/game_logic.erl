@@ -55,7 +55,7 @@ pop_combo( Board = #board{}, Combo ) ->
 
 
 simulate_gravity( Board = #board{} )->
-	simulate_gravity( Board = #board{}, 0, 0 ).
+	simulate_gravity_by_column( Board, 0).
 
 
 
@@ -68,25 +68,31 @@ simulate_gravity_by_column( Board = #board{}, X ) when X >= Board#board.width ->
 	Board;
 
 simulate_gravity_by_column( Board = #board{}, X ) ->
-	
-	simulate_gravity_by_column( Board = #board{}, X + 1 ).
+	New_board = move_column_down( Board, X, 0, 0),
+	simulate_gravity_by_column( New_board, X + 1 ).
 
 
-
-simulate_gravity( Board = #board{}, X, Y ) ->
-	case board:get_block( Board, X, Y) of
-		empty ->
-			move_column_down( Board = #board{}, X, Y, 1 );
-		_block ->
-			Board
-	end.
-
-
-move_column_down( Board = #board{}, X, Y, How_much ) when Y >= Board#board.height ->
+move_column_down( Board = #board{}, _X, Y, _How_much ) when Y >= Board#board.height ->
 	Board;
 
+move_column_down( Board = #board{}, X, Y, 0) ->
+	case board:get_block( Board, X, Y) of
+		empty ->
+			move_column_down( Board, X, Y + 1, 1);
+		_block ->
+			move_column_down( Board, X, Y + 1, 0)
+	end;
+
 move_column_down( Board = #board{}, X, Y, How_much ) ->
-	Board.
+	case board:get_block( Board, X, Y) of
+		empty ->
+			move_column_down( Board, X, Y + 1, How_much + 1);
+
+		Block ->
+			Board_withouth_block = board:remove_block( Board, X, Y ),
+			Board_with_block_in_place = board:set_block( Block, Board_withouth_block, X, Y - How_much ),
+			move_column_down( Board_with_block_in_place, X, Y + 1, How_much)
+	end.
 
 
 
@@ -142,7 +148,29 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 
 
 
-%% --------------------         Combos              ------------------------------------------
+%% --------------------         GRAVITY              ------------------------------------------
+
+
+simple_gravity_test() ->
+	
+	Board = board:new_empty(5,12),
+	Board2 = board:set_block( #block{ color = red }, Board , 3 , 1 ),
+	Board3 = board:set_block( #block{ color = yellow }, Board2 , 3 , 3 ),
+	Board4 = board:set_block( #block{ color = blue }, Board3 , 2 , 0 ),
+	Board5 = board:set_block( #block{ color = green }, Board4 , 1 , 1 ),
+
+	Board_after_gravity = game_logic:simulate_gravity( Board5 ),
+
+	?assert( board:get_block( Board_after_gravity , 3, 0 ) == #block{ color = red, x = 3, y = 0 } ),
+	?assert( board:get_block( Board_after_gravity , 3, 1 ) == #block{ color = yellow, x = 3, y = 1 } ),
+	?assert( board:get_block( Board_after_gravity , 2, 0 ) == #block{ color = blue, x = 2, y = 0 } ),
+	?assert( board:get_block( Board_after_gravity , 1, 0 ) == #block{ color = green, x = 1, y = 0 } ),
+
+	ok.
+
+
+
+%% --------------------         COBMOS              ------------------------------------------
 
 simple_combo_test() ->
 
