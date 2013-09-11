@@ -46,11 +46,16 @@ calculate_combos( Board = #board{} )->
 	lists:filter(Pred_minimum_4, All_Combos).
 
 
-pop_combo( Board = #board{}, _Combo) ->
-	Board.
+pop_combo( Board = #board{}, Combo ) ->
+	Fun = fun( Block = #block{}, New_board )->
+		board:remove_block( New_board, Block#block.x, Block#block.y )
+	end,
+	lists:foldl( Fun, Board, sets:to_list(Combo)).
+
+
 
 simulate_gravity( Board = #board{} )->
-	Board.
+	simulate_gravity( Board = #board{}, 0, 0 ).
 
 
 
@@ -58,6 +63,33 @@ simulate_gravity( Board = #board{} )->
 %%
 %%										combos helper functions
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+simulate_gravity_by_column( Board = #board{}, X ) when X >= Board#board.width ->
+	Board;
+
+simulate_gravity_by_column( Board = #board{}, X ) ->
+	
+	simulate_gravity_by_column( Board = #board{}, X + 1 ).
+
+
+
+simulate_gravity( Board = #board{}, X, Y ) ->
+	case board:get_block( Board, X, Y) of
+		empty ->
+			move_column_down( Board = #board{}, X, Y, 1 );
+		_block ->
+			Board
+	end.
+
+
+move_column_down( Board = #board{}, X, Y, How_much ) when Y >= Board#board.height ->
+	Board;
+
+move_column_down( Board = #board{}, X, Y, How_much ) ->
+	Board.
+
+
+
 
 
 calculate_combo_for_piece( Block = #block{ }, X, Y, Board = #board{} ) ->
@@ -108,6 +140,9 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 
 -include_lib("eunit/include/eunit.hrl").
 
+
+
+%% --------------------         Combos              ------------------------------------------
 
 simple_combo_test() ->
 
@@ -162,6 +197,9 @@ double_combo_test() ->
 %	Lists = lists:map( fun( Set ) ->  sets:to_list(Set) end, Combos),
 %	io:format("All_Combos ~p",[Lists]),	
 	
+
+	?assert( length( Combos ) == 2),
+
 	[Combo1 , Combo2] = Combos,
 
 	case sets:size(Combo1) of
@@ -195,6 +233,38 @@ double_combo_test() ->
 			throw("one of the combos isnt the correct size") 
 	end,
 	ok.
+
+
+no_combos_test() ->
+	
+	Board = board:new_empty(5,12),
+	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Board3 = board:set_block( #block{ color = blue }, Board2 , 2 , 0 ),
+	Board4 = board:set_block( #block{ color = yellow }, Board3 , 3 , 0 ),
+	Board5 = board:set_block( #block{ color = green }, Board4 , 4 , 0 ),
+	Board6 = board:set_block( #block{ color = blue }, Board5 , 1 , 1 ),	
+	Board7 = board:set_block( #block{ color = yellow }, Board6 , 1 , 2 ),
+
+	Combos = game_logic:calculate_combos( Board7 ),
+
+	?assert( length( Combos ) == 0),
+	ok.
+
+
+
+
+
+
+
+
+
+
+
+
+%% --------------------                       ------------------------------------------
+
+
+
 
 
 -endif.

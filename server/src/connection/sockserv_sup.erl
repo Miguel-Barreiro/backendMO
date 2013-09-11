@@ -18,8 +18,12 @@ init([]) ->
 
 	Ip ="0.0.0.0",
 	%Ip ="127.0.0.1",
-	Port = 9000,
-	SSLPort = 9001,
+	%Port = 9000,
+	%SSLPort = 9001,
+
+	Port = application:get_env(server, port),
+	SSLPort = application:get_env(server, ssl_port),
+
 	CertFile = "../../etc/server_cert.pem",
 	KeyFile = "../../etc/server_key.pem",
 
