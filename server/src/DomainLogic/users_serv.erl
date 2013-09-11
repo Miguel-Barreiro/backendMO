@@ -1,7 +1,7 @@
 -module(users_serv).
 -behaviour(gen_server).
 
--define(CONNECTION_TIMEOUT, 60000).
+-define(CONNECTION_TIMEOUT, 6000).
 
 -include("include/softstate.hrl").
 
@@ -259,18 +259,19 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_s
 				when Reference == Connection_monitor ->
 	lager:info("user connection went down", []),
 	demonitor(Connection_monitor),
-	TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
+%	TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
 
-	case Game_process_pid of 
-		undefined ->
-			do_nothing;
-		_alive ->
-			gen_server:cast(Game_process_pid, { user_disconected, self() , User_id })
-	end,
+%	case Game_process_pid of 
+%		undefined ->
+%			do_nothing;
+%		_alive ->
+%			gen_server:cast(Game_process_pid, { user_disconected, self() , User_id })
+%	end,
 
-	{noreply, State#user_process_state{ disconect_timer = TimerRef,
-											connection_monitor = undefined,  
-												connection_pid = undefined } };
+%	{noreply, State#user_process_state{ disconect_timer = TimerRef,
+%											connection_monitor = undefined,  
+%												connection_pid = undefined } };
+	{stop, normal, State};
 
 
 %%

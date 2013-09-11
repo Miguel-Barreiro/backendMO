@@ -5,7 +5,6 @@
 
 -include("include/softstate.hrl").
 
--define(CONNECTION_TIMEOUT, 40000).
 -define(DIFFICULT_CHANGE_SECONDS, 30).
 -define( COUNTDOWN_TO_START_SECONDS , 5).
 
@@ -18,7 +17,7 @@
 	user_id = undefined,
 	monitor = undefined,
 	victories = 0,
-	is_ready = true,
+	is_ready = false,
 	is_connected = true,
 	garbage_list = []
 }).
@@ -56,12 +55,6 @@ handle_cast([User_pid, User_id, User_pid2, User_id2], State = #game_state{ }) ->
 
 	lager:info("new game with user_id ~p user ~p",[User_pid,User_pid2]),
 
-%	gen_server:cast( User_pid , {register_game_process,self()}),
-%	Connection_monitor1 = monitor(process, User_pid),
-	
-%	gen_server:cast( User_pid2 , {register_game_process,self()}),
-%	Connection_monitor2 = monitor(process, User_pid2),
-
 	gen_server:cast(self() , game_created ),
 
 	{noreply, State#game_state{
@@ -86,9 +79,14 @@ handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, st
 	gen_server:cast( User1#game_user.pid , { enter_game, self(), User2#game_user.user_id, Seed } ),
 	gen_server:cast( User2#game_user.pid , { enter_game, self(), User1#game_user.user_id, Seed } ),
 
+	Connection_monitor1 = monitor(process, User1#game_user.pid),	
+	Connection_monitor2 = monitor(process, User2#game_user.pid),
+
 	{ noreply, State#game_state{ difficult_level = 0,
 									starting_seed = Seed,
-										state = waiting_players } };
+										user1 = User1#game_user{ is_ready = false, monitor = Connection_monitor1 },
+											user2 = User2#game_user{ is_ready = false, monitor = Connection_monitor2 },
+												state = waiting_players } };
 
 
 
@@ -108,7 +106,7 @@ handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, 
 
 
 handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
-				when User1#game_user.pid == User_pid, 
+				when User2#game_user.pid == User_pid, 
 						Game_State == waiting_players ->
 
 	case User1#game_user.is_ready of
@@ -315,12 +313,6 @@ handle_cast( check_game_restart, State = #game_state{ } ) ->
 
 
 
-
-
-
-
-
-
 handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game_difficult_change_timer = Game_difficult_timer, 
 																				user1 = User1 , 
 																					user2 = User2 } )
@@ -433,15 +425,6 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{ use
 
 	{stop, normal, State};
 
-
-
-
-%%
-%	called when the user disconect timeouts
-%%
-handle_info(connection_timeout, State = #game_state{}) ->
-    lager:debug("connection timeout", []),
-    {stop, normal, State};
 
 
 
