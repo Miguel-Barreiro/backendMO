@@ -3,7 +3,10 @@
 -include("include/softstate.hrl").
 
 -export([ place_piece/4 ]).
--export([ simulate_gravity/1, calculate_combos/1, pop_combo/2 ]).
+-export([ simulate_gravity/1, calculate_combos/1, pop_combo/2, calculate_garbage_from_combos/1 ]).
+
+
+
 
 
 place_piece( Piece = #piece{} , Board = #board{} , X, Y) ->
@@ -21,11 +24,13 @@ place_piece( Piece = #piece{} , Board = #board{} , X, Y) ->
 
 
 
+
+
+
 calculate_combos( Board = #board{} )->
 	Blocks = board:get_all_blocks(Board),
 
 	Fun = fun( Block = #block{} , Combos ) ->
-
 		%lets ignore blocks already in combos
 		case lists:any( fun( Combo ) -> sets:is_element( Block, Combo ) end , Combos) of
 			true ->
@@ -46,6 +51,9 @@ calculate_combos( Board = #board{} )->
 	lists:filter(Pred_minimum_4, All_Combos).
 
 
+
+
+
 pop_combo( Board = #board{}, Combo ) ->
 	Fun = fun( Block = #block{}, New_board )->
 		board:remove_block( New_board, Block#block.x, Block#block.y )
@@ -54,8 +62,24 @@ pop_combo( Board = #board{}, Combo ) ->
 
 
 
+
+
 simulate_gravity( Board = #board{} )->
 	simulate_gravity_by_column( Board, 0).
+
+
+
+
+
+
+calculate_garbage_from_combos( Combos ) ->
+	Sum_garbage_from_combos = fun( Combo, Acc )->
+		Acc + calculate_garbage_from_combo( Combo )
+	end,
+	( length( Combos ) - 1) * 2 + lists:foldl( Sum_garbage_from_combos, 0, Combos).
+
+
+
 
 
 
@@ -129,7 +153,19 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 
 
 
-
+calculate_garbage_from_combo( Combo ) ->
+	case sets:size(Combo) of
+		4 ->		1;
+		5 ->		1;
+		6 ->		2;
+		7 ->		2;
+		8 ->		3;
+		9 ->		3;
+		10 ->		4;
+		11 ->		4;
+		12 ->		5;
+		_other ->	6
+	end.
 
 
 
@@ -145,6 +181,18 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 -ifdef(TEST).
 
 -include_lib("eunit/include/eunit.hrl").
+
+%% --------------------         GARBAGE              ------------------------------------------
+
+
+single_combo_garbage_test() ->
+	Combo = sets:add_element( #block{ color = red, x = 3, y = 0 } ,
+				sets:add_element( #block{ color = red, x = 3, y = 1 },
+					sets:add_element( #block{ color = red, x = 3, y = 2 },
+						sets:add_element( #block{ color = red, x = 3, y = 3 }, sets:new())))),
+
+	?assert( calculate_garbage_from_combos( [Combo] ) == 1 ),
+	ok.
 
 
 
@@ -224,7 +272,6 @@ double_combo_test() ->
 
 %	Lists = lists:map( fun( Set ) ->  sets:to_list(Set) end, Combos),
 %	io:format("All_Combos ~p",[Lists]),	
-	
 
 	?assert( length( Combos ) == 2),
 
