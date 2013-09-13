@@ -40,7 +40,8 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Board_after_gravity ),			
 			
 			case length(Generated_garbage_position_list) of
-				0 ->
+
+					0 ->
 						dont_send_anything;
 				_other ->
 						gen_server:cast( User_pid , { send_message, message_processor:create_generated_garbage_message( Generated_garbage_position_list ) } ),
@@ -57,12 +58,6 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 
 			{ New_gamestate, New_opponent_gamestate }
 	end.
-
-
-
-
-
-
 
 
 
@@ -353,7 +348,6 @@ calculate_garbage_from_combo( Combo ) ->
 
 
 
-
 test_garbage_position( Garbage_position_list ) ->
 	
 	Fun = fun( Position, { Cache , { Position_max , Max} , { Position_min , Min} } ) ->
@@ -604,6 +598,9 @@ no_combos_test() ->
 	?assert( length( Combos ) == 0),
 	ok.
 
+
+
+%% --------------------         PLACE PIECE              ------------------------------------------
 
 
 simple_up_place_piece_test() ->

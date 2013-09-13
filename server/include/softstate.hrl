@@ -27,7 +27,7 @@
 }).
 
 -type block_type() :: color | garbage.
--type color_type() :: red | yellow | blue | green.
+-type color_type() :: red | yellow | blue | green | purple | white.
 
 -record( block, {
 	type = color :: block_type(),
