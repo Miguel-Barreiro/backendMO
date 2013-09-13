@@ -69,16 +69,16 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 
 
 place_piece( Piece = #piece{}, X, Y, Angle, Board = #board{} ) ->
-	New_board = board:set_block( Piece#piece.block1, Board, X , Y ),
+	New_board = board:set_block( Piece#piece.block1, X , Y, Board ),
 	case Angle of
 		up ->
-			board:set_block( Piece#piece.block2, New_board, X , Y + 1 );	
+			board:set_block( Piece#piece.block2, X , Y + 1, New_board );	
 		down ->
-			board:set_block( Piece#piece.block2, New_board, X , Y - 1 );
+			board:set_block( Piece#piece.block2, X , Y - 1, New_board );
 		left ->
-			board:set_block( Piece#piece.block2, New_board, X -1 , Y );
+			board:set_block( Piece#piece.block2, X -1 , Y, New_board );
 		right ->			
-			board:set_block( Piece#piece.block2, New_board, X + 1 , Y )
+			board:set_block( Piece#piece.block2, X + 1 , Y, New_board )
 	end.
 
 
@@ -123,7 +123,7 @@ pop_combos( Board = #board{}, Combo_list ) ->
 
 pop_combo( Board = #board{}, Combo ) ->
 	Fun = fun( Block = #block{}, New_board )->
-		board:remove_block( New_board, Block#block.x, Block#block.y )
+		board:remove_block( Block#block.x, Block#block.y, New_board )
 	end,
 	lists:foldl( Fun, Board, sets:to_list(Combo)).
 
@@ -143,7 +143,7 @@ simulate_gravity( Board = #board{} )->
 release_garbage_list( Board = #board{}, [] ) ->
 	Board;
 release_garbage_list( Board = #board{}, [Garbage_position | Rest ] ) ->
-	New_board = board:set_block( #block{ type = garbage }, Board, Garbage_position , get_column_height( Garbage_position, Board ) ),
+	New_board = board:set_block( #block{ type = garbage }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
 	release_garbage_list( New_board, Rest ).
 
 
@@ -165,7 +165,7 @@ calculate_garbage_from_combos( Combos, Board = #board{} ) ->
 
 
 %TODO
-calculate_next_piece( Gamestate = #user_gamestate{} ) ->
+calculate_next_piece( _Gamestate = #user_gamestate{} ) ->
 	#piece{ block1 = #block{ type = color , color = red }, block2 = #block{ type = color , color = green } }.
 
 
@@ -188,7 +188,7 @@ get_column_height( Column, Board = #board{} ) ->
 
 
 get_column_height( Board = #board{}, X, Y ) ->
-	case board:get_block( Board , X , Y ) of
+	case board:get_block( X , Y, Board ) of
 		empty ->		Y;
 		_other ->		get_column_height( Board, X , Y + 1)
 	end.
@@ -242,7 +242,7 @@ move_column_down( Board = #board{}, _X, Y, _How_much ) when Y >= Board#board.hei
 	Board;
 
 move_column_down( Board = #board{}, X, Y, 0) ->
-	case board:get_block( Board, X, Y) of
+	case board:get_block( X, Y, Board) of
 		empty ->
 			move_column_down( Board, X, Y + 1, 1);
 		_block ->
@@ -250,13 +250,13 @@ move_column_down( Board = #board{}, X, Y, 0) ->
 	end;
 
 move_column_down( Board = #board{}, X, Y, How_much ) ->
-	case board:get_block( Board, X, Y) of
+	case board:get_block( X, Y, Board) of
 		empty ->
 			move_column_down( Board, X, Y + 1, How_much + 1);
 
 		Block ->
-			Board_withouth_block = board:remove_block( Board, X, Y ),
-			Board_with_block_in_place = board:set_block( Block, Board_withouth_block, X, Y - How_much ),
+			Board_withouth_block = board:remove_block( X, Y, Board ),
+			Board_with_block_in_place = board:set_block( Block, X, Y - How_much, Board_withouth_block ),
 
 			move_column_down( Board_with_block_in_place, X, Y + 1, How_much)
 	end.
@@ -284,7 +284,7 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 		false ->
 			New_visited = sets:add_element( {X,Y}, Visited),
 
-			case board:get_block( Board, X, Y ) of
+			case board:get_block( X, Y, Board ) of
 				empty ->
 					{ Combo, New_visited };
 
@@ -383,21 +383,21 @@ test_garbage_position( Garbage_position_list ) ->
 
 release_garbage_into_full_column_test()->
 	
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = green }, Board , 1 , 0 ),
-	Board3 = board:set_block( #block{ color = blue }, Board2 , 1 , 1 ),
-	Board4 = board:set_block( #block{ color = green }, Board3 , 1 , 2 ),
-	Board5 = board:set_block( #block{ color = blue }, Board4 , 1 , 3 ),
-	Board6 = board:set_block( #block{ color = green }, Board5 , 1 , 4 ),
-	Board7 = board:set_block( #block{ color = yellow }, Board6 , 1 , 5 ),
-	Board8 = board:set_block( #block{ color = green }, Board7 , 1 , 6 ),
-	Board9 = board:set_block( #block{ color = yellow }, Board8 , 1 , 7 ),
-	Board10 = board:set_block( #block{ color = green }, Board9 , 1 , 8 ),
-	Board11 = board:set_block( #block{ color = blue }, Board10 , 1 , 9 ),
-	Board12 = board:set_block( #block{ color = yellow }, Board11 , 1 , 10 ),
-	Board13 = board:set_block( #block{ color = red }, Board12 , 1 , 11 ),
+	Board = board:set_block( #block{ color = red }, 1 , 11, 
+				board:set_block( #block{ color = yellow }, 1 , 10, 
+					board:set_block( #block{ color = blue }, 1 , 9, 
+						board:set_block( #block{ color = green }, 1 , 8, 
+							board:set_block( #block{ color = yellow }, 1 , 7, 
+								board:set_block( #block{ color = green }, 1 , 6,
+									board:set_block( #block{ color = yellow }, 1 , 5,
+										board:set_block( #block{ color = green }, 1 , 4,
+											board:set_block( #block{ color = blue }, 1 , 3 ,
+												board:set_block( #block{ color = green }, 1 , 2,
+													board:set_block( #block{ color = blue }, 1 , 1,
+														board:set_block( #block{ color = green }, 1 , 0,
+															board:new_empty(5,12))))))))))))),
 
-	?assertThrow(out_of_bounds, release_garbage_list( Board13, [1] ) ),
+	?assertThrow(out_of_bounds, release_garbage_list( Board, [1] ) ),
 
 	ok.
 
@@ -449,24 +449,24 @@ double_combo_garbage_test() ->
 
 simple2_gravity_test() ->
 
-	Board = board:new_empty(6,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 3 , 2 ),
-	Board3 = board:set_block( #block{ color = yellow }, Board2 , 3 , 6 ),
-	Board4 = board:set_block( #block{ color = yellow }, Board3 , 3 , 7 ),
-	Board5 = board:set_block( #block{ color = blue }, Board4 , 2 , 3 ),
-	Board6 = board:set_block( #block{ color = green }, Board5 , 1 , 4 ),
-	Board7 = board:set_block( #block{ color = red }, Board6 , 5 , 0 ),
-	Board8 = board:set_block( #block{ color = green }, Board7 , 5 , 5 ),
+	Board = board:set_block( #block{ color = green }, 5 , 5,
+				board:set_block( #block{ color = red }, 5 , 0,
+					board:set_block( #block{ color = green }, 1 , 4,
+						board:set_block( #block{ color = blue }, 2 , 3,
+							board:set_block( #block{ color = yellow }, 3 , 7,
+								board:set_block( #block{ color = yellow }, 3 , 6,
+									board:set_block( #block{ color = red }, 3 , 2,
+										board:new_empty(6,12)))))))),
 
-	Board_after_gravity = simulate_gravity( Board8 ),
+	Board_after_gravity = simulate_gravity( Board ),
 
-	?assert( board:get_block( Board_after_gravity , 3, 0 ) == #block{ color = red, x = 3, y = 0 } ),
-	?assert( board:get_block( Board_after_gravity , 3, 1 ) == #block{ color = yellow, x = 3, y = 1 } ),
-	?assert( board:get_block( Board_after_gravity , 3, 2 ) == #block{ color = yellow, x = 3, y = 2 } ),
-	?assert( board:get_block( Board_after_gravity , 2, 0 ) == #block{ color = blue, x = 2, y = 0 } ),
-	?assert( board:get_block( Board_after_gravity , 1, 0 ) == #block{ color = green, x = 1, y = 0 } ),
-	?assert( board:get_block( Board_after_gravity , 5, 0 ) == #block{ color = red, x = 5, y = 0 } ),
-	?assert( board:get_block( Board_after_gravity , 5, 1 ) == #block{ color = green, x = 5, y = 1 } ),
+	?assert( board:get_block( 3, 0, Board_after_gravity ) == #block{ color = red, x = 3, y = 0 } ),
+	?assert( board:get_block( 3, 1, Board_after_gravity ) == #block{ color = yellow, x = 3, y = 1 } ),
+	?assert( board:get_block( 3, 2, Board_after_gravity ) == #block{ color = yellow, x = 3, y = 2 } ),
+	?assert( board:get_block( 2, 0, Board_after_gravity ) == #block{ color = blue, x = 2, y = 0 } ),
+	?assert( board:get_block( 1, 0, Board_after_gravity ) == #block{ color = green, x = 1, y = 0 } ),
+	?assert( board:get_block( 5, 0, Board_after_gravity ) == #block{ color = red, x = 5, y = 0 } ),
+	?assert( board:get_block( 5, 1, Board_after_gravity ) == #block{ color = green, x = 5, y = 1 } ),
 
 	ok.
 
@@ -474,18 +474,18 @@ simple2_gravity_test() ->
 
 simple_gravity_test() ->
 	
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 3 , 1 ),
-	Board3 = board:set_block( #block{ color = yellow }, Board2 , 3 , 3 ),
-	Board4 = board:set_block( #block{ color = blue }, Board3 , 2 , 0 ),
-	Board5 = board:set_block( #block{ color = green }, Board4 , 1 , 1 ),
+	Board = board:set_block( #block{ color = green }, 1 , 1,
+				board:set_block( #block{ color = blue }, 2 , 0,
+					board:set_block( #block{ color = yellow }, 3 , 3,
+				 		board:set_block( #block{ color = red }, 3 , 1,
+				 			board:new_empty(5,12))))),
 
-	Board_after_gravity = simulate_gravity( Board5 ),
+	Board_after_gravity = simulate_gravity( Board ),
 
-	?assert( board:get_block( Board_after_gravity , 3, 0 ) == #block{ color = red, x = 3, y = 0 } ),
-	?assert( board:get_block( Board_after_gravity , 3, 1 ) == #block{ color = yellow, x = 3, y = 1 } ),
-	?assert( board:get_block( Board_after_gravity , 2, 0 ) == #block{ color = blue, x = 2, y = 0 } ),
-	?assert( board:get_block( Board_after_gravity , 1, 0 ) == #block{ color = green, x = 1, y = 0 } ),
+	?assert( board:get_block( 3, 0, Board_after_gravity ) == #block{ color = red, x = 3, y = 0 } ),
+	?assert( board:get_block( 3, 1, Board_after_gravity ) == #block{ color = yellow, x = 3, y = 1 } ),
+	?assert( board:get_block( 2, 0, Board_after_gravity ) == #block{ color = blue, x = 2, y = 0 } ),
+	?assert( board:get_block( 1, 0, Board_after_gravity ) == #block{ color = green, x = 1, y = 0 } ),
 
 	ok.
 
@@ -495,18 +495,17 @@ simple_gravity_test() ->
 
 simple_combo_test() ->
 
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 3 , 0 ),
-	Board3 = board:set_block( #block{ color = red }, Board2 , 3 , 1 ),
-	Board4 = board:set_block( #block{ color = red }, Board3 , 4 , 1 ),
-	Board5 = board:set_block( #block{ color = red }, Board4 , 4 , 2 ),
+	Board = board:set_block( #block{ color = yellow }, 3 , 2,
+				board:set_block( #block{ color = green }, 2 , 2,
+					board:set_block( #block{ color = yellow }, 2 , 0,
+						board:set_block( #block{ color = blue }, 4 , 0,
+							board:set_block( #block{ color = red }, 4 , 2,
+								board:set_block( #block{ color = red }, 4 , 1,
+									board:set_block( #block{ color = red }, 3 , 1,
+										board:set_block( #block{ color = red }, 3 , 0,
+											board:new_empty(5,12))))))))),
 
-	Board6 = board:set_block( #block{ color = blue }, Board5 , 4 , 0 ),
-	Board7 = board:set_block( #block{ color = yellow }, Board6 , 2 , 0 ),
-	Board8 = board:set_block( #block{ color = green }, Board7 , 2 , 2 ),
-	Board9 = board:set_block( #block{ color = yellow }, Board8 , 3 , 2 ),
-
-	Combos = calculate_combos( Board9 ),
+	Combos = calculate_combos( Board ),
 
 	?assert( length( Combos ) == 1),
 	
@@ -524,24 +523,22 @@ simple_combo_test() ->
 
 double_combo_test() ->
 
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = blue }, Board , 1 , 0 ),
-	Board3 = board:set_block( #block{ color = blue }, Board2 , 2 , 0 ),
-	Board4 = board:set_block( #block{ color = blue }, Board3 , 3 , 0 ),
-	Board5 = board:set_block( #block{ color = blue }, Board4 , 4 , 0 ),
-	Board6 = board:set_block( #block{ color = blue }, Board5 , 1 , 1 ),
-	
-	Board7 = board:set_block( #block{ color = green }, Board6 , 2 , 1 ),
-	Board8 = board:set_block( #block{ color = green }, Board7 , 2 , 2 ),
-	Board9 = board:set_block( #block{ color = green }, Board8 , 3 , 1 ),
-	Board10 = board:set_block( #block{ color = green }, Board9 , 4 , 1 ),
+	Board = board:set_block( #block{ color = yellow }, 1 , 2,
+				board:set_block( #block{ color = red }, 5 , 1,
+					board:set_block( #block{ color = yellow }, 5 , 0,
+						board:set_block( #block{ color = blue }, 3 , 2,
+							board:set_block( #block{ color = green }, 4 , 1,
+								board:set_block( #block{ color = green }, 3 , 1,
+									board:set_block( #block{ color = green }, 2 , 2,
+										board:set_block( #block{ color = green }, 2 , 1,
+											board:set_block( #block{ color = blue }, 1 , 1,
+												board:set_block( #block{ color = blue }, 4 , 0,
+													board:set_block( #block{ color = blue }, 3 , 0,
+														board:set_block( #block{ color = blue }, 2 , 0,
+															board:set_block( #block{ color = blue }, 1 , 0,
+																board:new_empty(5,12)))))))))))))),
 
-	Board11 = board:set_block( #block{ color = blue }, Board10 , 3 , 2 ),
-	Board12 = board:set_block( #block{ color = yellow }, Board11 , 5 , 0 ),
-	Board13 = board:set_block( #block{ color = red }, Board12 , 5 , 1 ),
-	Board14 = board:set_block( #block{ color = yellow }, Board13 , 1 , 2 ),
-
-	Combos = calculate_combos( Board14 ),
+	Combos = calculate_combos( Board ),
 
 %	Lists = lists:map( fun( Set ) ->  sets:to_list(Set) end, Combos),
 %	io:format("All_Combos ~p",[Lists]),	
@@ -585,15 +582,15 @@ double_combo_test() ->
 
 no_combos_test() ->
 	
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
-	Board3 = board:set_block( #block{ color = blue }, Board2 , 2 , 0 ),
-	Board4 = board:set_block( #block{ color = yellow }, Board3 , 3 , 0 ),
-	Board5 = board:set_block( #block{ color = green }, Board4 , 4 , 0 ),
-	Board6 = board:set_block( #block{ color = blue }, Board5 , 1 , 1 ),	
-	Board7 = board:set_block( #block{ color = yellow }, Board6 , 1 , 2 ),
+	Board = board:set_block( #block{ color = yellow }, 1 , 2,
+				board:set_block( #block{ color = blue }, 1 , 1,
+					board:set_block( #block{ color = green }, 4 , 0,
+						board:set_block( #block{ color = yellow }, 3 , 0,
+							board:set_block( #block{ color = blue }, 2 , 0,
+								board:set_block( #block{ color = red }, 1 , 0,
+									board:new_empty(5,12))))))),
 
-	Combos = calculate_combos( Board7 ),
+	Combos = calculate_combos( Board ),
 
 	?assert( length( Combos ) == 0),
 	ok.
@@ -605,59 +602,55 @@ no_combos_test() ->
 
 simple_up_place_piece_test() ->
 
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
 
-	Board_result = place_piece(  Piece, 1, 1, up, Board2 ),
+	Board_result = place_piece(  Piece, 1, 1, up, Board ),
 
-	?assert( board:get_block( Board_result , 1, 0 ) == #block{ color = red, x = 1, y = 0 } ),
-	?assert( board:get_block( Board_result , 1, 1 ) == #block{ color = green, x = 1, y = 1 } ),
-	?assert( board:get_block( Board_result , 1, 2 ) == #block{ color = blue, x = 1, y = 2 } ),
+	?assert( board:get_block( 1, 0, Board_result ) == #block{ color = red, x = 1, y = 0 } ),
+	?assert( board:get_block( 1, 1, Board_result ) == #block{ color = green, x = 1, y = 1 } ),
+	?assert( board:get_block( 1, 2, Board_result ) == #block{ color = blue, x = 1, y = 2 } ),
 
 	ok.
 
 simple_down_place_piece_test() ->
 
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
 
-	Board_result = place_piece(  Piece, 1, 2, down, Board2 ),
+	Board_result = place_piece(  Piece, 1, 2, down, Board ),
 
-	?assert( board:get_block( Board_result , 1, 0 ) == #block{ color = red, x = 1, y = 0 } ),
-	?assert( board:get_block( Board_result , 1, 2 ) == #block{ color = green, x = 1, y = 2 } ),
-	?assert( board:get_block( Board_result , 1, 1 ) == #block{ color = blue, x = 1, y = 1 } ),
+	?assert( board:get_block( 1, 0, Board_result ) == #block{ color = red, x = 1, y = 0 } ),
+	?assert( board:get_block( 1, 2, Board_result ) == #block{ color = green, x = 1, y = 2 } ),
+	?assert( board:get_block( 1, 1, Board_result ) == #block{ color = blue, x = 1, y = 1 } ),
 
 	ok.
 
 
 simple_right_piece_test() ->
 
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
 
-	Board_result = place_piece(  Piece, 1, 1, right, Board2 ),
+	Board_result = place_piece(  Piece, 1, 1, right, Board ),
 
-	?assert( board:get_block( Board_result , 1, 0 ) == #block{ color = red, x = 1, y = 0 } ),
-	?assert( board:get_block( Board_result , 1, 1 ) == #block{ color = green, x = 1, y = 1 } ),
-	?assert( board:get_block( Board_result , 2, 1 ) == #block{ color = blue, x = 2, y = 1 } ),
+	?assert( board:get_block( 1, 0, Board_result ) == #block{ color = red, x = 1, y = 0 } ),
+	?assert( board:get_block( 1, 1, Board_result ) == #block{ color = green, x = 1, y = 1 } ),
+	?assert( board:get_block( 2, 1, Board_result ) == #block{ color = blue, x = 2, y = 1 } ),
 
 	ok.
 
 
 simple_left_place_piece_test() ->
 
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
 
-	Board_result = place_piece(  Piece, 2, 1, left, Board2 ),
+	Board_result = place_piece(  Piece, 2, 1, left, Board ),
 
-	?assert( board:get_block( Board_result , 1, 0 ) == #block{ color = red, x = 1, y = 0 } ),
-	?assert( board:get_block( Board_result , 2, 1 ) == #block{ color = green, x = 2, y = 1 } ),
-	?assert( board:get_block( Board_result , 1, 1 ) == #block{ color = blue, x = 1, y = 1 } ),
+	?assert( board:get_block( 1, 0, Board_result ) == #block{ color = red, x = 1, y = 0 } ),
+	?assert( board:get_block( 2, 1, Board_result ) == #block{ color = green, x = 2, y = 1 } ),
+	?assert( board:get_block( 1, 1, Board_result ) == #block{ color = blue, x = 1, y = 1 } ),
 
 	ok.
 
@@ -665,12 +658,11 @@ simple_left_place_piece_test() ->
 
 simple_invalid_place_piece_test() ->
 
-	Board = board:new_empty(5,12),
-	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 
 	Piece = #piece{ block1 = #block{ color = red }, block2 = #block{ color = blue } },
 
-	?assertThrow(invalid_move, place_piece(  Piece, 1, 0, up, Board2 )  ),
+	?assertThrow(invalid_move, place_piece(  Piece, 1, 0, up, Board )  ),
 
 	ok.
 

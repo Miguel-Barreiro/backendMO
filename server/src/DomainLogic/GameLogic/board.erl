@@ -17,17 +17,17 @@ get_all_blocks( Board = #board{} ) ->
 
 
 
-is_valid_position( Board = #board{} , X , Y )
+is_valid_position( X , Y, Board = #board{} )
 				when Board#board.height > Y, Board#board.height > Y, Y >= 0, X >= 0 ->
 	true;
-is_valid_position( #board{} , _X , _Y ) ->
+is_valid_position( _X , _Y, #board{} ) ->
 	false.
 
 
 
 
 %returns the block record
-get_block( #board{ blocks = Blocks } , X , Y ) ->
+get_block( X , Y , #board{ blocks = Blocks }) ->
 	case gb_trees:lookup( {X,Y}, Blocks) of
 		none ->					empty;
 		{value, Block} ->		Block
@@ -38,10 +38,10 @@ get_block( #board{ blocks = Blocks } , X , Y ) ->
 
 %returns the new board record
 %may throw out_of_bounds exception
-set_block( Block = #block{}, Board = #board{ blocks = Blocks } , X , Y )  ->
-	case is_valid_position( Board, X, Y) of 
+set_block( Block = #block{}, X , Y, Board = #board{ blocks = Blocks } )  ->
+	case is_valid_position( X, Y, Board) of 
 		true ->
-			case get_block( Board , X , Y ) of
+			case get_block( X , Y, Board ) of
 				empty ->
 					Board#board{ blocks = gb_trees:insert({X,Y}, Block#block{ x = X , y = Y } , Blocks) };
 				_other ->
@@ -55,7 +55,7 @@ set_block( Block = #block{}, Board = #board{ blocks = Blocks } , X , Y )  ->
 
 
 %returns the new board record
-remove_block( Board = #board{ blocks = Blocks } , X , Y ) ->
+remove_block( X , Y, Board = #board{ blocks = Blocks } ) ->
 	Board#board{ blocks = gb_trees:delete_any({X,Y}, Blocks) }.
 
 
