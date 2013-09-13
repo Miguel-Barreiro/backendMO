@@ -13,6 +13,7 @@
 
 
 %throws out_of_bounds (in case the user has lost)
+%throws invalid_move (in case of an invalid move)
 handle_place_piece( User_pid, Piece = #piece{}, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
 	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
 	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, Opponent_pid, Piece, X, Y, Angle, Game#game.user1_gamestate, Game#game.user2_gamestate ),
@@ -605,7 +606,76 @@ no_combos_test() ->
 
 
 
+simple_up_place_piece_test() ->
 
+	Board = board:new_empty(5,12),
+	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
+
+	Board_result = place_piece(  Piece, 1, 1, up, Board2 ),
+
+	?assert( board:get_block( Board_result , 1, 0 ) == #block{ color = red, x = 1, y = 0 } ),
+	?assert( board:get_block( Board_result , 1, 1 ) == #block{ color = green, x = 1, y = 1 } ),
+	?assert( board:get_block( Board_result , 1, 2 ) == #block{ color = blue, x = 1, y = 2 } ),
+
+	ok.
+
+simple_down_place_piece_test() ->
+
+	Board = board:new_empty(5,12),
+	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
+
+	Board_result = place_piece(  Piece, 1, 2, down, Board2 ),
+
+	?assert( board:get_block( Board_result , 1, 0 ) == #block{ color = red, x = 1, y = 0 } ),
+	?assert( board:get_block( Board_result , 1, 2 ) == #block{ color = green, x = 1, y = 2 } ),
+	?assert( board:get_block( Board_result , 1, 1 ) == #block{ color = blue, x = 1, y = 1 } ),
+
+	ok.
+
+
+simple_right_piece_test() ->
+
+	Board = board:new_empty(5,12),
+	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
+
+	Board_result = place_piece(  Piece, 1, 1, right, Board2 ),
+
+	?assert( board:get_block( Board_result , 1, 0 ) == #block{ color = red, x = 1, y = 0 } ),
+	?assert( board:get_block( Board_result , 1, 1 ) == #block{ color = green, x = 1, y = 1 } ),
+	?assert( board:get_block( Board_result , 2, 1 ) == #block{ color = blue, x = 2, y = 1 } ),
+
+	ok.
+
+
+simple_left_place_piece_test() ->
+
+	Board = board:new_empty(5,12),
+	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
+
+	Board_result = place_piece(  Piece, 2, 1, left, Board2 ),
+
+	?assert( board:get_block( Board_result , 1, 0 ) == #block{ color = red, x = 1, y = 0 } ),
+	?assert( board:get_block( Board_result , 2, 1 ) == #block{ color = green, x = 2, y = 1 } ),
+	?assert( board:get_block( Board_result , 1, 1 ) == #block{ color = blue, x = 1, y = 1 } ),
+
+	ok.
+
+
+
+simple_invalid_place_piece_test() ->
+
+	Board = board:new_empty(5,12),
+	Board2 = board:set_block( #block{ color = red }, Board , 1 , 0 ),
+
+	Piece = #piece{ block1 = #block{ color = red }, block2 = #block{ color = blue } },
+
+	?assertThrow(invalid_move, place_piece(  Piece, 1, 0, up, Board2 )  ),
+
+	ok.
 
 
 

@@ -41,7 +41,12 @@ get_block( #board{ blocks = Blocks } , X , Y ) ->
 set_block( Block = #block{}, Board = #board{ blocks = Blocks } , X , Y )  ->
 	case is_valid_position( Board, X, Y) of 
 		true ->
-			Board#board{ blocks = gb_trees:insert({X,Y}, Block#block{ x = X , y = Y } , Blocks) };
+			case get_block( Board , X , Y ) of
+				empty ->
+					Board#board{ blocks = gb_trees:insert({X,Y}, Block#block{ x = X , y = Y } , Blocks) };
+				_other ->
+					throw( invalid_move )
+			end;
 		false ->
 			throw( out_of_bounds )
 	end.
