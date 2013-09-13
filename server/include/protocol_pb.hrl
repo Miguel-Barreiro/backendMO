@@ -101,6 +101,12 @@
 -record(message_place_garbage,{
   garbage :: #message_garbage_list{}}).
 
+%% @type message_generated_garbage_record() = #message_generated_garbage_record{
+%%   garbage() = #message_garbage_list{}
+%% }.
+-record(message_generated_garbage,{
+  garbage :: #message_garbage_list{}}).
+
 %% @type message_difficult_change_record() = #message_difficult_change_record{
 %%   level() = integer()
 %% }.
@@ -143,8 +149,8 @@
   opponent_name :: binary(),
   start_level :: integer()}).
 
-%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found.
--type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found.
+%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code.
+-type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code.
 
 %% @type request_record() = #request_record{
 %%   type() = request__request_type(),
@@ -161,7 +167,8 @@
 %%   restart_game_content() = 'undefined' | #message_restart_game{},
 %%   power_content() = 'undefined' | #message_generic_power{},
 %%   enter_queue_content() = 'undefined' | #message_enter_queue{},
-%%   match_found_content() = 'undefined' | #message_match_found{}
+%%   match_found_content() = 'undefined' | #message_match_found{},
+%%   generated_garbage_content() = 'undefined' | #message_generated_garbage{}
 %% }.
 -record(request,{
   type :: request__request_type(),
@@ -178,5 +185,6 @@
   restart_game_content :: 'undefined' | #message_restart_game{},
   power_content :: 'undefined' | #message_generic_power{},
   enter_queue_content :: 'undefined' | #message_enter_queue{},
-  match_found_content :: 'undefined' | #message_match_found{}}).
+  match_found_content :: 'undefined' | #message_match_found{},
+  generated_garbage_content :: 'undefined' | #message_generated_garbage{}}).
 

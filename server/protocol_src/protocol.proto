@@ -73,6 +73,10 @@ message MessagePlaceGarbage{
 	required MessageGarbageList garbage = 1;
 };
 
+message MessageGeneratedGarbage{
+	required MessageGarbageList garbage = 1;
+};
+
 
 message MessageDifficultChange{ 
 	required int32 level = 1;
@@ -122,6 +126,7 @@ message Request {
 		MESSAGE_GENERIC_POWER = 16;
 		MESSAGE_ENTER_QUEUE = 17;
 		MESSAGE_MATCH_FOUND = 18;
+		MESSAGE_GENERATED_GARBAGE_CODE = 19;
 	}
 
 	required request_type type = 1;
@@ -140,6 +145,7 @@ message Request {
 	optional MessageGenericPower powerContent = 13;
 	optional MessageEnterQueue enterQueueContent = 14;
 	optional MessageMatchFound matchFoundContent = 15;
+	optional MessageGeneratedGarbage generatedGarbageContent = 16;
 };
 
 

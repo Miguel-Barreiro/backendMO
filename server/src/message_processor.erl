@@ -13,6 +13,8 @@
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/1]).
 
+-export([create_place_garbage_message/1, create_generated_garbage_message/1 ]).
+
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
 
@@ -86,6 +88,26 @@ create_login_success( User_id, Player_game_state, Opponent_game_state,
 					login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = lobby }},
 	protocol_pb:encode_request(Req).
 
+
+
+create_generated_garbage_message( Garbages_position_list ) ->
+	Req = #request{ type = message_generated_garbage_code,
+					generated_garbage_content = #message_generated_garbage{ 
+						garbage = #message_garbage_list{
+							garbage_position = Garbages_position_list
+						}
+					}},
+	protocol_pb:encode_request(Req).
+
+
+create_place_garbage_message( Garbages_position_list ) ->
+	Req = #request{ type = message_place_garbage,
+					place_garbage_content = #message_place_garbage{ 
+						garbage = #message_garbage_list{
+							garbage_position = Garbages_position_list
+						}
+					}},
+	protocol_pb:encode_request(Req).
 
 
 

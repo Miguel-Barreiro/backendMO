@@ -14,6 +14,7 @@
   encode_message_update_piece/1,decode_message_update_piece/1,
   encode_message_place_piece/1,decode_message_place_piece/1,
   encode_message_place_garbage/1,decode_message_place_garbage/1,
+  encode_message_generated_garbage/1,decode_message_generated_garbage/1,
   encode_message_difficult_change/1,decode_message_difficult_change/1,
   encode_message_user_disconected/1,decode_message_user_disconected/1,
   encode_message_restart_game/1,decode_message_restart_game/1,
@@ -267,6 +268,24 @@ encode_message_place_garbage(R) when is_record(R,message_place_garbage) ->
     protocol_buffers:encode(1,length_encoded,encode_message_garbage_list(R#message_place_garbage.garbage))
   ].
 
+decode_message_generated_garbage(B) ->
+  case decode_message_generated_garbage_impl(B) of
+    undefined -> #message_generated_garbage{};
+    Any -> Any
+  end.
+
+decode_message_generated_garbage_impl(<<>>) -> undefined;
+decode_message_generated_garbage_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_generated_garbage{},
+     fun(1,{length_encoded,Bin},Rec) -> Rec#message_generated_garbage{garbage = decode_message_garbage_list_impl(Bin)}
+      end).
+
+encode_message_generated_garbage(undefined) -> undefined;
+encode_message_generated_garbage(R) when is_record(R,message_generated_garbage) ->
+  [
+    protocol_buffers:encode(1,length_encoded,encode_message_garbage_list(R#message_generated_garbage.garbage))
+  ].
+
 decode_message_difficult_change(B) ->
   case decode_message_difficult_change_impl(B) of
     undefined -> #message_difficult_change{};
@@ -399,6 +418,7 @@ to_request__request_type(15) -> message_game_restart;
 to_request__request_type(16) -> message_generic_power;
 to_request__request_type(17) -> message_enter_queue;
 to_request__request_type(18) -> message_match_found;
+to_request__request_type(19) -> message_generated_garbage_code;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -419,6 +439,7 @@ from_request__request_type(message_game_restart) -> 15;
 from_request__request_type(message_generic_power) -> 16;
 from_request__request_type(message_enter_queue) -> 17;
 from_request__request_type(message_match_found) -> 18;
+from_request__request_type(message_generated_garbage_code) -> 19;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -444,7 +465,8 @@ decode_request_impl(Binary) ->
         (12,{length_encoded,Bin},Rec) -> Rec#request{restart_game_content = decode_message_restart_game_impl(Bin)};
         (13,{length_encoded,Bin},Rec) -> Rec#request{power_content = decode_message_generic_power_impl(Bin)};
         (14,{length_encoded,Bin},Rec) -> Rec#request{enter_queue_content = decode_message_enter_queue_impl(Bin)};
-        (15,{length_encoded,Bin},Rec) -> Rec#request{match_found_content = decode_message_match_found_impl(Bin)}
+        (15,{length_encoded,Bin},Rec) -> Rec#request{match_found_content = decode_message_match_found_impl(Bin)};
+        (16,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -464,6 +486,7 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(12,length_encoded,encode_message_restart_game(R#request.restart_game_content)),
     protocol_buffers:encode(13,length_encoded,encode_message_generic_power(R#request.power_content)),
     protocol_buffers:encode(14,length_encoded,encode_message_enter_queue(R#request.enter_queue_content)),
-    protocol_buffers:encode(15,length_encoded,encode_message_match_found(R#request.match_found_content))
+    protocol_buffers:encode(15,length_encoded,encode_message_match_found(R#request.match_found_content)),
+    protocol_buffers:encode(16,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content))
   ].
 
