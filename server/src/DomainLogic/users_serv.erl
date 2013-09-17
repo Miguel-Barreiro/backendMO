@@ -80,50 +80,10 @@ handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_p
 
 
 
-handle_cast( { add_garbage , Garbage_list_message } , State = #user_process_state{ game_pid = Game_pid } ) ->
-	gen_server:cast( Game_pid, { add_garbage, Garbage_list_message, self() } ),
+handle_cast( { place_piece , Piece = #piece{}, X, Y, Angle } , State = #user_process_state{ game_pid = Game_pid } ) ->
+	gen_server:cast( Game_pid, { place_piece , Piece, X, Y, Angle, self() } ),
 	{noreply, State};
 
-
-
-
-
-handle_cast( { save_game_state , Game_state } , State = #user_process_state{ game_pid = Game_pid } ) ->
-	gen_server:cast( Game_pid, { save_game_state, Game_state, self() } ),
-	{noreply, State};
-
-
-
-
-
-
-handle_cast( { send_lost_message, Lost_details }, State = #user_process_state{ connection_pid = Connection_pid, game_state = Game_state }) 
-				when Game_state == playing_game ->
-	Msg = message_processor:create_lost_message(Lost_details),
-	gen_server:cast( Connection_pid, {reply, Msg}),
-	{noreply, State};
-
-
-
-
-
-
-handle_cast( { send_won_message, Won_details }, State = #user_process_state{ connection_pid = Connection_pid , game_state = Game_state }) 
-				when Game_state == playing_game ->
-	Msg = message_processor:create_won_message(Won_details),
-	gen_server:cast( Connection_pid, {reply, Msg}),
-	{noreply, State};
-
-
-
-
-
-
-handle_cast( {game_difficult_change , New_level }, State = #user_process_state{ connection_pid = Connection_pid , game_state = Game_state }) 
-				when Game_state == playing_game ->
-	Msg = message_processor:create_difficult_message(New_level),
-	gen_server:cast( Connection_pid, {reply, Msg}),
-	{noreply, State};
 
 
 
@@ -292,14 +252,6 @@ handle_info(connection_timeout, State = #user_process_state{}) ->
 handle_info(M,S) ->
 	lager:error("unhandled info ~p", [M]),
 	{noreply, S}.
-
-
-%%
-%		GETTERS
-%%
-
-handle_call( get_game_pid, _From, State = #user_process_state{ game_pid = Game_pid } ) ->
-	{reply,{ ok , Game_pid},State};
 
 
 

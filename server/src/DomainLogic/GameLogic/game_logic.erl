@@ -2,12 +2,26 @@
 
 -include("include/softstate.hrl").
 
--export([ handle_place_piece/6 ]).
+-export([ handle_place_piece/6, create_new_game/3 ]).
+
+
+
+-define( BOARD_WIDTH , 6).
+-define( BOARD_HEIGHT , 14).
 
 
 
 
 %-------------- PUBLIC -------------------------
+
+
+create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
+	User1_gamestate = #user_gamestate{ user_pid = User1_pid, board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ) },
+	User2_gamestate = #user_gamestate{ user_pid = User2_pid, board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ) },
+
+	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed }.
+
+
 
 
 
@@ -28,7 +42,7 @@ handle_place_piece( User_pid, Piece = #piece{}, X, Y, Angle, Game = #game{} ) wh
 handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) ->
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
-			throw( invalid_piece );
+			throw( invalid_move );
 		true ->
 			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Gamestate#user_gamestate.board),
 			Combos = calculate_combos( Board_after_place_piece ),
@@ -40,12 +54,11 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Board_after_gravity ),			
 			
 			case length(Generated_garbage_position_list) of
-
 					0 ->
 						dont_send_anything;
 				_other ->
 						gen_server:cast( User_pid , { send_message, message_processor:create_generated_garbage_message( Generated_garbage_position_list ) } ),
-						gen_server:cast( Opponent_pid , { send_message, message_processor:create_place_garbage_message( Generated_garbage_position_list ) } )
+						gen_server:cast( Opponent_pid , { send_message, message_processor:create_place_garbage_message( Generated_garbage_position_list, Piece, X, Y, Angle ) } )
 			end,
 
 			New_gamestate = Gamestate#user_gamestate{ board = Board_after_release_garbage,

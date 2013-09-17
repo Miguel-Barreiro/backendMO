@@ -57,6 +57,6 @@
 
 	user1_gamestate = #user_gamestate{},
 	user2_gamestate = #user_gamestate{},
-	initial_seed = undefined
-
+	initial_seed = undefined,
+	difficult_level = 0
 }).

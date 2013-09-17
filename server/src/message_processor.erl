@@ -5,15 +5,15 @@
 
 -include("include/protocol_pb.hrl").
 
--export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
+-export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/2]).
 -export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
 
--export([create_login_success/1, create_login_success/7]).
+-export([create_login_success/1, create_login_success/5]).
 
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/1]).
 
--export([create_place_garbage_message/1, create_generated_garbage_message/1 ]).
+-export([create_place_garbage_message/5, create_generated_garbage_message/1 ]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -42,7 +42,7 @@ process(Msg, User_process_pid) ->
 	end.
 
 
-process_user_disconect( _Disconected_pid, User_pid, _Game_pid) ->
+process_user_disconect(User_pid, _Game_pid) ->
 	gen_server:cast( User_pid ,{send_won_message, disconect }),
 	ok.
 
@@ -66,9 +66,7 @@ create_login_success( User_id ) ->
 
 
 
-create_login_success( User_id, Player_game_state, Opponent_game_state, 
-						Starting_seed, Oppponent_user_id, Player_garbage_messages_list, 
-							Opponent_garbage_messages_list ) ->
+create_login_success( User_id, Player_game_state, Opponent_game_state, Starting_seed, Oppponent_user_id) ->
 	Player_message_state = 
 	case Player_game_state of 
 		undefined ->	#game_state{};
@@ -90,7 +88,7 @@ create_login_success( User_id, Player_game_state, Opponent_game_state,
 
 
 
-create_generated_garbage_message( Garbages_position_list ) ->
+create_generated_garbage_message( Garbages_position_list) ->
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
 						garbage = #message_garbage_list{
@@ -100,14 +98,18 @@ create_generated_garbage_message( Garbages_position_list ) ->
 	protocol_pb:encode_request(Req).
 
 
-create_place_garbage_message( Garbages_position_list ) ->
+create_place_garbage_message( Garbages_position_list, Piece = #piece{}, X, Y, Angle ) ->
 	Req = #request{ type = message_place_garbage,
 					place_garbage_content = #message_place_garbage{ 
 						garbage = #message_garbage_list{
 							garbage_position = Garbages_position_list
-						}
+						},
+						x = X,
+						y = Y,
+						state = Angle
 					}},
 	protocol_pb:encode_request(Req).
+
 
 
 
@@ -250,8 +252,7 @@ process_message( message_place_piece_code,
 							Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 
-	gen_server:cast( User_process_pid, { save_game_state , Game_state } ),
-	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+	gen_server:cast( User_process_pid, { place_piece, Message_encoded }),
 	{no_reply};
 
 
@@ -261,9 +262,7 @@ process_message( message_place_garbage_code,
 						#request{ place_garbage_content = #message_place_garbage{ garbage = Garbage_message } }, 
 							Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
-
-	gen_server:cast( User_process_pid, { add_garbage , Garbage_message } ),
-	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+%	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 
 

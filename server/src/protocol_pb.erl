@@ -2,6 +2,7 @@
 -include("protocol_pb.hrl").
 
 -export([
+  to_piece_rotation/1,from_piece_rotation/1,
   encode_block_position/1,decode_block_position/1,
   encode_message_garbage_list/1,decode_message_garbage_list/1,
   encode_game_state/1,decode_game_state/1,
@@ -23,6 +24,18 @@
   encode_message_match_found/1,decode_message_match_found/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
+
+to_piece_rotation(1) -> up;
+to_piece_rotation(2) -> down;
+to_piece_rotation(3) -> rigth;
+to_piece_rotation(4) -> left;
+to_piece_rotation(undefined) -> undefined.
+
+from_piece_rotation(up) -> 1;
+from_piece_rotation(down) -> 2;
+from_piece_rotation(rigth) -> 3;
+from_piece_rotation(left) -> 4;
+from_piece_rotation(undefined) -> undefined.
 
 decode_block_position(B) ->
   case decode_block_position_impl(B) of
@@ -215,7 +228,7 @@ decode_message_update_piece_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_update_piece{},
      fun(1,Val,Rec) -> Rec#message_update_piece{x = protocol_buffers:cast(int32,Val)};
         (2,Val,Rec) -> Rec#message_update_piece{y = protocol_buffers:cast(int32,Val)};
-        (3,Val,Rec) -> Rec#message_update_piece{state = protocol_buffers:cast(int32,Val)}
+        (3,{varint,Enum},Rec) -> Rec#message_update_piece{state=to_piece_rotation(Enum)}
       end).
 
 encode_message_update_piece(undefined) -> undefined;
@@ -223,7 +236,7 @@ encode_message_update_piece(R) when is_record(R,message_update_piece) ->
   [
     protocol_buffers:encode(1,int32,R#message_update_piece.x),
     protocol_buffers:encode(2,int32,R#message_update_piece.y),
-    protocol_buffers:encode(3,int32,R#message_update_piece.state)
+    protocol_buffers:encode(3,int32,from_piece_rotation(R#message_update_piece.state))
   ].
 
 decode_message_place_piece(B) ->
@@ -237,7 +250,7 @@ decode_message_place_piece_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_place_piece{},
      fun(1,Val,Rec) -> Rec#message_place_piece{x = protocol_buffers:cast(int32,Val)};
         (2,Val,Rec) -> Rec#message_place_piece{y = protocol_buffers:cast(int32,Val)};
-        (3,Val,Rec) -> Rec#message_place_piece{state = protocol_buffers:cast(int32,Val)};
+        (3,{varint,Enum},Rec) -> Rec#message_place_piece{state=to_piece_rotation(Enum)};
         (4,{length_encoded,Bin},Rec) -> Rec#message_place_piece{game_state = decode_game_state_impl(Bin)}
       end).
 
@@ -246,7 +259,7 @@ encode_message_place_piece(R) when is_record(R,message_place_piece) ->
   [
     protocol_buffers:encode(1,int32,R#message_place_piece.x),
     protocol_buffers:encode(2,int32,R#message_place_piece.y),
-    protocol_buffers:encode(3,int32,R#message_place_piece.state),
+    protocol_buffers:encode(3,int32,from_piece_rotation(R#message_place_piece.state)),
     protocol_buffers:encode(4,length_encoded,encode_game_state(R#message_place_piece.game_state))
   ].
 
@@ -259,13 +272,19 @@ decode_message_place_garbage(B) ->
 decode_message_place_garbage_impl(<<>>) -> undefined;
 decode_message_place_garbage_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_place_garbage{},
-     fun(1,{length_encoded,Bin},Rec) -> Rec#message_place_garbage{garbage = decode_message_garbage_list_impl(Bin)}
+     fun(1,Val,Rec) -> Rec#message_place_garbage{x = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#message_place_garbage{y = protocol_buffers:cast(int32,Val)};
+        (3,{varint,Enum},Rec) -> Rec#message_place_garbage{state=to_piece_rotation(Enum)};
+        (4,{length_encoded,Bin},Rec) -> Rec#message_place_garbage{garbage = decode_message_garbage_list_impl(Bin)}
       end).
 
 encode_message_place_garbage(undefined) -> undefined;
 encode_message_place_garbage(R) when is_record(R,message_place_garbage) ->
   [
-    protocol_buffers:encode(1,length_encoded,encode_message_garbage_list(R#message_place_garbage.garbage))
+    protocol_buffers:encode(1,int32,R#message_place_garbage.x),
+    protocol_buffers:encode(2,int32,R#message_place_garbage.y),
+    protocol_buffers:encode(3,int32,from_piece_rotation(R#message_place_garbage.state)),
+    protocol_buffers:encode(4,length_encoded,encode_message_garbage_list(R#message_place_garbage.garbage))
   ].
 
 decode_message_generated_garbage(B) ->
@@ -277,13 +296,13 @@ decode_message_generated_garbage(B) ->
 decode_message_generated_garbage_impl(<<>>) -> undefined;
 decode_message_generated_garbage_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_generated_garbage{},
-     fun(1,{length_encoded,Bin},Rec) -> Rec#message_generated_garbage{garbage = decode_message_garbage_list_impl(Bin)}
+     fun(4,{length_encoded,Bin},Rec) -> Rec#message_generated_garbage{garbage = decode_message_garbage_list_impl(Bin)}
       end).
 
 encode_message_generated_garbage(undefined) -> undefined;
 encode_message_generated_garbage(R) when is_record(R,message_generated_garbage) ->
   [
-    protocol_buffers:encode(1,length_encoded,encode_message_garbage_list(R#message_generated_garbage.garbage))
+    protocol_buffers:encode(4,length_encoded,encode_message_garbage_list(R#message_generated_garbage.garbage))
   ].
 
 decode_message_difficult_change(B) ->

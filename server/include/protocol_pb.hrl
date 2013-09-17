@@ -1,3 +1,6 @@
+%% @type piece_rotation() = up | down | rigth | left.
+-type piece_rotation() :: up | down | rigth | left.
+
 %% @type block_position_record() = #block_position_record{
 %%   position() = integer(),
 %%   color() = integer()
@@ -76,29 +79,35 @@
 %% @type message_update_piece_record() = #message_update_piece_record{
 %%   x() = integer(),
 %%   y() = integer(),
-%%   state() = integer()
+%%   state() = piece_rotation()
 %% }.
 -record(message_update_piece,{
   x :: integer(),
   y :: integer(),
-  state :: integer()}).
+  state :: piece_rotation()}).
 
 %% @type message_place_piece_record() = #message_place_piece_record{
 %%   x() = integer(),
 %%   y() = integer(),
-%%   state() = integer(),
+%%   state() = piece_rotation(),
 %%   game_state() = #game_state{}
 %% }.
 -record(message_place_piece,{
   x :: integer(),
   y :: integer(),
-  state :: integer(),
+  state :: piece_rotation(),
   game_state :: #game_state{}}).
 
 %% @type message_place_garbage_record() = #message_place_garbage_record{
+%%   x() = integer(),
+%%   y() = integer(),
+%%   state() = piece_rotation(),
 %%   garbage() = #message_garbage_list{}
 %% }.
 -record(message_place_garbage,{
+  x :: integer(),
+  y :: integer(),
+  state :: piece_rotation(),
   garbage :: #message_garbage_list{}}).
 
 %% @type message_generated_garbage_record() = #message_generated_garbage_record{
