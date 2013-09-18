@@ -3,6 +3,7 @@
 
 -export([
   to_piece_rotation/1,from_piece_rotation/1,
+  to_block_color/1,from_block_color/1,
   encode_block_position/1,decode_block_position/1,
   encode_message_garbage_list/1,decode_message_garbage_list/1,
   encode_game_state/1,decode_game_state/1,
@@ -37,6 +38,24 @@ from_piece_rotation(rigth) -> 3;
 from_piece_rotation(left) -> 4;
 from_piece_rotation(undefined) -> undefined.
 
+to_block_color(1) -> garbage;
+to_block_color(2) -> red;
+to_block_color(3) -> yellow;
+to_block_color(4) -> blue;
+to_block_color(5) -> green;
+to_block_color(6) -> purple;
+to_block_color(7) -> white;
+to_block_color(undefined) -> undefined.
+
+from_block_color(garbage) -> 1;
+from_block_color(red) -> 2;
+from_block_color(yellow) -> 3;
+from_block_color(blue) -> 4;
+from_block_color(green) -> 5;
+from_block_color(purple) -> 6;
+from_block_color(white) -> 7;
+from_block_color(undefined) -> undefined.
+
 decode_block_position(B) ->
   case decode_block_position_impl(B) of
     undefined -> #block_position{};
@@ -46,15 +65,17 @@ decode_block_position(B) ->
 decode_block_position_impl(<<>>) -> undefined;
 decode_block_position_impl(Binary) ->
   protocol_buffers:decode(Binary,#block_position{},
-     fun(1,Val,Rec) -> Rec#block_position{position = protocol_buffers:cast(int32,Val)};
-        (2,Val,Rec) -> Rec#block_position{color = protocol_buffers:cast(int32,Val)}
+     fun(1,Val,Rec) -> Rec#block_position{x = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#block_position{y = protocol_buffers:cast(int32,Val)};
+        (3,{varint,Enum},Rec) -> Rec#block_position{color=to_block_color(Enum)}
       end).
 
 encode_block_position(undefined) -> undefined;
 encode_block_position(R) when is_record(R,block_position) ->
   [
-    protocol_buffers:encode(1,int32,R#block_position.position),
-    protocol_buffers:encode(2,int32,R#block_position.color)
+    protocol_buffers:encode(1,int32,R#block_position.x),
+    protocol_buffers:encode(2,int32,R#block_position.y),
+    protocol_buffers:encode(3,int32,from_block_color(R#block_position.color))
   ].
 
 decode_message_garbage_list(B) ->
@@ -87,12 +108,14 @@ decode_game_state_impl(<<>>) -> undefined;
 decode_game_state_impl(Binary) ->
   protocol_buffers:decode(Binary,#game_state{},
      fun(1,Val,Rec) -> Rec#game_state{current_random = protocol_buffers:cast(int32,Val)};
-        (2,Val,Rec) -> Rec#game_state{current_piece_position = protocol_buffers:cast(int32,Val)};
-        (3,Val,Rec) -> Rec#game_state{current_piece_state = protocol_buffers:cast(int32,Val)};
-        (4,Val,Rec) -> Rec#game_state{current_piece_color = protocol_buffers:cast(int32,Val)};
-        (5,{length_encoded,Bin},#game_state{blocks=F}=Rec) when is_list(F) -> Rec#game_state{blocks = Rec#game_state.blocks ++ [decode_block_position_impl(Bin)]}
+        (2,Val,Rec) -> Rec#game_state{current_piece_x = protocol_buffers:cast(int32,Val)};
+        (3,Val,Rec) -> Rec#game_state{current_piece_y = protocol_buffers:cast(int32,Val)};
+        (4,{varint,Enum},Rec) -> Rec#game_state{current_piece_angle=to_piece_rotation(Enum)};
+        (5,{varint,Enum},Rec) -> Rec#game_state{current_piece_color1=to_block_color(Enum)};
+        (6,{varint,Enum},Rec) -> Rec#game_state{current_piece_color2=to_block_color(Enum)};
+        (7,{length_encoded,Bin},#game_state{blocks=F}=Rec) when is_list(F) -> Rec#game_state{blocks = Rec#game_state.blocks ++ [decode_block_position_impl(Bin)]}
 ;
-        (6,{length_encoded,Bin},#game_state{garbage_message_list=F}=Rec) when is_list(F) -> Rec#game_state{garbage_message_list = Rec#game_state.garbage_message_list ++ [decode_message_garbage_list_impl(Bin)]}
+        (8,{length_encoded,Bin},#game_state{garbage_message_list=F}=Rec) when is_list(F) -> Rec#game_state{garbage_message_list = Rec#game_state.garbage_message_list ++ [decode_message_garbage_list_impl(Bin)]}
 
       end).
 
@@ -100,11 +123,13 @@ encode_game_state(undefined) -> undefined;
 encode_game_state(R) when is_record(R,game_state) ->
   [
     protocol_buffers:encode(1,int32,R#game_state.current_random),
-    protocol_buffers:encode(2,int32,R#game_state.current_piece_position),
-    protocol_buffers:encode(3,int32,R#game_state.current_piece_state),
-    protocol_buffers:encode(4,int32,R#game_state.current_piece_color),
-    [ protocol_buffers:encode(5,length_encoded,encode_block_position(X)) || X <- R#game_state.blocks],
-    [ protocol_buffers:encode(6,length_encoded,encode_message_garbage_list(X)) || X <- R#game_state.garbage_message_list]
+    protocol_buffers:encode(2,int32,R#game_state.current_piece_x),
+    protocol_buffers:encode(3,int32,R#game_state.current_piece_y),
+    protocol_buffers:encode(4,int32,from_piece_rotation(R#game_state.current_piece_angle)),
+    protocol_buffers:encode(5,int32,from_block_color(R#game_state.current_piece_color1)),
+    protocol_buffers:encode(6,int32,from_block_color(R#game_state.current_piece_color2)),
+    [ protocol_buffers:encode(7,length_encoded,encode_block_position(X)) || X <- R#game_state.blocks],
+    [ protocol_buffers:encode(8,length_encoded,encode_message_garbage_list(X)) || X <- R#game_state.garbage_message_list]
   ].
 
 decode_message_game_state(B) ->

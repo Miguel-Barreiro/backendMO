@@ -1,13 +1,18 @@
 %% @type piece_rotation() = up | down | rigth | left.
 -type piece_rotation() :: up | down | rigth | left.
 
+%% @type block_color() = garbage | red | yellow | blue | green | purple | white.
+-type block_color() :: garbage | red | yellow | blue | green | purple | white.
+
 %% @type block_position_record() = #block_position_record{
-%%   position() = integer(),
-%%   color() = integer()
+%%   x() = integer(),
+%%   y() = integer(),
+%%   color() = block_color()
 %% }.
 -record(block_position,{
-  position :: integer(),
-  color :: integer()}).
+  x :: integer(),
+  y :: integer(),
+  color :: block_color()}).
 
 %% @type message_garbage_list_record() = #message_garbage_list_record{
 %%   garbage_position() = [integer()]
@@ -17,17 +22,21 @@
 
 %% @type game_state_record() = #game_state_record{
 %%   current_random() = integer(),
-%%   current_piece_position() = integer(),
-%%   current_piece_state() = integer(),
-%%   current_piece_color() = integer(),
+%%   current_piece_x() = integer(),
+%%   current_piece_y() = integer(),
+%%   current_piece_angle() = piece_rotation(),
+%%   current_piece_color1() = block_color(),
+%%   current_piece_color2() = block_color(),
 %%   blocks() = [#block_position{}],
 %%   garbage_message_list() = [#message_garbage_list{}]
 %% }.
 -record(game_state,{
   current_random :: integer(),
-  current_piece_position :: integer(),
-  current_piece_state :: integer(),
-  current_piece_color :: integer(),
+  current_piece_x :: integer(),
+  current_piece_y :: integer(),
+  current_piece_angle :: piece_rotation(),
+  current_piece_color1 :: block_color(),
+  current_piece_color2 :: block_color(),
   blocks = [] :: [#block_position{}],
   garbage_message_list = [] :: [#message_garbage_list{}]}).
 
