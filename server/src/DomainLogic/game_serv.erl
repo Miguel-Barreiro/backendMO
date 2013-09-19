@@ -16,7 +16,7 @@
 	pid :: pid(),
 	user_id = undefined,
 	monitor = undefined,
-	is_ready = true,
+	is_ready = false,
 	is_connected = true
 }).
 
@@ -102,25 +102,22 @@ handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, st
 
 
 handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
-				when User1#game_user.pid == User_pid, 
-						Game_State == waiting_players ->
+				when Game_State == waiting_players ->
 
-	case User2#game_user.is_ready of
-		true ->		gen_server:cast(self() , start_game );
-		false ->	nothing_happens
-	end,
-	{ noreply, State#game_state{ user1 = User1#game_user{ is_ready = true} } };
-
-
-handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
-				when User1#game_user.pid == User_pid, 
-						Game_State == waiting_players ->
-
-	case User1#game_user.is_ready of
-		true ->		gen_server:cast(self() , start_game );
-		false ->	nothing_happens
-	end,
-	{ noreply, State#game_state{ user2 = User2#game_user{ is_ready = true} } };
+	case User2#game_user.pid == User_pid of
+		true ->
+			case User1#game_user.is_ready of
+				true ->		gen_server:cast(self() , start_game );
+				false ->	nothing_happens
+			end,
+			{ noreply, State#game_state{ user2 = User2#game_user{ is_ready = true} } };
+		false ->		
+			case User2#game_user.is_ready of
+				true ->		gen_server:cast(self() , start_game );
+				false ->	nothing_happens
+			end,
+			{ noreply, State#game_state{ user1 = User1#game_user{ is_ready = true} } }
+	end;
 
 
 
@@ -164,10 +161,10 @@ handle_cast( start_game, State = #game_state{ time_difficult_change_left = Time_
 
 
 
-handle_cast( { place_piece , Piece, X, Y, Angle, User_pid } , State = #game_state{}  ) ->
+handle_cast( { place_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) ->
 
 	try 
-		New_game_state = game_logic:handle_place_piece( User_pid, Piece, X, Y, Angle,  State#game_state.game_logic_state),
+		New_game_state = game_logic:handle_place_piece( User_pid, X, Y, Angle,  State#game_state.game_logic_state),
 		{ noreply, State#game_state{ game_logic_state = New_game_state } }
 	catch
 		throw:out_of_bounds ->

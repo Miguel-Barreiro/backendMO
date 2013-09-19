@@ -15,7 +15,7 @@
   encode_message_game_end/1,decode_message_game_end/1,
   encode_message_update_piece/1,decode_message_update_piece/1,
   encode_message_place_piece/1,decode_message_place_piece/1,
-  encode_message_place_garbage/1,decode_message_place_garbage/1,
+  encode_message_opponent_place_piece/1,decode_message_opponent_place_piece/1,
   encode_message_generated_garbage/1,decode_message_generated_garbage/1,
   encode_message_difficult_change/1,decode_message_difficult_change/1,
   encode_message_user_disconected/1,decode_message_user_disconected/1,
@@ -28,13 +28,13 @@
 
 to_piece_rotation(1) -> up;
 to_piece_rotation(2) -> down;
-to_piece_rotation(3) -> rigth;
+to_piece_rotation(3) -> right;
 to_piece_rotation(4) -> left;
 to_piece_rotation(undefined) -> undefined.
 
 from_piece_rotation(up) -> 1;
 from_piece_rotation(down) -> 2;
-from_piece_rotation(rigth) -> 3;
+from_piece_rotation(right) -> 3;
 from_piece_rotation(left) -> 4;
 from_piece_rotation(undefined) -> undefined.
 
@@ -67,7 +67,7 @@ decode_block_position_impl(Binary) ->
   protocol_buffers:decode(Binary,#block_position{},
      fun(1,Val,Rec) -> Rec#block_position{x = protocol_buffers:cast(int32,Val)};
         (2,Val,Rec) -> Rec#block_position{y = protocol_buffers:cast(int32,Val)};
-        (3,{varint,Enum},Rec) -> Rec#block_position{color=to_block_color(Enum)}
+        (3,Val,Rec) -> Rec#block_position{color = protocol_buffers:cast(int32,Val)}
       end).
 
 encode_block_position(undefined) -> undefined;
@@ -75,7 +75,7 @@ encode_block_position(R) when is_record(R,block_position) ->
   [
     protocol_buffers:encode(1,int32,R#block_position.x),
     protocol_buffers:encode(2,int32,R#block_position.y),
-    protocol_buffers:encode(3,int32,from_block_color(R#block_position.color))
+    protocol_buffers:encode(3,int32,R#block_position.color)
   ].
 
 decode_message_garbage_list(B) ->
@@ -275,8 +275,7 @@ decode_message_place_piece_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_place_piece{},
      fun(1,Val,Rec) -> Rec#message_place_piece{x = protocol_buffers:cast(int32,Val)};
         (2,Val,Rec) -> Rec#message_place_piece{y = protocol_buffers:cast(int32,Val)};
-        (3,{varint,Enum},Rec) -> Rec#message_place_piece{state=to_piece_rotation(Enum)};
-        (4,{length_encoded,Bin},Rec) -> Rec#message_place_piece{game_state = decode_game_state_impl(Bin)}
+        (3,{varint,Enum},Rec) -> Rec#message_place_piece{state=to_piece_rotation(Enum)}
       end).
 
 encode_message_place_piece(undefined) -> undefined;
@@ -284,32 +283,31 @@ encode_message_place_piece(R) when is_record(R,message_place_piece) ->
   [
     protocol_buffers:encode(1,int32,R#message_place_piece.x),
     protocol_buffers:encode(2,int32,R#message_place_piece.y),
-    protocol_buffers:encode(3,int32,from_piece_rotation(R#message_place_piece.state)),
-    protocol_buffers:encode(4,length_encoded,encode_game_state(R#message_place_piece.game_state))
+    protocol_buffers:encode(3,int32,from_piece_rotation(R#message_place_piece.state))
   ].
 
-decode_message_place_garbage(B) ->
-  case decode_message_place_garbage_impl(B) of
-    undefined -> #message_place_garbage{};
+decode_message_opponent_place_piece(B) ->
+  case decode_message_opponent_place_piece_impl(B) of
+    undefined -> #message_opponent_place_piece{};
     Any -> Any
   end.
 
-decode_message_place_garbage_impl(<<>>) -> undefined;
-decode_message_place_garbage_impl(Binary) ->
-  protocol_buffers:decode(Binary,#message_place_garbage{},
-     fun(1,Val,Rec) -> Rec#message_place_garbage{x = protocol_buffers:cast(int32,Val)};
-        (2,Val,Rec) -> Rec#message_place_garbage{y = protocol_buffers:cast(int32,Val)};
-        (3,{varint,Enum},Rec) -> Rec#message_place_garbage{state=to_piece_rotation(Enum)};
-        (4,{length_encoded,Bin},Rec) -> Rec#message_place_garbage{garbage = decode_message_garbage_list_impl(Bin)}
+decode_message_opponent_place_piece_impl(<<>>) -> undefined;
+decode_message_opponent_place_piece_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_opponent_place_piece{},
+     fun(1,Val,Rec) -> Rec#message_opponent_place_piece{x = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#message_opponent_place_piece{y = protocol_buffers:cast(int32,Val)};
+        (3,{varint,Enum},Rec) -> Rec#message_opponent_place_piece{state=to_piece_rotation(Enum)};
+        (4,{length_encoded,Bin},Rec) -> Rec#message_opponent_place_piece{garbage = decode_message_garbage_list_impl(Bin)}
       end).
 
-encode_message_place_garbage(undefined) -> undefined;
-encode_message_place_garbage(R) when is_record(R,message_place_garbage) ->
+encode_message_opponent_place_piece(undefined) -> undefined;
+encode_message_opponent_place_piece(R) when is_record(R,message_opponent_place_piece) ->
   [
-    protocol_buffers:encode(1,int32,R#message_place_garbage.x),
-    protocol_buffers:encode(2,int32,R#message_place_garbage.y),
-    protocol_buffers:encode(3,int32,from_piece_rotation(R#message_place_garbage.state)),
-    protocol_buffers:encode(4,length_encoded,encode_message_garbage_list(R#message_place_garbage.garbage))
+    protocol_buffers:encode(1,int32,R#message_opponent_place_piece.x),
+    protocol_buffers:encode(2,int32,R#message_opponent_place_piece.y),
+    protocol_buffers:encode(3,int32,from_piece_rotation(R#message_opponent_place_piece.state)),
+    protocol_buffers:encode(4,length_encoded,encode_message_garbage_list(R#message_opponent_place_piece.garbage))
   ].
 
 decode_message_generated_garbage(B) ->
@@ -447,7 +445,7 @@ encode_message_match_found(R) when is_record(R,message_match_found) ->
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
-to_request__request_type(4) -> message_place_garbage_code;
+to_request__request_type(4) -> message_opponent_place_piece_code;
 to_request__request_type(5) -> message_game_end_code;
 to_request__request_type(6) -> message_game_start_code;
 to_request__request_type(7) -> message_ready_code;
@@ -456,19 +454,18 @@ to_request__request_type(9) -> message_login_sucess;
 to_request__request_type(10) -> message_disconect;
 to_request__request_type(11) -> message_difficult_change;
 to_request__request_type(12) -> message_get_game_state;
-to_request__request_type(13) -> message_game_state;
-to_request__request_type(14) -> message_user_disconected;
-to_request__request_type(15) -> message_game_restart;
-to_request__request_type(16) -> message_generic_power;
-to_request__request_type(17) -> message_enter_queue;
-to_request__request_type(18) -> message_match_found;
-to_request__request_type(19) -> message_generated_garbage_code;
+to_request__request_type(13) -> message_user_disconected;
+to_request__request_type(14) -> message_game_restart;
+to_request__request_type(15) -> message_generic_power;
+to_request__request_type(16) -> message_enter_queue;
+to_request__request_type(17) -> message_match_found;
+to_request__request_type(18) -> message_generated_garbage_code;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
 from_request__request_type(message_place_piece_code) -> 2;
 from_request__request_type(message_update_piece_code) -> 3;
-from_request__request_type(message_place_garbage_code) -> 4;
+from_request__request_type(message_opponent_place_piece_code) -> 4;
 from_request__request_type(message_game_end_code) -> 5;
 from_request__request_type(message_game_start_code) -> 6;
 from_request__request_type(message_ready_code) -> 7;
@@ -477,13 +474,12 @@ from_request__request_type(message_login_sucess) -> 9;
 from_request__request_type(message_disconect) -> 10;
 from_request__request_type(message_difficult_change) -> 11;
 from_request__request_type(message_get_game_state) -> 12;
-from_request__request_type(message_game_state) -> 13;
-from_request__request_type(message_user_disconected) -> 14;
-from_request__request_type(message_game_restart) -> 15;
-from_request__request_type(message_generic_power) -> 16;
-from_request__request_type(message_enter_queue) -> 17;
-from_request__request_type(message_match_found) -> 18;
-from_request__request_type(message_generated_garbage_code) -> 19;
+from_request__request_type(message_user_disconected) -> 13;
+from_request__request_type(message_game_restart) -> 14;
+from_request__request_type(message_generic_power) -> 15;
+from_request__request_type(message_enter_queue) -> 16;
+from_request__request_type(message_match_found) -> 17;
+from_request__request_type(message_generated_garbage_code) -> 18;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -499,18 +495,17 @@ decode_request_impl(Binary) ->
         (2,{length_encoded,Bin},Rec) -> Rec#request{login_content = decode_message_login_impl(Bin)};
         (3,{length_encoded,Bin},Rec) -> Rec#request{place_piece_content = decode_message_place_piece_impl(Bin)};
         (4,{length_encoded,Bin},Rec) -> Rec#request{update_piece_content = decode_message_update_piece_impl(Bin)};
-        (5,{length_encoded,Bin},Rec) -> Rec#request{place_garbage_content = decode_message_place_garbage_impl(Bin)};
+        (5,{length_encoded,Bin},Rec) -> Rec#request{opponent_place_piece_content = decode_message_opponent_place_piece_impl(Bin)};
         (6,{length_encoded,Bin},Rec) -> Rec#request{game_end_content = decode_message_game_end_impl(Bin)};
         (7,{length_encoded,Bin},Rec) -> Rec#request{game_start_content = decode_message_game_start_impl(Bin)};
         (8,{length_encoded,Bin},Rec) -> Rec#request{login_sucess_content = decode_messagelogin_success_impl(Bin)};
         (9,{length_encoded,Bin},Rec) -> Rec#request{difficult_change_content = decode_message_difficult_change_impl(Bin)};
-        (10,{length_encoded,Bin},Rec) -> Rec#request{game_state_content = decode_message_game_state_impl(Bin)};
-        (11,{length_encoded,Bin},Rec) -> Rec#request{user_disconected_content = decode_message_user_disconected_impl(Bin)};
-        (12,{length_encoded,Bin},Rec) -> Rec#request{restart_game_content = decode_message_restart_game_impl(Bin)};
-        (13,{length_encoded,Bin},Rec) -> Rec#request{power_content = decode_message_generic_power_impl(Bin)};
-        (14,{length_encoded,Bin},Rec) -> Rec#request{enter_queue_content = decode_message_enter_queue_impl(Bin)};
-        (15,{length_encoded,Bin},Rec) -> Rec#request{match_found_content = decode_message_match_found_impl(Bin)};
-        (16,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)}
+        (10,{length_encoded,Bin},Rec) -> Rec#request{user_disconected_content = decode_message_user_disconected_impl(Bin)};
+        (11,{length_encoded,Bin},Rec) -> Rec#request{restart_game_content = decode_message_restart_game_impl(Bin)};
+        (12,{length_encoded,Bin},Rec) -> Rec#request{power_content = decode_message_generic_power_impl(Bin)};
+        (13,{length_encoded,Bin},Rec) -> Rec#request{enter_queue_content = decode_message_enter_queue_impl(Bin)};
+        (14,{length_encoded,Bin},Rec) -> Rec#request{match_found_content = decode_message_match_found_impl(Bin)};
+        (15,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -520,17 +515,16 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(2,length_encoded,encode_message_login(R#request.login_content)),
     protocol_buffers:encode(3,length_encoded,encode_message_place_piece(R#request.place_piece_content)),
     protocol_buffers:encode(4,length_encoded,encode_message_update_piece(R#request.update_piece_content)),
-    protocol_buffers:encode(5,length_encoded,encode_message_place_garbage(R#request.place_garbage_content)),
+    protocol_buffers:encode(5,length_encoded,encode_message_opponent_place_piece(R#request.opponent_place_piece_content)),
     protocol_buffers:encode(6,length_encoded,encode_message_game_end(R#request.game_end_content)),
     protocol_buffers:encode(7,length_encoded,encode_message_game_start(R#request.game_start_content)),
     protocol_buffers:encode(8,length_encoded,encode_messagelogin_success(R#request.login_sucess_content)),
     protocol_buffers:encode(9,length_encoded,encode_message_difficult_change(R#request.difficult_change_content)),
-    protocol_buffers:encode(10,length_encoded,encode_message_game_state(R#request.game_state_content)),
-    protocol_buffers:encode(11,length_encoded,encode_message_user_disconected(R#request.user_disconected_content)),
-    protocol_buffers:encode(12,length_encoded,encode_message_restart_game(R#request.restart_game_content)),
-    protocol_buffers:encode(13,length_encoded,encode_message_generic_power(R#request.power_content)),
-    protocol_buffers:encode(14,length_encoded,encode_message_enter_queue(R#request.enter_queue_content)),
-    protocol_buffers:encode(15,length_encoded,encode_message_match_found(R#request.match_found_content)),
-    protocol_buffers:encode(16,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content))
+    protocol_buffers:encode(10,length_encoded,encode_message_user_disconected(R#request.user_disconected_content)),
+    protocol_buffers:encode(11,length_encoded,encode_message_restart_game(R#request.restart_game_content)),
+    protocol_buffers:encode(12,length_encoded,encode_message_generic_power(R#request.power_content)),
+    protocol_buffers:encode(13,length_encoded,encode_message_enter_queue(R#request.enter_queue_content)),
+    protocol_buffers:encode(14,length_encoded,encode_message_match_found(R#request.match_found_content)),
+    protocol_buffers:encode(15,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content))
   ].
 

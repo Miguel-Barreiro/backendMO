@@ -80,8 +80,8 @@ handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_p
 
 
 
-handle_cast( { place_piece , Piece = #piece{}, X, Y, Angle } , State = #user_process_state{ game_pid = Game_pid } ) ->
-	gen_server:cast( Game_pid, { place_piece , Piece, X, Y, Angle, self() } ),
+handle_cast( { place_piece , X, Y, Angle } , State = #user_process_state{ game_pid = Game_pid } ) ->
+	gen_server:cast( Game_pid, { place_piece, X, Y, Angle, self() } ),
 	{noreply, State};
 
 
@@ -97,6 +97,9 @@ handle_cast( {game_start , StartTime },
 	Client_start_time = Client_time + ( StartTime - Session_start ),
 	Msg = message_processor:create_start_message( Client_start_time ),
 	gen_server:cast( Connection_pid, {reply, Msg}),
+
+	lager:info("sending start game to ~p",[self()]),
+
 	{noreply, State};
 
 

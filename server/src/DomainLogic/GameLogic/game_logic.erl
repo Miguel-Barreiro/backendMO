@@ -2,7 +2,7 @@
 
 -include("include/softstate.hrl").
 
--export([ handle_place_piece/6, create_new_game/3 ]).
+-export([ handle_place_piece/5, create_new_game/3 ]).
 
 
 
@@ -16,8 +16,12 @@
 
 
 create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
-	User1_gamestate = #user_gamestate{ user_pid = User1_pid, board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ) },
-	User2_gamestate = #user_gamestate{ user_pid = User2_pid, board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ) },
+	User1_gamestate = #user_gamestate{ user_pid = User1_pid, 
+										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ), 
+											current_piece = calculate_next_piece( undefined ) },
+	User2_gamestate = #user_gamestate{ user_pid = User2_pid, 
+										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ),
+											current_piece = calculate_next_piece( undefined ) },
 
 	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed }.
 
@@ -28,14 +32,24 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 
 %throws out_of_bounds (in case the user has lost)
 %throws invalid_move (in case of an invalid move)
-handle_place_piece( User_pid, Piece = #piece{}, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
+handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
 	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
-	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, Opponent_pid, Piece, X, Y, Angle, Game#game.user1_gamestate, Game#game.user2_gamestate ),
+	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
+																	Opponent_pid,
+																		(Game#game.user1_gamestate)#user_gamestate.current_piece, 
+																			X, Y, Angle, 
+																				Game#game.user1_gamestate, 
+																					Game#game.user2_gamestate ),
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
 
-handle_place_piece( User_pid, Piece = #piece{}, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
+handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
 	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
-	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, Opponent_pid,  Piece, X, Y, Angle, Game#game.user2_gamestate, Game#game.user1_gamestate ),
+	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
+																	Opponent_pid,  
+																		(Game#game.user2_gamestate)#user_gamestate.current_piece, 
+																			X, Y, Angle, 
+																				Game#game.user2_gamestate, 
+																					Game#game.user1_gamestate ),
 	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
 
 
@@ -83,7 +97,7 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 
 place_piece( Piece = #piece{}, X, Y, Angle, Board = #board{} ) ->
 	New_board = board:set_block( Piece#piece.block1, X , Y, Board ),
-	case Angle of
+	case Angle of	
 		up ->
 			board:set_block( Piece#piece.block2, X , Y + 1, New_board );	
 		down ->
@@ -178,8 +192,13 @@ calculate_garbage_from_combos( Combos, Board = #board{} ) ->
 
 
 %TODO
+calculate_next_piece( undefined ) ->
+	#piece{ block1 = #block{ type = color , color = green }, block2 = #block{ type = color , color = blue } };
+
 calculate_next_piece( _Gamestate = #user_gamestate{} ) ->
-	#piece{ block1 = #block{ type = color , color = red }, block2 = #block{ type = color , color = green } }.
+	#piece{ block1 = #block{ type = color , color = green }, block2 = #block{ type = color , color = blue } }.
+
+
 
 
 

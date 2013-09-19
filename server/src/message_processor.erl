@@ -13,7 +13,7 @@
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/1]).
 
--export([create_place_garbage_message/5, create_generated_garbage_message/1 ]).
+-export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -91,7 +91,7 @@ create_login_success( User_id,
 
 	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
 										current_piece_x = (Opponent_current_piece#piece.block1)#block.x,
-											current_piece_y = (Opponent_current_piece#piece.block1)#block.y, 
+											current_piece_y = (Opponent_current_piece#piece.block1)#block.y,
 												current_piece_angle = Opponent_current_piece_angle,
 													current_piece_color1 = (Opponent_current_piece#piece.block1)#block.color,
 														current_piece_color2 = (Opponent_current_piece#piece.block2)#block.color,
@@ -130,9 +130,9 @@ create_generated_garbage_message( Garbages_position_list) ->
 	protocol_pb:encode_request(Req).
 
 
-create_place_garbage_message( Garbages_position_list, Piece = #piece{}, X, Y, Angle ) ->
-	Req = #request{ type = message_place_garbage,
-					place_garbage_content = #message_place_garbage{ 
+create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle ) ->
+	Req = #request{ type = message_opponent_place_piece,
+					opponent_place_piece_content = #message_opponent_place_piece{ 
 						garbage = #message_garbage_list{
 							garbage_position = Garbages_position_list
 						},
@@ -280,21 +280,11 @@ process_message( message_lost_game, User_process_pid, _Message_decoded, _Message
 
 process_message( message_place_piece_code, 
 					User_process_pid, 
-						#request{ place_piece_content = #message_place_piece{ game_state = Game_state } }, 
-							Message_encoded ) 
+						#request{ place_piece_content = Message }, 
+							_Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 
-	gen_server:cast( User_process_pid, { place_piece, Message_encoded }),
-	{no_reply};
-
-
-
-process_message( message_place_garbage_code, 
-					User_process_pid, 
-						#request{ place_garbage_content = #message_place_garbage{ garbage = Garbage_message } }, 
-							Message_encoded ) 
-			when User_process_pid =/= no_user_process ->
-%	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+	gen_server:cast( User_process_pid, { place_piece, Message#message_place_piece.x, Message#message_place_piece.y, Message#message_place_piece.state }),
 	{no_reply};
 
 
