@@ -64,16 +64,15 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			Board_after_gravity = simulate_gravity( Board_after_pop_combos ),
 			Board_after_release_garbage = release_garbage_list( Board_after_gravity, Gamestate#user_gamestate.garbage_position_list ),
 			Next_piece = calculate_next_piece( Gamestate ),
-
 			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Board_after_gravity ),			
 			
 			case length(Generated_garbage_position_list) of
-					0 ->
-						dont_send_anything;
+				0 ->
+					do_nothing;
 				_other ->
-						gen_server:cast( User_pid , { send_message, message_processor:create_generated_garbage_message( Generated_garbage_position_list ) } ),
-						gen_server:cast( Opponent_pid , { send_message, message_processor:create_place_garbage_message( Generated_garbage_position_list, Piece, X, Y, Angle ) } )
+					gen_server:cast( User_pid , { send_message, message_processor:create_generated_garbage_message( Generated_garbage_position_list ) } )
 			end,
+			gen_server:cast( Opponent_pid , { send_message, message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, X, Y, Angle ) } ),
 
 			New_gamestate = Gamestate#user_gamestate{ board = Board_after_release_garbage,
 											garbage_position_list = [],
@@ -184,7 +183,14 @@ calculate_garbage_from_combos( Combos, Board = #board{} ) ->
 	Sum_garbage_from_combos = fun( Combo, Acc )->
 		Acc + calculate_garbage_from_combo( Combo )
 	end,
-	Garbage_number = ( length( Combos ) - 1) * 2 + lists:foldl( Sum_garbage_from_combos, 0, Combos),
+
+	Combo_sequence_garbage = case length( Combos ) > 1 of
+		true ->				( length( Combos ) - 1) * 2;
+		false ->			0
+	end,
+
+	Garbage_number = Combo_sequence_garbage + lists:foldl( Sum_garbage_from_combos, 0, Combos),
+	lager:info("generated ~p garbages ",[Garbage_number]),
 	generate_garbage_positions( Garbage_number, Board ).
 
 
@@ -434,6 +440,16 @@ release_garbage_into_full_column_test()->
 	ok.
 
 
+
+no_combo_garbage_test() ->
+	Board = board:new_empty(6,12),
+
+	Garbage_position_list = calculate_garbage_from_combos( [], Board ),
+
+	?assert( length( Garbage_position_list ) == 0 ),
+	?assert( test_garbage_position( Garbage_position_list )),
+
+	ok.
 
 
 single_combo_garbage_test() ->

@@ -86,8 +86,8 @@ create_login_success( User_id,
 	Opponent_block_position_list = lists:foldl(Fun, [], Opponent_block_list),
 	Player_block_position_list = lists:foldl(Fun, [], Player_block_list),
 
-	Opponent_garbage_message_list = #message_garbage_list{ garbage_position = Player_garbage_list },
-	Player_garbage_message_list = #message_garbage_list{ garbage_position = Opponent_garbage_list },
+	Opponent_garbage_message_list =  lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Player_garbage_list),
+	Player_garbage_message_list = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Opponent_garbage_list),
 
 	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
 										current_piece_x = (Opponent_current_piece#piece.block1)#block.x,
@@ -96,7 +96,7 @@ create_login_success( User_id,
 													current_piece_color1 = (Opponent_current_piece#piece.block1)#block.color,
 														current_piece_color2 = (Opponent_current_piece#piece.block2)#block.color,
 															blocks = Opponent_block_position_list,
-																garbage_message_list = Opponent_garbage_message_list },
+																garbage_message_list = Opponent_garbage_message_list  },
 
 	Player_game_state = #game_state{ current_random = Player_current_random_step, 
 										current_piece_x = (Player_current_piece#piece.block1)#block.x,
@@ -123,19 +123,17 @@ create_login_success( User_id,
 create_generated_garbage_message( Garbages_position_list) ->
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
-						garbage = #message_garbage_list{
-							garbage_position = Garbages_position_list
-						}
+						garbage = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Garbages_position_list)
 					}},
 	protocol_pb:encode_request(Req).
 
 
 create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle ) ->
-	Req = #request{ type = message_opponent_place_piece,
+
+	Garbage_list_part = lists:foldl( fun( X_pposition, Result) -> [ #garbage_position{ x = X_pposition } | Result] end , [], Garbages_position_list),
+	Req = #request{ type = message_opponent_place_piece_code,
 					opponent_place_piece_content = #message_opponent_place_piece{ 
-						garbage = #message_garbage_list{
-							garbage_position = Garbages_position_list
-						},
+						garbage = Garbage_list_part,
 						x = X,
 						y = Y,
 						state = Angle
@@ -284,7 +282,12 @@ process_message( message_place_piece_code,
 							_Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 
-	gen_server:cast( User_process_pid, { place_piece, Message#message_place_piece.x, Message#message_place_piece.y, Message#message_place_piece.state }),
+	lager:info("place piece received to ~p",[User_process_pid]),
+
+	gen_server:cast( User_process_pid, { place_piece, 
+											Message#message_place_piece.x, 
+												Message#message_place_piece.y, 
+													Message#message_place_piece.state } ),
 	{no_reply};
 
 

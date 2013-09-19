@@ -162,7 +162,6 @@ handle_cast( start_game, State = #game_state{ time_difficult_change_left = Time_
 
 
 handle_cast( { place_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) ->
-
 	try 
 		New_game_state = game_logic:handle_place_piece( User_pid, X, Y, Angle,  State#game_state.game_logic_state),
 		{ noreply, State#game_state{ game_logic_state = New_game_state } }

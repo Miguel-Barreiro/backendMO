@@ -14,11 +14,11 @@
   y :: integer(),
   color :: integer()}).
 
-%% @type message_garbage_list_record() = #message_garbage_list_record{
-%%   garbage_position() = [integer()]
+%% @type garbage_position_record() = #garbage_position_record{
+%%   x() = integer()
 %% }.
--record(message_garbage_list,{
-  garbage_position = [] :: [integer()]}).
+-record(garbage_position,{
+  x :: integer()}).
 
 %% @type game_state_record() = #game_state_record{
 %%   current_random() = integer(),
@@ -28,7 +28,7 @@
 %%   current_piece_color1() = block_color(),
 %%   current_piece_color2() = block_color(),
 %%   blocks() = [#block_position{}],
-%%   garbage_message_list() = [#message_garbage_list{}]
+%%   garbage_message_list() = [#garbage_position{}]
 %% }.
 -record(game_state,{
   current_random :: integer(),
@@ -38,7 +38,7 @@
   current_piece_color1 :: block_color(),
   current_piece_color2 :: block_color(),
   blocks = [] :: [#block_position{}],
-  garbage_message_list = [] :: [#message_garbage_list{}]}).
+  garbage_message_list = [] :: [#garbage_position{}]}).
 
 %% @type message_game_state_record() = #message_game_state_record{
 %%   opponent_state() = #game_state{},
@@ -109,19 +109,19 @@
 %%   x() = integer(),
 %%   y() = integer(),
 %%   state() = piece_rotation(),
-%%   garbage() = #message_garbage_list{}
+%%   garbage() = [#garbage_position{}]
 %% }.
 -record(message_opponent_place_piece,{
   x :: integer(),
   y :: integer(),
   state :: piece_rotation(),
-  garbage :: #message_garbage_list{}}).
+  garbage = [] :: [#garbage_position{}]}).
 
 %% @type message_generated_garbage_record() = #message_generated_garbage_record{
-%%   garbage() = #message_garbage_list{}
+%%   garbage() = [#garbage_position{}]
 %% }.
 -record(message_generated_garbage,{
-  garbage :: #message_garbage_list{}}).
+  garbage = [] :: [#garbage_position{}]}).
 
 %% @type message_difficult_change_record() = #message_difficult_change_record{
 %%   level() = integer()
