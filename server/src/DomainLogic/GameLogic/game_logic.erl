@@ -7,7 +7,7 @@
 
 
 -define( BOARD_WIDTH , 6).
--define( BOARD_HEIGHT , 14).
+-define( BOARD_HEIGHT , 13).
 
 
 
@@ -56,16 +56,21 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) ->
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
+			lager:info("invalid piece place: wrong piece",[]),
 			throw( invalid_move );
 		true ->
 			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Gamestate#user_gamestate.board),
-			Combos = calculate_combos( Board_after_place_piece ),
-			Board_after_pop_combos = pop_combos( Board_after_place_piece, Combos ),
-			Board_after_gravity = simulate_gravity( Board_after_pop_combos ),
-			Board_after_release_garbage = release_garbage_list( Board_after_gravity, Gamestate#user_gamestate.garbage_position_list ),
-			Next_piece = calculate_next_piece( Gamestate ),
-			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Board_after_gravity ),			
+			lager:info("piece placed"),
+
+
+
+			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece ),
 			
+			Board_after_release_garbage = release_garbage_list( Result_loop_board, Gamestate#user_gamestate.garbage_position_list ),
+			Next_piece = calculate_next_piece( Gamestate ),
+			
+
+			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board ),
 			case length(Generated_garbage_position_list) of
 				0 ->
 					do_nothing;
@@ -94,18 +99,79 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 %-------------- PRIVATE -------------------------
 
 
-place_piece( Piece = #piece{}, X, Y, Angle, Board = #board{} ) ->
-	New_board = board:set_block( Piece#piece.block1, X , Y, Board ),
-	case Angle of	
-		up ->
-			board:set_block( Piece#piece.block2, X , Y + 1, New_board );	
-		down ->
-			board:set_block( Piece#piece.block2, X , Y - 1, New_board );
-		left ->
-			board:set_block( Piece#piece.block2, X -1 , Y, New_board );
-		right ->			
-			board:set_block( Piece#piece.block2, X + 1 , Y, New_board )
+
+apply_gravity_combo_loop( Board = #board{} ) ->
+	Board_after_gravity = simulate_gravity( Board ),
+	lager:info("apply gravity"),
+	Combos = calculate_combos( Board_after_gravity ),
+	case Combos of
+		[] ->
+			{ [], Board_after_gravity};
+		_other ->
+			Board_after_pop_combos = pop_combos( Board_after_gravity, Combos ),
+			lager:info("poped combos"),
+			{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_pop_combos ),
+			{ lists:append( Combos, New_Combos) , New_board}
 	end.
+
+
+
+
+
+
+
+place_piece( Piece = #piece{}, X, Y, up, Board = #board{} ) ->
+	Real_y = get_column_height( X, Board),
+	case Real_y == Y - 1 of 
+		true ->
+			 board:set_block( Piece#piece.block1, X , Y, 
+			 					board:set_block( Piece#piece.block2, X , Y - 1, Board ) );
+		false ->
+			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			throw( invalid_move )
+	end;
+
+place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
+	Real_y = get_column_height( X, Board),
+	case Y == Real_y of 
+		true ->
+			board:set_block( Piece#piece.block1, X , Y,
+		 						board:set_block( Piece#piece.block2, X , Y + 1, Board ) );
+		false ->
+			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			throw( invalid_move )
+	end;
+
+place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
+	Real_y = get_column_height( X, Board),
+	Real_y2 = get_column_height( X + 1, Board),
+	case Y == Real_y orelse Y == Real_y2 of
+		true ->
+			board:set_block( Piece#piece.block1, X , Real_y,
+			 					board:set_block( Piece#piece.block2, X + 1, Real_y2, Board ) );
+		false ->
+			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
+			throw( invalid_move )
+	end;
+
+
+place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
+	Real_y = get_column_height( X, Board),
+	Real_y2 = get_column_height( X - 1, Board),
+	case Y == Real_y orelse Y == Real_y2 of
+		true ->
+			board:set_block( Piece#piece.block1, X , Real_y,
+			 					board:set_block( Piece#piece.block2, X - 1, Real_y2, Board ) );
+		false ->
+			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
+			throw( invalid_move )
+	end.
+
+
+
+
 
 
 
@@ -149,9 +215,30 @@ pop_combos( Board = #board{}, Combo_list ) ->
 
 pop_combo( Board = #board{}, Combo ) ->
 	Fun = fun( Block = #block{}, New_board )->
-		board:remove_block( Block#block.x, Block#block.y, New_board )
+		New_board_witout_block = board:remove_block( Block#block.x, Block#block.y, New_board ),
+		pop_garbages_around( New_board_witout_block, Block#block.x, Block#block.y )
 	end,
 	lists:foldl( Fun, Board, sets:to_list(Combo)).
+
+
+
+
+
+
+
+pop_garbages_around( Board = #board{}, X, Y) ->
+	pop_garbage_in( X + 1, Y, pop_garbage_in( X - 1, Y, pop_garbage_in( X, Y + 1, pop_garbage_in( X, Y - 1, Board)))).
+
+
+pop_garbage_in( X, Y, Board = #board{}) ->
+	case board:get_block( X, Y , Board) of
+		empty ->
+			Board;
+		Garbage_Block when Garbage_Block#block.type == garbage ->
+			board:remove_block( X, Y , Board);
+		_Color_block ->
+			Board
+	end.
 
 
 
@@ -189,9 +276,7 @@ calculate_garbage_from_combos( Combos, Board = #board{} ) ->
 		false ->			0
 	end,
 
-	Garbage_number = Combo_sequence_garbage + lists:foldl( Sum_garbage_from_combos, 0, Combos),
-	lager:info("generated ~p garbages ",[Garbage_number]),
-	generate_garbage_positions( Garbage_number, Board ).
+	generate_garbage_positions( Combo_sequence_garbage + lists:foldl( Sum_garbage_from_combos, 0, Combos), Board ).
 
 
 
@@ -224,6 +309,8 @@ calculate_next_piece( _Gamestate = #user_gamestate{} ) ->
 get_column_height( Column, Board = #board{} ) ->
 	get_column_height( Board, Column, 0 ).
 
+get_column_height( Board = #board{}, _X, Y ) when Y >= Board#board.height ->
+	throw( out_of_bounds );
 
 get_column_height( Board = #board{}, X, Y ) ->
 	case board:get_block( X , Y, Board ) of
@@ -240,7 +327,7 @@ get_column_height( Board = #board{}, X, Y ) ->
 
 
 generate_garbage_positions( Garbage_number, Board = #board{} ) ->
-	generate_garbage_positions( Garbage_number, Board, lists:seq( 0, Board#board.width ) ).
+	generate_garbage_positions( Garbage_number, Board, lists:seq( 0, Board#board.width - 1 ) ).
 
 
 
@@ -248,7 +335,7 @@ generate_garbage_positions( 0, _ , _ ) ->
 	[];
 
 generate_garbage_positions( Garbage_number, Board = #board{}, [] ) ->
-	generate_garbage_positions( Garbage_number, Board, lists:seq( 0 , Board#board.width ) );
+	generate_garbage_positions( Garbage_number, Board, lists:seq( 0 , Board#board.width - 1 ) );
 
 generate_garbage_positions( Garbage_number, Board = #board{}, Column_list ) ->
 	Random = random:uniform( length(Column_list) ) - 1,
@@ -257,9 +344,6 @@ generate_garbage_positions( Garbage_number, Board = #board{}, Column_list ) ->
 	New_column_list = lists:append( List1 , List2 ),
 
 	[ Position | generate_garbage_positions( Garbage_number - 1, Board, New_column_list )].
-
-
-
 
 
 
@@ -386,9 +470,23 @@ calculate_garbage_from_combo( Combo ) ->
 
 
 
-test_garbage_position( Garbage_position_list ) ->
+test_garbage_position( Garbage_position_list, Board = #board{} ) ->
 	
-	Fun = fun( Position, { Cache , { Position_max , Max} , { Position_min , Min} } ) ->
+	Fun = fun( Position, { Cache , Max } ) ->
+
+		case Position >= Board#board.width of
+			true ->
+				throw( {out_of_bounds, Position} );
+			false -> 
+				nothing_bad
+		end,
+		case Position < 0 of
+			true ->
+				throw( {out_of_bounds, Position} );
+			false -> 
+				nothing_bad
+		end,
+
 		case proplists:get_value( Position , Cache) of
 			undefined ->
 				New_value = 0,
@@ -399,19 +497,22 @@ test_garbage_position( Garbage_position_list ) ->
 		end,
 
 		New_max = case New_value > Max of
-			true ->		{ Position , New_value };
-			false ->	{ Position_max , Max}
+			true ->		New_value;
+			false ->	Max
 		end,
 
-		New_min = case New_value < Min of
-			true ->		{ Position , New_value };
-			false ->	{ Position_min , Min}
-		end,
-
-		{ New_cache, New_max, New_min }
+		{ New_cache, New_max }
 
 	end,
-	{ _ , { _Position_max , Max} , { _Position_min , Min} } = lists:foldl(Fun, { [], { 0 ,0 } , { 0, 999} }, Garbage_position_list),
+	{ Cache , Max } = lists:foldl(Fun, { [], 0 }, Garbage_position_list),
+
+	Min = lists:foldl( fun( {_Position, Value}, Min ) -> 
+		case Value < Min of  
+			true ->	Value;
+			false -> Min
+		end
+	end, 999, Cache ),
+
 
 	Max =< Min +1.
 
@@ -446,8 +547,25 @@ no_combo_garbage_test() ->
 
 	Garbage_position_list = calculate_garbage_from_combos( [], Board ),
 
-	?assert( length( Garbage_position_list ) == 0 ),
-	?assert( test_garbage_position( Garbage_position_list )),
+	?assertMatch( 0, length( Garbage_position_list ) ),
+	?assert( test_garbage_position( Garbage_position_list, Board )),
+
+	ok.
+
+
+five_combo_garbage_test() ->
+	Board = board:new_empty(6,12),
+	Combo = sets:add_element( #block{ color = red, x = 3, y = 0 } ,
+				sets:add_element( #block{ color = red, x = 3, y = 1 },
+					sets:add_element( #block{ color = red, x = 3, y = 2 },
+						sets:add_element( #block{ color = red, x = 3, y = 3 }, sets:new())))),
+
+	Garbage_position_list = calculate_garbage_from_combos( [Combo, Combo, Combo, Combo, Combo], Board ),
+
+	io:format("garbage list is ~p",[Garbage_position_list]),
+
+	?assertMatch( 13, length( Garbage_position_list ) ),
+	?assert( test_garbage_position( Garbage_position_list, Board )),
 
 	ok.
 
@@ -461,8 +579,8 @@ single_combo_garbage_test() ->
 
 	Garbage_position_list = calculate_garbage_from_combos( [Combo], Board ),
 
-	?assert( length( Garbage_position_list ) == 1 ),
-	?assert( test_garbage_position( Garbage_position_list )),
+	?assertMatch( 1, length( Garbage_position_list ) ),
+	?assert( test_garbage_position( Garbage_position_list, Board )),
 
 	ok.
 
@@ -485,8 +603,8 @@ double_combo_garbage_test() ->
 
 	Garbage_position_list = calculate_garbage_from_combos( [Combo,Combo1] , Board ),
 
-	?assert( length( Garbage_position_list ) == 5 ),
-	?assert( test_garbage_position( Garbage_position_list )),
+	?assertMatch( 5, length( Garbage_position_list ) ),
+	?assert( test_garbage_position( Garbage_position_list, Board )),
 
 	ok.
 
@@ -508,13 +626,13 @@ simple2_gravity_test() ->
 
 	Board_after_gravity = simulate_gravity( Board ),
 
-	?assert( board:get_block( 3, 0, Board_after_gravity ) == #block{ color = red, x = 3, y = 0 } ),
-	?assert( board:get_block( 3, 1, Board_after_gravity ) == #block{ color = yellow, x = 3, y = 1 } ),
-	?assert( board:get_block( 3, 2, Board_after_gravity ) == #block{ color = yellow, x = 3, y = 2 } ),
-	?assert( board:get_block( 2, 0, Board_after_gravity ) == #block{ color = blue, x = 2, y = 0 } ),
-	?assert( board:get_block( 1, 0, Board_after_gravity ) == #block{ color = green, x = 1, y = 0 } ),
-	?assert( board:get_block( 5, 0, Board_after_gravity ) == #block{ color = red, x = 5, y = 0 } ),
-	?assert( board:get_block( 5, 1, Board_after_gravity ) == #block{ color = green, x = 5, y = 1 } ),
+	?assertMatch( #block{ color = red, x = 3, y = 0 }, board:get_block( 3, 0, Board_after_gravity ) ),
+	?assertMatch( #block{ color = yellow, x = 3, y = 1 }, board:get_block( 3, 1, Board_after_gravity ) ),
+	?assertMatch( #block{ color = yellow, x = 3, y = 2 }, board:get_block( 3, 2, Board_after_gravity ) ),
+	?assertMatch( #block{ color = blue, x = 2, y = 0 }, board:get_block( 2, 0, Board_after_gravity ) ),
+	?assertMatch( #block{ color = green, x = 1, y = 0 }, board:get_block( 1, 0, Board_after_gravity ) ),
+	?assertMatch( #block{ color = red, x = 5, y = 0 }, board:get_block( 5, 0, Board_after_gravity ) ),
+	?assertMatch( #block{ color = green, x = 5, y = 1 }, board:get_block( 5, 1, Board_after_gravity ) ),
 
 	ok.
 
@@ -530,10 +648,10 @@ simple_gravity_test() ->
 
 	Board_after_gravity = simulate_gravity( Board ),
 
-	?assert( board:get_block( 3, 0, Board_after_gravity ) == #block{ color = red, x = 3, y = 0 } ),
-	?assert( board:get_block( 3, 1, Board_after_gravity ) == #block{ color = yellow, x = 3, y = 1 } ),
-	?assert( board:get_block( 2, 0, Board_after_gravity ) == #block{ color = blue, x = 2, y = 0 } ),
-	?assert( board:get_block( 1, 0, Board_after_gravity ) == #block{ color = green, x = 1, y = 0 } ),
+	?assertMatch( #block{ color = red, x = 3, y = 0 }, board:get_block( 3, 0, Board_after_gravity ) ),
+	?assertMatch( #block{ color = yellow, x = 3, y = 1 }, board:get_block( 3, 1, Board_after_gravity ) ),
+	?assertMatch( #block{ color = blue, x = 2, y = 0 }, board:get_block( 2, 0, Board_after_gravity ) ),
+	?assertMatch( #block{ color = green, x = 1, y = 0 }, board:get_block( 1, 0, Board_after_gravity ) ),
 
 	ok.
 
@@ -555,11 +673,11 @@ simple_combo_test() ->
 
 	Combos = calculate_combos( Board ),
 
-	?assert( length( Combos ) == 1),
+	?assertMatch( 1, length( Combos ) ),
 	
 	[Combo] = Combos,
 
-	?assert( sets:size(Combo) == 4),
+	?assertMatch(4, sets:size(Combo) ),
 
 	?assert( sets:is_element(#block{ color = red, x = 3, y = 1},Combo) ),
 	?assert( sets:is_element(#block{ color = red, x = 4, y = 1},Combo) ),
@@ -575,10 +693,12 @@ double_combo_test() ->
 				board:set_block( #block{ color = red }, 5 , 1,
 					board:set_block( #block{ color = yellow }, 5 , 0,
 						board:set_block( #block{ color = blue }, 3 , 2,
+
 							board:set_block( #block{ color = green }, 4 , 1,
 								board:set_block( #block{ color = green }, 3 , 1,
 									board:set_block( #block{ color = green }, 2 , 2,
 										board:set_block( #block{ color = green }, 2 , 1,
+
 											board:set_block( #block{ color = blue }, 1 , 1,
 												board:set_block( #block{ color = blue }, 4 , 0,
 													board:set_block( #block{ color = blue }, 3 , 0,
@@ -591,7 +711,7 @@ double_combo_test() ->
 %	Lists = lists:map( fun( Set ) ->  sets:to_list(Set) end, Combos),
 %	io:format("All_Combos ~p",[Lists]),	
 
-	?assert( length( Combos ) == 2),
+	?assertMatch( 2, length( Combos ) ),
 
 	[Combo1 , Combo2] = Combos,
 
@@ -603,7 +723,7 @@ double_combo_test() ->
 			?assert( sets:is_element(#block{ color = blue, x = 4, y = 0},Combo1) ),
 			?assert( sets:is_element(#block{ color = blue, x = 1, y = 1},Combo1) ),
 
-			?assert( sets:size(Combo2) == 4),
+			?assertMatch( 4, sets:size(Combo2) ),
 			?assert( sets:is_element(#block{ color = green, x = 2, y = 1},Combo2) ),
 			?assert( sets:is_element(#block{ color = green, x = 2, y = 2},Combo2) ),
 			?assert( sets:is_element(#block{ color = green, x = 3, y = 1},Combo2) ),
@@ -616,7 +736,7 @@ double_combo_test() ->
 			?assert( sets:is_element(#block{ color = blue, x = 4, y = 0},Combo2) ),
 			?assert( sets:is_element(#block{ color = blue, x = 1, y = 1},Combo2) ),
 
-			?assert( sets:size(Combo1) == 4),
+			?assertMatch( 4, sets:size(Combo1) ),
 			?assert( sets:is_element(#block{ color = green, x = 2, y = 1},Combo1) ),
 			?assert( sets:is_element(#block{ color = green, x = 2, y = 2},Combo1) ),
 			?assert( sets:is_element(#block{ color = green, x = 3, y = 1},Combo1) ),
@@ -645,6 +765,97 @@ no_combos_test() ->
 
 
 
+simple_garbage_poping_combos_test() ->
+	Board = board:set_block( #block{ color = yellow }, 3 , 2,
+				board:set_block( #block{ color = green }, 2 , 2,
+					board:set_block( #block{ color = yellow }, 2 , 0,
+						board:set_block( #block{ color = blue }, 4 , 0,
+
+							board:set_block( #block{ color = red }, 4 , 2,
+								board:set_block( #block{ color = red }, 4 , 1,
+									board:set_block( #block{ color = red }, 3 , 1,
+										board:set_block( #block{ color = red }, 3 , 0,
+
+											board:set_block( #block{ type = garbage }, 4 , 3,
+												board:set_block( #block{ type = garbage }, 2 , 1,
+													board:new_empty(5,12))))))))))),
+
+	Combos = calculate_combos( Board ),
+
+	?assertMatch( 1, length( Combos ) ),
+	
+	[Combo] = Combos,
+
+	?assertMatch(4, sets:size(Combo) ),
+
+	?assert( sets:is_element(#block{ color = red, x = 3, y = 1},Combo) ),
+	?assert( sets:is_element(#block{ color = red, x = 4, y = 1},Combo) ),
+	?assert( sets:is_element(#block{ color = red, x = 4, y = 2},Combo) ),
+	?assert( sets:is_element(#block{ color = red, x = 3, y = 0},Combo) ),
+
+
+	New_board = pop_combos( Board, Combos ),
+
+	?assertMatch( #block{ color = yellow, x = 3, y = 2 }, board:get_block( 3, 2, New_board ) ),
+	?assertMatch( #block{ color = green, x = 2, y = 2 }, board:get_block( 2, 2, New_board ) ),
+	?assertMatch( #block{ color = yellow, x = 2, y = 0 }, board:get_block( 2, 0, New_board ) ),
+	?assertMatch( #block{ color = blue, x = 4, y = 0 }, board:get_block( 4, 0, New_board ) ),
+
+
+	?assertMatch( empty, board:get_block( 4, 2, New_board ) ),
+	?assertMatch( empty, board:get_block( 4, 1, New_board ) ),
+	?assertMatch( empty, board:get_block( 3, 1, New_board ) ),
+	?assertMatch( empty, board:get_block( 3, 0, New_board ) ),
+
+	?assertMatch( empty, board:get_block( 4, 3, New_board ) ),
+	?assertMatch( empty, board:get_block( 2, 1, New_board ) ),
+	
+	ok.
+
+
+
+simple_poping_combos_test() ->
+	Board = board:set_block( #block{ color = yellow }, 3 , 2,
+				board:set_block( #block{ color = green }, 2 , 2,
+					board:set_block( #block{ color = yellow }, 2 , 0,
+						board:set_block( #block{ color = blue }, 4 , 0,
+							board:set_block( #block{ color = red }, 4 , 2,
+								board:set_block( #block{ color = red }, 4 , 1,
+									board:set_block( #block{ color = red }, 3 , 1,
+										board:set_block( #block{ color = red }, 3 , 0,
+											board:new_empty(5,12))))))))),
+
+	Combos = calculate_combos( Board ),
+
+	?assertMatch( 1, length( Combos ) ),
+	
+	[Combo] = Combos,
+
+	?assertMatch(4, sets:size(Combo) ),
+
+	?assert( sets:is_element(#block{ color = red, x = 3, y = 1},Combo) ),
+	?assert( sets:is_element(#block{ color = red, x = 4, y = 1},Combo) ),
+	?assert( sets:is_element(#block{ color = red, x = 4, y = 2},Combo) ),
+	?assert( sets:is_element(#block{ color = red, x = 3, y = 0},Combo) ),
+
+
+	New_board = pop_combos( Board, Combos ),
+
+	?assertMatch( #block{ color = yellow, x = 3, y = 2 }, board:get_block( 3, 2, New_board ) ),
+	?assertMatch( #block{ color = green, x = 2, y = 2 }, board:get_block( 2, 2, New_board ) ),
+	?assertMatch( #block{ color = yellow, x = 2, y = 0 }, board:get_block( 2, 0, New_board ) ),
+	?assertMatch( #block{ color = blue, x = 4, y = 0 }, board:get_block( 4, 0, New_board ) ),
+
+
+	?assertMatch( empty, board:get_block( 4, 2, New_board ) ),
+	?assertMatch( empty, board:get_block( 4, 1, New_board ) ),
+	?assertMatch( empty, board:get_block( 3, 1, New_board ) ),
+	?assertMatch( empty, board:get_block( 3, 0, New_board ) ),
+
+
+	ok.
+
+
 %% --------------------         PLACE PIECE              ------------------------------------------
 
 
@@ -653,11 +864,11 @@ simple_up_place_piece_test() ->
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
 
-	Board_result = place_piece(  Piece, 1, 1, up, Board ),
+	Board_result = place_piece(  Piece, 1, 1, down, Board ),
 
-	?assert( board:get_block( 1, 0, Board_result ) == #block{ color = red, x = 1, y = 0 } ),
-	?assert( board:get_block( 1, 1, Board_result ) == #block{ color = green, x = 1, y = 1 } ),
-	?assert( board:get_block( 1, 2, Board_result ) == #block{ color = blue, x = 1, y = 2 } ),
+	?assertMatch( #block{ color = red, x = 1, y = 0 }, board:get_block( 1, 0, Board_result ) ),
+	?assertMatch( #block{ color = green, x = 1, y = 1 }, board:get_block( 1, 1, Board_result ) ),
+	?assertMatch( #block{ color = blue, x = 1, y = 2 }, board:get_block( 1, 2, Board_result ) ),
 
 	ok.
 
@@ -666,11 +877,11 @@ simple_down_place_piece_test() ->
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
 
-	Board_result = place_piece(  Piece, 1, 2, down, Board ),
+	Board_result = place_piece(  Piece, 1, 2, up, Board ),
 
-	?assert( board:get_block( 1, 0, Board_result ) == #block{ color = red, x = 1, y = 0 } ),
-	?assert( board:get_block( 1, 2, Board_result ) == #block{ color = green, x = 1, y = 2 } ),
-	?assert( board:get_block( 1, 1, Board_result ) == #block{ color = blue, x = 1, y = 1 } ),
+	?assertMatch( #block{ color = red, x = 1, y = 0 }, board:get_block( 1, 0, Board_result ) ),
+	?assertMatch( #block{ color = green, x = 1, y = 2 }, board:get_block( 1, 2, Board_result ) ),
+	?assertMatch( #block{ color = blue, x = 1, y = 1 }, board:get_block( 1, 1, Board_result ) ),
 
 	ok.
 
@@ -680,11 +891,11 @@ simple_right_piece_test() ->
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
 
-	Board_result = place_piece(  Piece, 1, 1, right, Board ),
+	Board_result = place_piece(  Piece, 1, 1, left, Board ),
 
-	?assert( board:get_block( 1, 0, Board_result ) == #block{ color = red, x = 1, y = 0 } ),
-	?assert( board:get_block( 1, 1, Board_result ) == #block{ color = green, x = 1, y = 1 } ),
-	?assert( board:get_block( 2, 1, Board_result ) == #block{ color = blue, x = 2, y = 1 } ),
+	?assertMatch( #block{ color = red, x = 1, y = 0 }, board:get_block( 1, 0, Board_result ) ),
+	?assertMatch( #block{ color = green, x = 1, y = 1 }, board:get_block( 1, 1, Board_result ) ),
+	?assertMatch( #block{ color = blue, x = 2, y = 0 }, board:get_block( 2, 0, Board_result ) ),
 
 	ok.
 
@@ -694,11 +905,11 @@ simple_left_place_piece_test() ->
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
 
-	Board_result = place_piece(  Piece, 2, 1, left, Board ),
+	Board_result = place_piece(  Piece, 2, 1, right, Board ),
 
-	?assert( board:get_block( 1, 0, Board_result ) == #block{ color = red, x = 1, y = 0 } ),
-	?assert( board:get_block( 2, 1, Board_result ) == #block{ color = green, x = 2, y = 1 } ),
-	?assert( board:get_block( 1, 1, Board_result ) == #block{ color = blue, x = 1, y = 1 } ),
+	?assertMatch( #block{ color = red, x = 1, y = 0 }, board:get_block( 1, 0, Board_result ) ),
+	?assertMatch(  #block{ color = green, x = 2, y = 0 }, board:get_block( 2, 0, Board_result ) ),
+	?assertMatch( #block{ color = blue, x = 1, y = 1 }, board:get_block( 1, 1, Board_result ) ),
 
 	ok.
 
@@ -710,12 +921,9 @@ simple_invalid_place_piece_test() ->
 
 	Piece = #piece{ block1 = #block{ color = red }, block2 = #block{ color = blue } },
 
-	?assertThrow(invalid_move, place_piece(  Piece, 1, 0, up, Board )  ),
+	?assertThrow(invalid_move, place_piece(  Piece, 1, 0, down, Board )  ),
 
 	ok.
-
-
-
 
 
 

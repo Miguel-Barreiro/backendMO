@@ -44,10 +44,12 @@ set_block( Block = #block{}, X , Y, Board = #board{ blocks = Blocks } )  ->
 			case get_block( X , Y, Board ) of
 				empty ->
 					Board#board{ blocks = gb_trees:insert({X,Y}, Block#block{ x = X , y = Y } , Blocks) };
-				_other ->
+				Other ->
+					lager:info("invalid piece place: trying to place the piece ~p in ~p,~p",[Other,X,Y]),
 					throw( invalid_move )
 			end;
 		false ->
+			lager:info("Out of bounds in ~p,~p when board is ~p,~p",[X,Y,Board#board.width,Board#board.height]),
 			throw( out_of_bounds )
 	end.
 

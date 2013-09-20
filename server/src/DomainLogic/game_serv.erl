@@ -167,10 +167,12 @@ handle_cast( { place_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) -
 		{ noreply, State#game_state{ game_logic_state = New_game_state } }
 	catch
 		throw:out_of_bounds ->
+			lager:info("user out of bounds"),
 			gen_server:cast( self(), { user_lost_game, User_pid } ),
 			{ noreply, State };
 		throw:invalid_move ->
 			%% HACKER
+			lager:info("user is a hacker"),
 			gen_server:cast( self(), { user_lost_game, User_pid } ),
 			{ noreply, State }
 	end;
