@@ -1,32 +1,44 @@
+%% @type piece_rotation() = up | down | right | left.
+-type piece_rotation() :: up | down | right | left.
+
+%% @type block_color() = garbage | red | yellow | blue | green | purple | white.
+-type block_color() :: garbage | red | yellow | blue | green | purple | white.
+
 %% @type block_position_record() = #block_position_record{
-%%   position() = integer(),
+%%   x() = integer(),
+%%   y() = integer(),
 %%   color() = integer()
 %% }.
 -record(block_position,{
-  position :: integer(),
+  x :: integer(),
+  y :: integer(),
   color :: integer()}).
 
-%% @type message_garbage_list_record() = #message_garbage_list_record{
-%%   garbage_position() = [integer()]
+%% @type garbage_position_record() = #garbage_position_record{
+%%   x() = integer()
 %% }.
--record(message_garbage_list,{
-  garbage_position = [] :: [integer()]}).
+-record(garbage_position,{
+  x :: integer()}).
 
 %% @type game_state_record() = #game_state_record{
 %%   current_random() = integer(),
-%%   current_piece_position() = integer(),
-%%   current_piece_state() = integer(),
-%%   current_piece_color() = integer(),
+%%   current_piece_x() = integer(),
+%%   current_piece_y() = integer(),
+%%   current_piece_angle() = piece_rotation(),
+%%   current_piece_color1() = block_color(),
+%%   current_piece_color2() = block_color(),
 %%   blocks() = [#block_position{}],
-%%   garbage_message_list() = [#message_garbage_list{}]
+%%   garbage_message_list() = [#garbage_position{}]
 %% }.
 -record(game_state,{
   current_random :: integer(),
-  current_piece_position :: integer(),
-  current_piece_state :: integer(),
-  current_piece_color :: integer(),
+  current_piece_x :: integer(),
+  current_piece_y :: integer(),
+  current_piece_angle :: piece_rotation(),
+  current_piece_color1 :: block_color(),
+  current_piece_color2 :: block_color(),
   blocks = [] :: [#block_position{}],
-  garbage_message_list = [] :: [#message_garbage_list{}]}).
+  garbage_message_list = [] :: [#garbage_position{}]}).
 
 %% @type message_game_state_record() = #message_game_state_record{
 %%   opponent_state() = #game_state{},
@@ -76,30 +88,40 @@
 %% @type message_update_piece_record() = #message_update_piece_record{
 %%   x() = integer(),
 %%   y() = integer(),
-%%   state() = integer()
+%%   state() = piece_rotation()
 %% }.
 -record(message_update_piece,{
   x :: integer(),
   y :: integer(),
-  state :: integer()}).
+  state :: piece_rotation()}).
 
 %% @type message_place_piece_record() = #message_place_piece_record{
 %%   x() = integer(),
 %%   y() = integer(),
-%%   state() = integer(),
-%%   game_state() = #game_state{}
+%%   state() = piece_rotation()
 %% }.
 -record(message_place_piece,{
   x :: integer(),
   y :: integer(),
-  state :: integer(),
-  game_state :: #game_state{}}).
+  state :: piece_rotation()}).
 
-%% @type message_place_garbage_record() = #message_place_garbage_record{
-%%   garbage() = #message_garbage_list{}
+%% @type message_opponent_place_piece_record() = #message_opponent_place_piece_record{
+%%   x() = integer(),
+%%   y() = integer(),
+%%   state() = piece_rotation(),
+%%   garbage() = [#garbage_position{}]
 %% }.
--record(message_place_garbage,{
-  garbage :: #message_garbage_list{}}).
+-record(message_opponent_place_piece,{
+  x :: integer(),
+  y :: integer(),
+  state :: piece_rotation(),
+  garbage = [] :: [#garbage_position{}]}).
+
+%% @type message_generated_garbage_record() = #message_generated_garbage_record{
+%%   garbage() = [#garbage_position{}]
+%% }.
+-record(message_generated_garbage,{
+  garbage = [] :: [#garbage_position{}]}).
 
 %% @type message_difficult_change_record() = #message_difficult_change_record{
 %%   level() = integer()
@@ -143,40 +165,40 @@
   opponent_name :: binary(),
   start_level :: integer()}).
 
-%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found.
--type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_place_garbage_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found.
+%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code.
+-type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code.
 
 %% @type request_record() = #request_record{
 %%   type() = request__request_type(),
 %%   login_content() = 'undefined' | #message_login{},
 %%   place_piece_content() = 'undefined' | #message_place_piece{},
 %%   update_piece_content() = 'undefined' | #message_update_piece{},
-%%   place_garbage_content() = 'undefined' | #message_place_garbage{},
+%%   opponent_place_piece_content() = 'undefined' | #message_opponent_place_piece{},
 %%   game_end_content() = 'undefined' | #message_game_end{},
 %%   game_start_content() = 'undefined' | #message_game_start{},
 %%   login_sucess_content() = 'undefined' | #messagelogin_success{},
 %%   difficult_change_content() = 'undefined' | #message_difficult_change{},
-%%   game_state_content() = 'undefined' | #message_game_state{},
 %%   user_disconected_content() = 'undefined' | #message_user_disconected{},
 %%   restart_game_content() = 'undefined' | #message_restart_game{},
 %%   power_content() = 'undefined' | #message_generic_power{},
 %%   enter_queue_content() = 'undefined' | #message_enter_queue{},
-%%   match_found_content() = 'undefined' | #message_match_found{}
+%%   match_found_content() = 'undefined' | #message_match_found{},
+%%   generated_garbage_content() = 'undefined' | #message_generated_garbage{}
 %% }.
 -record(request,{
   type :: request__request_type(),
   login_content :: 'undefined' | #message_login{},
   place_piece_content :: 'undefined' | #message_place_piece{},
   update_piece_content :: 'undefined' | #message_update_piece{},
-  place_garbage_content :: 'undefined' | #message_place_garbage{},
+  opponent_place_piece_content :: 'undefined' | #message_opponent_place_piece{},
   game_end_content :: 'undefined' | #message_game_end{},
   game_start_content :: 'undefined' | #message_game_start{},
   login_sucess_content :: 'undefined' | #messagelogin_success{},
   difficult_change_content :: 'undefined' | #message_difficult_change{},
-  game_state_content :: 'undefined' | #message_game_state{},
   user_disconected_content :: 'undefined' | #message_user_disconected{},
   restart_game_content :: 'undefined' | #message_restart_game{},
   power_content :: 'undefined' | #message_generic_power{},
   enter_queue_content :: 'undefined' | #message_enter_queue{},
-  match_found_content :: 'undefined' | #message_match_found{}}).
+  match_found_content :: 'undefined' | #message_match_found{},
+  generated_garbage_content :: 'undefined' | #message_generated_garbage{}}).
 

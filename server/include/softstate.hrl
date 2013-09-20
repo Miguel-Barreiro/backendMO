@@ -27,7 +27,7 @@
 }).
 
 -type block_type() :: color | garbage.
--type color_type() :: red | yellow | blue | green.
+-type color_type() :: red | yellow | blue | green | purple | white.
 
 -record( block, {
 	type = color :: block_type(),
@@ -41,19 +41,22 @@
 
 -record( piece, {
 	block1 :: #block{},
-	block2 :: #block{},
-	angle = up :: angle_type()
+	block2 :: #block{}
 }).
 
 
+-record( user_gamestate,{
+	user_pid = undefined :: pid(),
+	board :: #board{},
+	current_piece :: #piece{},
+	garbage_position_list = [],
+	piece_generation_step = 0
+}).
+
 -record( game, {
 
-	user1_pid = undefined :: pid(),
-	user2_pid = undefined :: pid(),
-
-	user1_current_piece :: #piece{},
-	user2_current_piece :: #piece{},
-
-	user1_board :: #board{},
-	user2_board :: #board{}
+	user1_gamestate = #user_gamestate{},
+	user2_gamestate = #user_gamestate{},
+	initial_seed = undefined,
+	difficult_level = 0
 }).

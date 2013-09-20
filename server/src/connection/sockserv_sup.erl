@@ -21,8 +21,8 @@ init([]) ->
 	%Port = 9000,
 	%SSLPort = 9001,
 
-	{ ok, Port } = application:get_env(server, port),
-	{ ok, SSLPort } = application:get_env(server, ssl_port),
+	{ok, Port} = application:get_env(server, port),
+	{ok, SSLPort} = application:get_env(server, ssl_port),
 
 	CertFile = "../../etc/server_cert.pem",
 	KeyFile = "../../etc/server_key.pem",

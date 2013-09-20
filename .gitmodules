@@ -1,0 +1,3 @@
+[submodule "server/protocol_src"]
+	path = server/protocol_src
+	url = git@bitbucket.org:Miniclipt/miniorbsprotocol.git

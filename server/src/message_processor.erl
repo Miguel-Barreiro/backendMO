@@ -5,13 +5,15 @@
 
 -include("include/protocol_pb.hrl").
 
--export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/3]).
+-export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/2]).
 -export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
 
--export([create_login_success/1, create_login_success/7]).
+-export([create_login_success/1, create_login_success/13]).
 
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/1]).
+
+-export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -40,7 +42,7 @@ process(Msg, User_process_pid) ->
 	end.
 
 
-process_user_disconect( _Disconected_pid, User_pid, _Game_pid) ->
+process_user_disconect(User_pid, _Game_pid) ->
 	gen_server:cast( User_pid ,{send_won_message, disconect }),
 	ok.
 
@@ -64,26 +66,78 @@ create_login_success( User_id ) ->
 
 
 
-create_login_success( User_id, Player_game_state, Opponent_game_state, 
-						Starting_seed, Oppponent_user_id, Player_garbage_messages_list, 
-							Opponent_garbage_messages_list ) ->
-	Player_message_state = 
-	case Player_game_state of 
-		undefined ->	#game_state{};
-		_ -> 			Player_game_state
-	end,
-	Opponent_message_state = 
-	case Opponent_game_state of 
-		undefined ->	#game_state{};
-		_ ->			Opponent_game_state
+create_login_success( User_id, 
+						Player_current_random_step, Player_current_piece = #piece{}, 
+						Player_current_piece_angle, Player_block_list, Player_garbage_list,
+							Opponent_current_random_step, Opponent_current_piece = #piece{}, 
+							Opponent_current_piece_angle, Opponent_block_list, Opponent_garbage_list,
+								Starting_seed, 
+									Oppponent_user_id) ->
+
+	Fun = fun( Block = #block{}, Result_block_list ) -> 
+		Color = case Block#block.type of
+			color ->			Block#block.color;
+			garbage ->			garbage
+		end,
+		New_block_position = #block_position{ x = Block#block.x, y = Block#block.y, color = Color },
+		[ New_block_position | Result_block_list]
 	end,
 
-	%Game_state = #message_game_state{ player_state = Player_message_state#game_state{ garbage_message_list = Player_garbage_messages_list }, 
-	%													opponent_state = Opponent_message_state#game_state{ garbage_message_list = Opponent_garbage_messages_list },
-	%														starting_seed = Starting_seed,
-	%															opponent_name = Oppponent_user_id },
+	Opponent_block_position_list = lists:foldl(Fun, [], Opponent_block_list),
+	Player_block_position_list = lists:foldl(Fun, [], Player_block_list),
+
+	Opponent_garbage_message_list =  lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Player_garbage_list),
+	Player_garbage_message_list = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Opponent_garbage_list),
+
+	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
+										current_piece_x = (Opponent_current_piece#piece.block1)#block.x,
+											current_piece_y = (Opponent_current_piece#piece.block1)#block.y,
+												current_piece_angle = Opponent_current_piece_angle,
+													current_piece_color1 = (Opponent_current_piece#piece.block1)#block.color,
+														current_piece_color2 = (Opponent_current_piece#piece.block2)#block.color,
+															blocks = Opponent_block_position_list,
+																garbage_message_list = Opponent_garbage_message_list  },
+
+	Player_game_state = #game_state{ current_random = Player_current_random_step, 
+										current_piece_x = (Player_current_piece#piece.block1)#block.x,
+											current_piece_y = (Player_current_piece#piece.block1)#block.y, 
+												current_piece_angle = Player_current_piece_angle,
+													current_piece_color1 = (Player_current_piece#piece.block1)#block.color,
+														current_piece_color2 = (Player_current_piece#piece.block2)#block.color,
+															blocks = Player_block_position_list,
+																garbage_message_list = Player_garbage_message_list },
+
+	Message_game_state = #message_game_state{ opponent_state = Opponent_game_state, 
+												player_state = Player_game_state, 
+													starting_seed = Starting_seed, 
+														opponent_name = Oppponent_user_id },
+
 	Req = #request{ type = message_login_sucess,
-					login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = lobby }},
+					login_sucess_content = #messagelogin_success{ user_id = User_id, 
+																	previous_state = playing_game, 
+																		game_state = Message_game_state }},
+	protocol_pb:encode_request(Req).
+
+
+
+create_generated_garbage_message( Garbages_position_list) ->
+	Req = #request{ type = message_generated_garbage_code,
+					generated_garbage_content = #message_generated_garbage{ 
+						garbage = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Garbages_position_list)
+					}},
+	protocol_pb:encode_request(Req).
+
+
+create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle ) ->
+
+	Garbage_list_part = lists:foldl( fun( X_pposition, Result) -> [ #garbage_position{ x = X_pposition } | Result] end , [], Garbages_position_list),
+	Req = #request{ type = message_opponent_place_piece_code,
+					opponent_place_piece_content = #message_opponent_place_piece{ 
+						garbage = Garbage_list_part,
+						x = X,
+						y = Y,
+						state = Angle
+					}},
 	protocol_pb:encode_request(Req).
 
 
@@ -224,24 +278,16 @@ process_message( message_lost_game, User_process_pid, _Message_decoded, _Message
 
 process_message( message_place_piece_code, 
 					User_process_pid, 
-						#request{ place_piece_content = #message_place_piece{ game_state = Game_state } }, 
-							Message_encoded ) 
+						#request{ place_piece_content = Message }, 
+							_Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 
-	gen_server:cast( User_process_pid, { save_game_state , Game_state } ),
-	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
-	{no_reply};
+	lager:info("place piece received to ~p",[User_process_pid]),
 
-
-
-process_message( message_place_garbage_code, 
-					User_process_pid, 
-						#request{ place_garbage_content = #message_place_garbage{ garbage = Garbage_message } }, 
-							Message_encoded ) 
-			when User_process_pid =/= no_user_process ->
-
-	gen_server:cast( User_process_pid, { add_garbage , Garbage_message } ),
-	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+	gen_server:cast( User_process_pid, { place_piece, 
+											Message#message_place_piece.x, 
+												Message#message_place_piece.y, 
+													Message#message_place_piece.state } ),
 	{no_reply};
 
 
