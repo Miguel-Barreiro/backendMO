@@ -373,13 +373,15 @@ decode_message_restart_game(B) ->
 decode_message_restart_game_impl(<<>>) -> undefined;
 decode_message_restart_game_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_restart_game{},
-     fun(1,Val,Rec) -> Rec#message_restart_game{opponent = protocol_buffers:cast(string,Val)}
+     fun(1,Val,Rec) -> Rec#message_restart_game{opponent = protocol_buffers:cast(string,Val)};
+        (2,Val,Rec) -> Rec#message_restart_game{start_timestamp = protocol_buffers:cast(int32,Val)}
       end).
 
 encode_message_restart_game(undefined) -> undefined;
 encode_message_restart_game(R) when is_record(R,message_restart_game) ->
   [
-    protocol_buffers:encode(1,length_encoded,R#message_restart_game.opponent)
+    protocol_buffers:encode(1,length_encoded,R#message_restart_game.opponent),
+    protocol_buffers:encode(2,int32,R#message_restart_game.start_timestamp)
   ].
 
 decode_message_generic_power(B) ->
@@ -460,6 +462,7 @@ to_request__request_type(15) -> message_generic_power;
 to_request__request_type(16) -> message_enter_queue;
 to_request__request_type(17) -> message_match_found;
 to_request__request_type(18) -> message_generated_garbage_code;
+to_request__request_type(19) -> message_user_reconected;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -480,6 +483,7 @@ from_request__request_type(message_generic_power) -> 15;
 from_request__request_type(message_enter_queue) -> 16;
 from_request__request_type(message_match_found) -> 17;
 from_request__request_type(message_generated_garbage_code) -> 18;
+from_request__request_type(message_user_reconected) -> 19;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->

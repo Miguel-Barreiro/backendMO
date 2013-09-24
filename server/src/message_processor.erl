@@ -11,7 +11,7 @@
 -export([create_login_success/1, create_login_success/13]).
 
 -export([create_match_found_message/2, create_start_message/1]).
--export([create_user_disconects_message/1, create_game_restarts_message/1]).
+-export([create_user_disconects_message/1, create_game_restarts_message/1, create_user_reconected_message/0]).
 
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 
@@ -213,6 +213,10 @@ create_user_disconects_message( User_id ) ->
 	protocol_pb:encode_request(Req).
 
 
+
+create_user_reconected_message() ->
+	Req = #request{ type = message_user_reconected },
+	protocol_pb:encode_request(Req).
 
 
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

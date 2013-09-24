@@ -111,7 +111,7 @@ handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, 
 				false ->	nothing_happens
 			end,
 			{ noreply, State#game_state{ user2 = User2#game_user{ is_ready = true} } };
-		false ->		
+		false ->
 			case User2#game_user.is_ready of
 				true ->		gen_server:cast(self() , start_game );
 				false ->	nothing_happens
@@ -204,10 +204,15 @@ handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = Us
 
 	erlang:cancel_timer(State#game_state.game_difficult_change_timer),
 
-	{noreply, State#game_state{ state = waiting_players, 
-									game_difficult_change_timer = undefined,
-										user1 = User1#game_user{ is_ready = false }, 
-											user2 = User2#game_user{ is_ready = false } } };
+	{stop, normal, State#game_state{ state = init }};
+
+%	{noreply, State#game_state{ state = waiting_players, 
+%									game_difficult_change_timer = undefined,
+%										user1 = User1#game_user{ is_ready = false }, 
+%											user2 = User2#game_user{ is_ready = false } } };
+
+
+
 
 
 
@@ -238,11 +243,15 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 
 
 
+
+
+
 handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, game_logic_state = Game_logic }  ) 
 				when User_pid == User1#game_user.pid ->
 
 	case User_pid == User1#game_user.pid of
 		true ->
+			gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
 			Msg = message_processor:create_login_success( User1#game_user.user_id,
 															not_implemented, 
 																not_implemented, 
@@ -250,6 +259,7 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 																		User2#game_user.user_id ),
 			New_state = State#game_state{ user1 = User1#game_user{ is_connected = true } };
 		false ->
+			gen_server:cast( User1#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
 			Msg = message_processor:create_login_success( User2#game_user.user_id , 
 															not_implemented, 
 																not_implemented,
@@ -260,39 +270,10 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 
 	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast( User_pid, {send_message, Msg }),
-	gen_server:cast( self(), check_game_restart),
 
-	{noreply, New_state };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-handle_cast( check_game_restart, State = #game_state{ user1 = User1 , user2 = User2 } ) 
-				when User1#game_user.is_connected == true, User2#game_user.is_connected == true->
-
-%	Reconect_user1_msg = message_processor:create_game_restarts_message(User1#game_user.user_id),
-%	gen_server:cast(User1#game_user.pid, {send_message, Reconect_user1_msg }),
-
-%	Reconect_user2_msg = message_processor:create_game_restarts_message(User2#game_user.user_id),
-%	gen_server:cast(User2#game_user.pid, {send_message, Reconect_user2_msg }),
-
-	{noreply, State#game_state{ state = waiting_players, 
+	{noreply, New_state#game_state{ state = waiting_players, 
 									user1 = User1#game_user{ is_ready = false}, 
 										user2 = User2#game_user{ is_ready = false}  } };
-
-
-handle_cast( check_game_restart, State = #game_state{ } ) -> 
-	{noreply, State };
 
 
 
@@ -387,32 +368,26 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, user1 =
 
 
 %%
-%	called when the user1 connection stops
+%	called when the any user process stops
 %%
-handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{ user1 = User1 , user2 = User2 })
-			 when Reference == User1#game_user.monitor ->
+handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{ user1 = User1 , user2 = User2 }) ->
+
+	Won_msg = message_processor:create_won_message(disconect),
 
 	case Reference == User1#game_user.monitor of
 		true ->
 			demonitor(User1#game_user.monitor),
-			message_processor:process_user_disconect(User2#game_user.pid, self());
+			message_processor:process_user_disconect(User2#game_user.pid, self()),
+			gen_server:cast( User1#game_user.pid, {send_message, Won_msg});
 		false ->
 			demonitor(User2#game_user.monitor),
-			message_processor:process_user_disconect(User1#game_user.pid, self())
+			message_processor:process_user_disconect(User1#game_user.pid, self()),
+			gen_server:cast( User1#game_user.pid, {send_message, Won_msg})
 	end,
+
 	lager:info("user ~p connection went down", [Pid]),
-	{stop, normal, State};
+	{stop, normal, State#game_state{ state = init }};
 
-
-
-
-
-%%
-%	called when the user disconect timeouts
-%%
-handle_info(connection_timeout, State = #game_state{}) ->
-    lager:debug("connection timeout", []),
-    {stop, normal, State};
 
 
 

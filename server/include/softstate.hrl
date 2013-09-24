@@ -50,7 +50,8 @@
 	board :: #board{},
 	current_piece :: #piece{},
 	garbage_position_list = [],
-	piece_generation_step = 0
+	piece_generation_step = 0,
+	random_state = undefined
 }).
 
 -record( game, {

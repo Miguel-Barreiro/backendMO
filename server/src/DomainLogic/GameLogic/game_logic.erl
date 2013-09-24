@@ -16,12 +16,18 @@
 
 
 create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
+
+	{ New_random_state, Piece } = calculate_next_piece( { Initial_seed , 1337 } ),
+
 	User1_gamestate = #user_gamestate{ user_pid = User1_pid, 
 										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ), 
-											current_piece = calculate_next_piece( undefined ) },
+											current_piece = Piece,
+												random_state = New_random_state },
+
 	User2_gamestate = #user_gamestate{ user_pid = User2_pid, 
 										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ),
-											current_piece = calculate_next_piece( undefined ) },
+											current_piece = Piece,
+												random_state = New_random_state },
 
 	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed }.
 
@@ -67,7 +73,7 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece ),
 			
 			Board_after_release_garbage = release_garbage_list( Result_loop_board, Gamestate#user_gamestate.garbage_position_list ),
-			Next_piece = calculate_next_piece( Gamestate ),
+			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate ),
 			
 
 			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board ),
@@ -79,10 +85,10 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			end,
 			gen_server:cast( Opponent_pid , { send_message, message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, X, Y, Angle ) } ),
 
-			New_gamestate = Gamestate#user_gamestate{ board = Board_after_release_garbage,
+			New_gamestate = New_gamestate_after_piece#user_gamestate{ board = Board_after_release_garbage,
 											garbage_position_list = [],
 												current_piece = Next_piece,
-													piece_generation_step = Gamestate#user_gamestate.piece_generation_step + 1 },
+													piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
 
 			New_opponent_garbage_list = lists:append( Generated_garbage_position_list, Opponent_gamestate#user_gamestate.garbage_position_list ),
 			New_opponent_gamestate = Opponent_gamestate#user_gamestate{ garbage_position_list = New_opponent_garbage_list },
@@ -282,19 +288,50 @@ calculate_garbage_from_combos( Combos, Board = #board{} ) ->
 
 
 
-%TODO
-calculate_next_piece( undefined ) ->
-	#piece{ block1 = #block{ type = color , color = green }, block2 = #block{ type = color , color = blue } };
 
-calculate_next_piece( _Gamestate = #user_gamestate{} ) ->
-	#piece{ block1 = #block{ type = color , color = green }, block2 = #block{ type = color , color = blue } }.
+calculate_next_piece( Gamestate = #user_gamestate{} ) ->
+	{ New_random_state, Random } = get_next_random( Gamestate#user_gamestate.random_state ),
+	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
+
+	{ Gamestate#user_gamestate{ random_state = New_random_state2 }, 
+		#piece{ block1 = #block{ type = color , color = get_block_color( Random ) }, 
+				block2 = #block{ type = color , color = get_block_color( Random2 ) } }};
+
+calculate_next_piece( Initial_random_state = { _ , _ } ) ->
+	{ New_random_state, Random } = get_next_random( Initial_random_state ),
+	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
+	{  New_random_state2,
+		#piece{ block1 = #block{ type = color , color = get_block_color( Random ) }, 
+				block2 = #block{ type = color , color = get_block_color( Random2 ) } }}.
+
+
+get_block_color( Random ) ->
+	case Random rem 6 of
+		0 ->		red;
+		1 ->		yellow;
+		2 ->		blue;
+		3 ->		green;
+		4 ->		purple;
+		5 ->		white
+	end.
 
 
 
+%	m_w = <choose-initializer>;    /* must not be zero, nor 0x464fffff */
+%	m_z = <choose-initializer>;    /* must not be zero, nor 0x9068ffff */
+ 
+%	uint get_random()
+%	{
+%	    m_z = 36969 * (m_z & 65535) + (m_z >> 16);
+%	    m_w = 18000 * (m_w & 65535) + (m_w >> 16);
+%	    return (m_z << 16) + m_w;  /* 32-bit result */
+%	}
 
-
-
-
+get_next_random( {W , Z} ) ->
+	New_z = 36969 * ( Z band 65535 ) + ( Z bsr 16),
+	New_w = 18000 * ( W band 65535 ) + ( W bsr 16),
+	Random = (New_z bsl 16) + New_w,
+	{ {New_w, New_z}, Random }.
 
 
 
