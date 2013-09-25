@@ -57,17 +57,15 @@ handle_cast([User_pid, User_id, User_pid2, User_id2], State = #game_state{ }) ->
 
 	lager:info("new game with user_id ~p user ~p",[User_pid,User_pid2]),
 
-%	gen_server:cast( User_pid , {register_game_process,self()}),
-%	Connection_monitor1 = monitor(process, User_pid),
-	
-%	gen_server:cast( User_pid2 , {register_game_process,self()}),
-%	Connection_monitor2 = monitor(process, User_pid2),
-
 	gen_server:cast(self() , game_created ),
 
+	Connection_monitor1 = monitor(process, User_pid),
+	Connection_monitor2 = monitor(process, User_pid2),
+
+
 	{noreply, State#game_state{
-				user1 = #game_user{ pid = User_pid, user_id = User_id },
-				user2 = #game_user{ pid = User_pid2, user_id = User_id2 },
+				user1 = #game_user{ pid = User_pid, user_id = User_id, monitor = Connection_monitor1 },
+				user2 = #game_user{ pid = User_pid2, user_id = User_id2, monitor = Connection_monitor2 },
 				state = init
 			}
 	};
@@ -246,30 +244,55 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 
 
 
-handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, game_logic_state = Game_logic }  ) 
-				when User_pid == User1#game_user.pid ->
+handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, 
+																game_logic_state = #game{ user1_gamestate = User1_gamestate,
+																									user2_gamestate = User2_gamestate,
+																									difficult_level = _Current_difficult_level,
+																									initial_seed = Initial_seed} }  )  ->
+	lager:info("USER ~p RECONNECTED WITH BOARD -----",[User_pid]),
 
 	case User_pid == User1#game_user.pid of
 		true ->
-			gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
-			Msg = message_processor:create_login_success( User1#game_user.user_id,
-															not_implemented, 
-																not_implemented, 
-																	Game_logic#game.initial_seed,
-																		User2#game_user.user_id ),
-			New_state = State#game_state{ user1 = User1#game_user{ is_connected = true } };
+			%gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
+			Msg = message_processor:create_login_success( User1#game_user.user_id, 
+															User1_gamestate#user_gamestate.piece_generation_step, 
+																User1_gamestate#user_gamestate.current_piece,
+																	up, board:get_all_blocks( User1_gamestate#user_gamestate.board), 
+																		User1_gamestate#user_gamestate.garbage_position_list,
+																			User2_gamestate#user_gamestate.piece_generation_step, 
+																				User2_gamestate#user_gamestate.current_piece,
+																					up, board:get_all_blocks( User2_gamestate#user_gamestate.board), 
+																						User2_gamestate#user_gamestate.garbage_position_list,
+																							Initial_seed, User2#game_user.user_id ),
+
+			New_state = State#game_state{ user1 = User1#game_user{ is_connected = true } },
+
+			board:print_board(User1_gamestate#user_gamestate.board);
+
+
 		false ->
-			gen_server:cast( User1#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
-			Msg = message_processor:create_login_success( User2#game_user.user_id , 
-															not_implemented, 
-																not_implemented,
-																	Game_logic#game.initial_seed, 
-																		User1#game_user.user_id ),
-			New_state = State#game_state{ user2 = User2#game_user{ is_connected = true } }
+			%gen_server:cast( User1#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
+
+			Msg = message_processor:create_login_success( User2#game_user.user_id, 
+															User2_gamestate#user_gamestate.piece_generation_step, 
+																User2_gamestate#user_gamestate.current_piece,
+																	up, board:get_all_blocks( User2_gamestate#user_gamestate.board), 
+																		User2_gamestate#user_gamestate.garbage_position_list,
+																			User1_gamestate#user_gamestate.piece_generation_step, 
+																				User1_gamestate#user_gamestate.current_piece,
+																					up, board:get_all_blocks( User1_gamestate#user_gamestate.board), 
+																						User1_gamestate#user_gamestate.garbage_position_list,
+																							Initial_seed, User1#game_user.user_id ),
+
+			New_state = State#game_state{ user2 = User2#game_user{ is_connected = true } },
+
+			board:print_board(User2_gamestate#user_gamestate.board)
 	end,
 
 	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast( User_pid, {send_message, Msg }),
+	gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_game_restarts_message( User1#game_user.user_id ) }),
+	gen_server:cast( User1#game_user.pid, {send_message, message_processor:create_game_restarts_message( User2#game_user.user_id ) }),
 
 	{noreply, New_state#game_state{ state = waiting_players, 
 									user1 = User1#game_user{ is_ready = false}, 
@@ -291,8 +314,7 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 
 handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game_difficult_change_timer = Game_difficult_timer, 
 																				user1 = User1 , 
-																					user2 = User2 } )
-				when User_pid == User1#game_user.pid ->
+																					user2 = User2 } ) ->
 
 	lager:info("user ~p disconected",[User_pid]),
 	Msg = message_processor:create_user_disconects_message(User_id),

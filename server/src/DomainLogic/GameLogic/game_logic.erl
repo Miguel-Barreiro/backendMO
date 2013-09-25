@@ -2,7 +2,7 @@
 
 -include("include/softstate.hrl").
 
--export([ handle_place_piece/5, create_new_game/3 ]).
+-export([ handle_place_piece/5, create_new_game/3, test_random/1 ]).
 
 
 
@@ -46,9 +46,16 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (
 																			X, Y, Angle, 
 																				Game#game.user1_gamestate, 
 																					Game#game.user2_gamestate ),
+
+	io:format("-------------------------------- ",[]),
+	io:format(" USER 1 ~p PLACE A PIECE ",[User_pid]),
+	board:print_board( New_gamestate#user_gamestate.board ),
+	io:format("-------------------------------- ",[]),
+
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
 
 handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
+
 	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
 	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
 																	Opponent_pid,  
@@ -56,6 +63,12 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 																			X, Y, Angle, 
 																				Game#game.user2_gamestate, 
 																					Game#game.user1_gamestate ),
+
+	io:format("-------------------------------- ",[]),
+	io:format(" USER 2 ~p PLACE A PIECE ",[User_pid]),
+	board:print_board( New_gamestate#user_gamestate.board ),
+	io:format("-------------------------------- ",[]),
+
 	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
 
 
@@ -66,9 +79,6 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			throw( invalid_move );
 		true ->
 			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Gamestate#user_gamestate.board),
-			lager:info("piece placed"),
-
-
 
 			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece ),
 			
@@ -92,6 +102,7 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 
 			New_opponent_garbage_list = lists:append( Generated_garbage_position_list, Opponent_gamestate#user_gamestate.garbage_position_list ),
 			New_opponent_gamestate = Opponent_gamestate#user_gamestate{ garbage_position_list = New_opponent_garbage_list },
+
 
 			{ New_gamestate, New_opponent_gamestate }
 	end.
@@ -134,6 +145,7 @@ place_piece( Piece = #piece{}, X, Y, up, Board = #board{} ) ->
 			 					board:set_block( Piece#piece.block2, X , Y - 1, Board ) );
 		false ->
 			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			board:print_board(Board),
 			throw( invalid_move )
 	end;
 
@@ -145,6 +157,7 @@ place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 		 						board:set_block( Piece#piece.block2, X , Y + 1, Board ) );
 		false ->
 			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			board:print_board(Board),
 			throw( invalid_move )
 	end;
 
@@ -158,6 +171,7 @@ place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
 		false ->
 			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
 			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
+			board:print_board(Board),
 			throw( invalid_move )
 	end;
 
@@ -172,6 +186,7 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 		false ->
 			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
 			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
+			board:print_board(Board),
 			throw( invalid_move )
 	end.
 
@@ -328,10 +343,33 @@ get_block_color( Random ) ->
 %	}
 
 get_next_random( {W , Z} ) ->
-	New_z = 36969 * ( Z band 65535 ) + ( Z bsr 16),
-	New_w = 18000 * ( W band 65535 ) + ( W bsr 16),
-	Random = (New_z bsl 16) + New_w,
-	{ {New_w, New_z}, Random }.
+	New_w = (W + 1) rem 1337,
+	Random = New_w,
+	{ {New_w, Z}, Random }.
+
+%	New_z = 36969 * ( Z band 65535 ) + ( Z bsr 16),
+%	New_w = 18000 * ( W band 65535 ) + ( W bsr 16),
+%	Random = (New_z bsl 16) + New_w,
+%	{ {New_w, New_z}, Random }.
+
+
+test_random( Number ) ->
+	test_random({ 1999, 1337}, 1, Number).
+
+test_random( _ , Current, Max) when Current == Max ->
+	ok;
+test_random(Random_state, Current, Max) ->
+	{ Random_state2, Random}  = get_next_random( Random_state ),
+	lager:info("~p -> ~p",[Current,Random]),
+	test_random(Random_state2, Current + 1, Max).
+	
+
+
+
+
+
+
+
 
 
 

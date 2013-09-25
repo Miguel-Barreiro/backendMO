@@ -7,12 +7,12 @@
 %% @type block_position_record() = #block_position_record{
 %%   x() = integer(),
 %%   y() = integer(),
-%%   color() = integer()
+%%   color() = block_color()
 %% }.
 -record(block_position,{
   x :: integer(),
   y :: integer(),
-  color :: integer()}).
+  color :: block_color()}).
 
 %% @type garbage_position_record() = #garbage_position_record{
 %%   x() = integer()

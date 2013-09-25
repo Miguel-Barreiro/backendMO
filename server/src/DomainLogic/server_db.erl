@@ -20,6 +20,7 @@ push_user_data( User = #user{ } ) ->
 	end.
 
 delete_user_data( User_id ) ->
+	lager:info("delete user from server_db"),
 	case mnesia:sync_transaction(fun() -> mnesia:delete(user, User_id ) end) of
 		{atomic, ok } -> 				ok;
 		{aborted, Reason} ->			{ error, Reason }
@@ -28,7 +29,6 @@ delete_user_data( User_id ) ->
 
 
 login_user( User_id , Login_function, Relogin_function) ->
-	
 	Function = fun() ->
 		case mnesia:read({user, User_id}) of
 			[] ->

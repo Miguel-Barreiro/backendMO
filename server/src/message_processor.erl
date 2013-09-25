@@ -33,7 +33,6 @@ process_pre_login_message(Msg) ->
 
 
 process(Msg, User_process_pid) ->
-	lager:debug("Message: ~p received", [Msg]),
 	Request = protocol_pb:decode_request(Msg),
 
 	case Request#request.type of
@@ -43,7 +42,6 @@ process(Msg, User_process_pid) ->
 
 
 process_user_disconect(User_pid, _Game_pid) ->
-	gen_server:cast( User_pid ,{send_won_message, disconect }),
 	ok.
 
 handle_connect() ->
@@ -61,6 +59,7 @@ handle_disconect() ->
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 create_login_success( User_id ) ->
+	lager:info("LOGIN SUCCESS WITHOUT STATE "),
 	Req = #request{ type = message_login_sucess, login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = lobby }},
 	protocol_pb:encode_request(Req).
 
@@ -86,8 +85,14 @@ create_login_success( User_id,
 	Opponent_block_position_list = lists:foldl(Fun, [], Opponent_block_list),
 	Player_block_position_list = lists:foldl(Fun, [], Player_block_list),
 
+%	lager:info("Opponent_block_position_list ~p",[Opponent_block_position_list]),
+%	lager:info("Player_block_position_list ~p",[Player_block_position_list]),
+
 	Opponent_garbage_message_list =  lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Player_garbage_list),
 	Player_garbage_message_list = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Opponent_garbage_list),
+
+%	lager:info("Player_garbage_message_list ~p",[Player_garbage_message_list]),
+%	lager:info("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),
 
 	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
 										current_piece_x = (Opponent_current_piece#piece.block1)#block.x,
@@ -245,7 +250,7 @@ process_message( message_login_code,
 
 			User_id_list = binary_to_list(User_id),
 			case persistent_db:get_user_by_guest_id( User_id_list ) of
-				{ error, _error } ->	{ ok, New_guest_id } = persistent_db:create_user( "Guest" ),
+				{ error, _error } ->	{ ok, New_guest_id } = persistent_db:create_user( "Guest" ),										
 										login_guest_user( New_guest_id , Client_time );
 				{ok, _user } ->			login_guest_user( User_id_list , Client_time )
 			end
@@ -328,6 +333,7 @@ process_message( Other_code, User_process_pid, _Message_decoded, _Message_encode
 
 login_guest_user( User_id , Client_time ) ->
 	User_creation_function = fun() -> 
+		lager:info("created a new user proccess in login"),
 		{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
 		#user{ 	user_id = User_id, user_process_pid = Child_pid }
 	end,
@@ -337,6 +343,7 @@ login_guest_user( User_id , Client_time ) ->
 			false ->
 				{save, User_creation_function() };
 			true ->
+				lager:info("reconnected a user to an existing proccess"),
 				gen_server:cast( User_pid, { reconnecting , self() } ),
 				dont_save
 		end

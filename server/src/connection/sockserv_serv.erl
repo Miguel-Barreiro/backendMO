@@ -59,7 +59,6 @@ init([Socket, SSLSocket, Type]) ->
 handle_cast({reply, Reply}, State = #connection_state{socket = Socket, type = Type}) ->
     %Packet = add_envelope(Reply),
 	Packet = Reply,
-	lager:debug("sent message: ~p",[Packet]),
 	case Type of
 		tcp -> gen_tcp:send(Socket, Packet);
 		ssl -> ssl:send(Socket, Packet)
@@ -159,7 +158,7 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #connection_sta
 	lager:debug("game either crashed or user was stoped so we disconect and send a disconect message", []),
 	demonitor(User_monitor),
 
-    gen_server:cast(self(), {reply_with_disconnect, ?DISCONNECT_MESSAGE}),
+    gen_server:cast(self(), {reply_with_disconnect, message_processor:create_disconect_message()}),
     {noreply, State};
 
 

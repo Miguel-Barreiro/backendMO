@@ -67,7 +67,7 @@ decode_block_position_impl(Binary) ->
   protocol_buffers:decode(Binary,#block_position{},
      fun(1,Val,Rec) -> Rec#block_position{x = protocol_buffers:cast(int32,Val)};
         (2,Val,Rec) -> Rec#block_position{y = protocol_buffers:cast(int32,Val)};
-        (3,Val,Rec) -> Rec#block_position{color = protocol_buffers:cast(int32,Val)}
+        (3,{varint,Enum},Rec) -> Rec#block_position{color=to_block_color(Enum)}
       end).
 
 encode_block_position(undefined) -> undefined;
@@ -75,7 +75,7 @@ encode_block_position(R) when is_record(R,block_position) ->
   [
     protocol_buffers:encode(1,int32,R#block_position.x),
     protocol_buffers:encode(2,int32,R#block_position.y),
-    protocol_buffers:encode(3,int32,R#block_position.color)
+    protocol_buffers:encode(3,int32,from_block_color(R#block_position.color))
   ].
 
 decode_garbage_position(B) ->

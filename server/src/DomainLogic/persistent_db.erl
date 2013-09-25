@@ -54,6 +54,7 @@ database_connect() ->
 
 %returns {ok, guest_id} or {error, _ }
 create_user( Name ) ->
+	lager:info("creating new user with name ~p",[Name]),
 	Query = "call user_create(\'" ++ Name ++ "\' )",
 	case  (catch emysql:execute(?DB_POOL_NAME, list_to_binary(Query) )) of
 		Ok_packet when is_record(Ok_packet, ok_packet) ->		{error, user_not_created};
