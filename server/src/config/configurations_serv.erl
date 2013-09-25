@@ -4,7 +4,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).
 
 
--define(CONFIGURATION_POLLING_INTERVAL,240000).
+%-define(CONFIGURATION_POLLING_INTERVAL,240000).
+-define(CONFIGURATION_POLLING_INTERVAL,1000).
 
 -record(configurations_state, {
 	latest_version = undefined
@@ -14,9 +15,13 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->	
-	gen_server:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
+	gen_server:cast(self(), start),
 	{ok, #configurations_state{}}.
 
+
+handle_cast( start, State) ->
+	erlang:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
+	{noreply, State};
 
 handle_cast( Msg, State) ->
 	lager:error("configurations_serv: unhandled cast ~p", [Msg]),
@@ -33,7 +38,7 @@ handle_info( poll_configuration , State = #configurations_state{} ) ->
 	Latest_version = download("http://s3-us-west-2.amazonaws.com/miniorbs-temp/latest.txt"),
 	lager:info("latest version is ~p",[Latest_version]),
 
-	gen_server:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
+	erlang:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
 
 	{ noreply, State };
 
