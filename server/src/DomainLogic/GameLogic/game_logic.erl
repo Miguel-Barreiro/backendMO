@@ -342,10 +342,9 @@ get_block_color( Random ) ->
 %	    return (m_z << 16) + m_w;  /* 32-bit result */
 %	}
 
-get_next_random( {W , Z} ) ->
-	New_w = (W + 1) rem 1337,
-	Random = New_w,
-	{ {New_w, Z}, Random }.
+get_next_random( X ) ->
+	Random = (1103515245 * X + 12345) rem 2147483648,
+	{ Random, Random }.
 
 %	New_z = 36969 * ( Z band 65535 ) + ( Z bsr 16),
 %	New_w = 18000 * ( W band 65535 ) + ( W bsr 16),
@@ -353,8 +352,11 @@ get_next_random( {W , Z} ) ->
 %	{ {New_w, New_z}, Random }.
 
 
+
+
+
 test_random( Number ) ->
-	test_random({ 1999, 1337}, 1, Number).
+	test_random(1999, 1, Number).
 
 test_random( _ , Current, Max) when Current == Max ->
 	ok;
