@@ -41,7 +41,7 @@ process(Msg, User_process_pid) ->
 	end.
 
 
-process_user_disconect(User_pid, _Game_pid) ->
+process_user_disconect(_User_pid, _Game_pid) ->
 	ok.
 
 handle_connect() ->
@@ -98,19 +98,15 @@ create_login_success( User_id,
 										current_piece_x = (Opponent_current_piece#piece.block1)#block.x,
 											current_piece_y = (Opponent_current_piece#piece.block1)#block.y,
 												current_piece_angle = Opponent_current_piece_angle,
-													current_piece_color1 = (Opponent_current_piece#piece.block1)#block.color,
-														current_piece_color2 = (Opponent_current_piece#piece.block2)#block.color,
-															blocks = Opponent_block_position_list,
-																garbage_message_list = Opponent_garbage_message_list  },
+													blocks = Opponent_block_position_list,
+														garbage_message_list = Opponent_garbage_message_list  },
 
 	Player_game_state = #game_state{ current_random = Player_current_random_step, 
 										current_piece_x = (Player_current_piece#piece.block1)#block.x,
 											current_piece_y = (Player_current_piece#piece.block1)#block.y, 
 												current_piece_angle = Player_current_piece_angle,
-													current_piece_color1 = (Player_current_piece#piece.block1)#block.color,
-														current_piece_color2 = (Player_current_piece#piece.block2)#block.color,
-															blocks = Player_block_position_list,
-																garbage_message_list = Player_garbage_message_list },
+													blocks = Player_block_position_list,
+														garbage_message_list = Player_garbage_message_list },
 
 	Message_game_state = #message_game_state{ opponent_state = Opponent_game_state, 
 												player_state = Player_game_state, 
@@ -292,7 +288,6 @@ process_message( message_place_piece_code,
 			when User_process_pid =/= no_user_process ->
 
 	lager:info("place piece received to ~p",[User_process_pid]),
-
 	gen_server:cast( User_process_pid, { place_piece, 
 											Message#message_place_piece.x, 
 												Message#message_place_piece.y, 
@@ -303,6 +298,7 @@ process_message( message_place_piece_code,
 
 process_message( message_update_piece_code, User_process_pid, _Message_decoded, Message_encoded )
 			when User_process_pid =/= no_user_process ->
+
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 

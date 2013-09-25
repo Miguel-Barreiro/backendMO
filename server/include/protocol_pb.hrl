@@ -25,8 +25,6 @@
 %%   current_piece_x() = integer(),
 %%   current_piece_y() = integer(),
 %%   current_piece_angle() = piece_rotation(),
-%%   current_piece_color1() = block_color(),
-%%   current_piece_color2() = block_color(),
 %%   blocks() = [#block_position{}],
 %%   garbage_message_list() = [#garbage_position{}]
 %% }.
@@ -35,8 +33,6 @@
   current_piece_x :: integer(),
   current_piece_y :: integer(),
   current_piece_angle :: piece_rotation(),
-  current_piece_color1 :: block_color(),
-  current_piece_color2 :: block_color(),
   blocks = [] :: [#block_position{}],
   garbage_message_list = [] :: [#garbage_position{}]}).
 
