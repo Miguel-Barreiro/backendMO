@@ -17,7 +17,7 @@
 
 create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 
-	{ New_random_state, Piece } = calculate_next_piece( { Initial_seed , 1337 } ),
+	{ New_random_state, Piece } = calculate_next_piece( Initial_seed ),
 
 	User1_gamestate = #user_gamestate{ user_pid = User1_pid, 
 										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ), 
@@ -312,7 +312,7 @@ calculate_next_piece( Gamestate = #user_gamestate{} ) ->
 		#piece{ block1 = #block{ type = color , color = get_block_color( Random ) }, 
 				block2 = #block{ type = color , color = get_block_color( Random2 ) } }};
 
-calculate_next_piece( Initial_random_state = { _ , _ } ) ->
+calculate_next_piece( Initial_random_state ) ->
 	{ New_random_state, Random } = get_next_random( Initial_random_state ),
 	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
 	{  New_random_state2,
