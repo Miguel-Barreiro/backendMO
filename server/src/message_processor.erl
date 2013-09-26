@@ -12,7 +12,7 @@
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/1, create_user_reconected_message/0]).
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
--export([ create_new_configuration_message/2 ]).
+-export([create_update_piece_message/3]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -68,10 +68,10 @@ create_login_success( User_id, Configuration_url, Configuration_version ) ->
 
 
 
-create_login_success( User_id, Configuration_url, Configuration_version,
-						Player_current_random_step, Player_current_piece = #piece{}, 
+create_login_success( User_id, 
+						Player_current_random_step, Player_current_piece_x, Player_current_piece_y, 
 						Player_current_piece_angle, Player_block_list, Player_garbage_list,
-							Opponent_current_random_step, Opponent_current_piece = #piece{}, 
+							Opponent_current_random_step, Opponent_current_piece_x, Opponent_current_piece_y, 
 							Opponent_current_piece_angle, Opponent_block_list, Opponent_garbage_list,
 								Starting_seed, 
 									Oppponent_user_id) ->
@@ -98,15 +98,15 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 %	lager:info("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),
 
 	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
-										current_piece_x = (Opponent_current_piece#piece.block1)#block.x,
-											current_piece_y = (Opponent_current_piece#piece.block1)#block.y,
+										current_piece_x = Opponent_current_piece_x,
+											current_piece_y = Opponent_current_piece_y,
 												current_piece_angle = Opponent_current_piece_angle,
 													blocks = Opponent_block_position_list,
 														garbage_message_list = Opponent_garbage_message_list  },
 
 	Player_game_state = #game_state{ current_random = Player_current_random_step, 
-										current_piece_x = (Player_current_piece#piece.block1)#block.x,
-											current_piece_y = (Player_current_piece#piece.block1)#block.y, 
+										current_piece_x = Player_current_piece_x,
+											current_piece_y = Player_current_piece_y,
 												current_piece_angle = Player_current_piece_angle,
 													blocks = Player_block_position_list,
 														garbage_message_list = Player_garbage_message_list },
@@ -235,6 +235,13 @@ create_new_configuration_message( New_version, New_version_url ) ->
 
 
 
+create_update_piece_message( Angle, X, Y) ->
+	Req = #request{ type = message_update_piece_code, 
+						update_piece_content = #message_update_piece{ x = X, y = Y, state = Angle } },
+	protocol_pb:encode_request(Req).
+	
+
+
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 %%
 %%										MESSAGE PROCESSING
@@ -311,9 +318,11 @@ process_message( message_place_piece_code,
 
 
 
-process_message( message_update_piece_code, User_process_pid, _Message_decoded, Message_encoded )
+process_message( message_update_piece_code, User_process_pid, #request{ update_piece_content = Message }, Message_encoded )
 			when User_process_pid =/= no_user_process ->
 
+	gen_server:cast( User_process_pid, { update_piece, Message#message_update_piece.x, Message#message_update_piece.y, 
+												Message#message_update_piece.state }),
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 

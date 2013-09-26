@@ -49,6 +49,11 @@
 	user_pid = undefined :: pid(),
 	board :: #board{},
 	current_piece :: #piece{},
+	
+	current_piece_angle :: angle_type(),
+	current_piece_x = 0 :: integer(),
+	current_piece_y = 0 :: integer(),
+
 	garbage_position_list = [],
 	piece_generation_step = 0,
 	random_state = undefined

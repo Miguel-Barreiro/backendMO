@@ -2,15 +2,13 @@
 
 -include("include/softstate.hrl").
 
--export([ handle_place_piece/5, create_new_game/3, test_random/1 ]).
+-export([ handle_place_piece/5, handle_update_piece/5, create_new_game/3, test_random/1 ]).
 
 
 
 -define( BOARD_WIDTH , 6).
 -define( BOARD_HEIGHT , 13).
-
-
-
+-define( STARTING_PIECE_X , 3).
 
 %-------------- PUBLIC -------------------------
 
@@ -98,6 +96,9 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			New_gamestate = New_gamestate_after_piece#user_gamestate{ board = Board_after_release_garbage,
 											garbage_position_list = [],
 												current_piece = Next_piece,
+												current_piece_angle = down,
+												current_piece_x = ?STARTING_PIECE_X,
+												current_piece_y = ?BOARD_HEIGHT - 1,
 													piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
 
 			New_opponent_garbage_list = lists:append( Generated_garbage_position_list, Opponent_gamestate#user_gamestate.garbage_position_list ),
@@ -109,6 +110,53 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 
 
 
+
+
+
+
+
+%throws out_of_bounds (in case the user has lost)
+%throws invalid_move (in case of an invalid move)
+handle_update_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
+	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
+	{New_gamestate, New_opponent_gamestate} = handle_update_piece( User_pid, 
+																	Opponent_pid,
+																		(Game#game.user1_gamestate)#user_gamestate.current_piece, 
+																			X, Y, Angle, 
+																				Game#game.user1_gamestate, 
+																					Game#game.user2_gamestate ),
+
+	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
+
+handle_update_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
+
+	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
+	{New_gamestate, New_opponent_gamestate} = handle_update_piece( User_pid, 
+																	Opponent_pid,
+																		(Game#game.user2_gamestate)#user_gamestate.current_piece, 
+																			X, Y, Angle, 
+																				Game#game.user2_gamestate, 
+																					Game#game.user1_gamestate ),
+
+	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
+
+
+
+
+
+handle_update_piece( _User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) ->
+
+	case Piece == Gamestate#user_gamestate.current_piece of	
+		false ->
+			lager:info("invalid piece update: wrong piece",[]),
+			throw( invalid_move );
+		true ->
+			gen_server:cast( Opponent_pid , { send_message, message_processor:create_update_piece_message( Angle, X, Y) } ),
+			New_gamestate = Gamestate#user_gamestate{  current_piece_angle = Angle,
+															current_piece_x = X,
+																current_piece_y = Y },
+			{ New_gamestate, Opponent_gamestate }
+	end.
 
 
 
@@ -144,19 +192,19 @@ place_piece( Piece = #piece{}, X, Y, up, Board = #board{} ) ->
 			 board:set_block( Piece#piece.block1, X , Y, 
 			 					board:set_block( Piece#piece.block2, X , Y - 1, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y - 1]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
 
 place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
-	case Y == Real_y of 
+	case Y == Real_y of
 		true ->
 			board:set_block( Piece#piece.block1, X , Y,
 		 						board:set_block( Piece#piece.block2, X , Y + 1, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
@@ -169,8 +217,8 @@ place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
 			board:set_block( Piece#piece.block1, X , Real_y,
 			 					board:set_block( Piece#piece.block2, X + 1, Real_y2, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
@@ -184,8 +232,8 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 			board:set_block( Piece#piece.block1, X , Real_y,
 			 					board:set_block( Piece#piece.block2, X - 1, Real_y2, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end.
