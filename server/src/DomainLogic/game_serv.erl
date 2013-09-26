@@ -156,6 +156,18 @@ handle_cast( start_game, State = #game_state{ time_difficult_change_left = Time_
 
 
 
+handle_cast( { update_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) ->
+	try 
+		New_game_state = game_logic:handle_update_piece( User_pid, X, Y, Angle,  State#game_state.game_logic_state),
+		{ noreply, State#game_state{ game_logic_state = New_game_state } }
+	catch
+		throw:invalid_move ->
+			%% HACKER
+			lager:info("user is a hacker"),
+			gen_server:cast( self(), { user_lost_game, User_pid } ),
+			{ noreply, State }
+	end;
+
 
 
 
@@ -253,15 +265,21 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 
 	case User_pid == User1#game_user.pid of
 		true ->
+
 			%gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
 			Msg = message_processor:create_login_success( User1#game_user.user_id, 
-															User1_gamestate#user_gamestate.piece_generation_step, 
-																User1_gamestate#user_gamestate.current_piece,
-																	up, board:get_all_blocks( User1_gamestate#user_gamestate.board), 
+															User1_gamestate#user_gamestate.piece_generation_step,
+																User1_gamestate#user_gamestate.current_piece_x,
+																User1_gamestate#user_gamestate.current_piece_y,
+																User1_gamestate#user_gamestate.current_piece_angle,
+																	board:get_all_blocks( User1_gamestate#user_gamestate.board), 
 																		User1_gamestate#user_gamestate.garbage_position_list,
 																			User2_gamestate#user_gamestate.piece_generation_step, 
 																				User2_gamestate#user_gamestate.current_piece,
-																					up, board:get_all_blocks( User2_gamestate#user_gamestate.board), 
+																				 User2_gamestate#user_gamestate.current_piece_x,
+																				 User2_gamestate#user_gamestate.current_piece_x,
+																				 User2_gamestate#user_gamestate.current_piece_angle,
+																					board:get_all_blocks( User2_gamestate#user_gamestate.board), 
 																						User2_gamestate#user_gamestate.garbage_position_list,
 																							Initial_seed, User2#game_user.user_id ),
 
@@ -275,12 +293,16 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 
 			Msg = message_processor:create_login_success( User2#game_user.user_id, 
 															User2_gamestate#user_gamestate.piece_generation_step, 
-																User2_gamestate#user_gamestate.current_piece,
-																	up, board:get_all_blocks( User2_gamestate#user_gamestate.board), 
+																User2_gamestate#user_gamestate.current_piece_x,
+																User2_gamestate#user_gamestate.current_piece_y,
+																User2_gamestate#user_gamestate.current_piece_angle,
+																	board:get_all_blocks( User2_gamestate#user_gamestate.board), 
 																		User2_gamestate#user_gamestate.garbage_position_list,
 																			User1_gamestate#user_gamestate.piece_generation_step, 
-																				User1_gamestate#user_gamestate.current_piece,
-																					up, board:get_all_blocks( User1_gamestate#user_gamestate.board), 
+																				User1_gamestate#user_gamestate.current_piece_x,
+																				User1_gamestate#user_gamestate.current_piece_y,
+																				User1_gamestate#user_gamestate.current_piece_angle,
+																					board:get_all_blocks( User1_gamestate#user_gamestate.board), 
 																						User1_gamestate#user_gamestate.garbage_position_list,
 																							Initial_seed, User1#game_user.user_id ),
 

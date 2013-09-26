@@ -87,6 +87,13 @@ handle_cast( { place_piece , X, Y, Angle } , State = #user_process_state{ game_p
 
 
 
+handle_cast( { update_piece, X, Y, Angle }, State = #user_process_state{ game_pid = Game_pid } ) ->
+	gen_server:cast( Game_pid, { update_piece, X, Y, Angle, self() } ),
+	{noreply, State};
+
+
+
+
 
 
 handle_cast( {game_start , StartTime }, 
