@@ -61,7 +61,7 @@ handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid =
 	{noreply, State};
 
 handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid })->
-	lager:info("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
+	%lager:info("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
 	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State};
 
@@ -153,20 +153,6 @@ handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
 
 
 
-handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state }) 
-				when Game_pid =/= undefined, User_state == playing_game ->
-	gen_server:cast(Game_pid , { user_lost_game, self() }),
-	{noreply, State};
-
-handle_cast( { lost_game, _Lost_details }, State = #user_process_state{ }) ->
-	lager:error("users_serv: lost_game received but user is not in correct lost_game state"),
-	{noreply, State};
-
-
-
-
-
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -215,9 +201,16 @@ handle_cast(accept, State ) ->
 
 
 
-handle_info({configuration,new_configuration}, State = #user_process_state{connection_monitor = Connection_monitor, 
+handle_info({configuration,{new_configuration, New_version, New_version_url} }, State = #user_process_state{connection_monitor = Connection_monitor, 
 																						game_pid = Game_process_pid,
-																						user_id = User_id}) 
+																						user_id = User_id}) ->
+	lager:info("User ~p is going to be disconected due to new configuration",[User_id]),
+	
+	Msg = message_processor:create_new_configuration_message( New_version, New_version_url ),
+
+	gen_server:cast(Game_process_pid,{reply, Msg}),
+
+	{stop, normal, State};
 
 
 

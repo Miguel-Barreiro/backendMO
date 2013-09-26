@@ -126,6 +126,8 @@ handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, 
 
 
 
+
+
 handle_cast( start_game, State = #game_state{ time_difficult_change_left = Time_left, user1 = User1, user2 = User2, state = Game_State} ) 
 				when Game_State == waiting_players,
 						User1#game_user.is_ready == true,

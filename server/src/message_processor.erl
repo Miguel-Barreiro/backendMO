@@ -6,14 +6,13 @@
 -include("include/protocol_pb.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/2]).
+
 -export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
-
 -export([create_login_success/1, create_login_success/13]).
-
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/1, create_user_reconected_message/0]).
-
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
+-export([ create_new_configuration_message/2 ]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -121,6 +120,9 @@ create_login_success( User_id,
 
 
 
+
+
+
 create_generated_garbage_message( Garbages_position_list) ->
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
@@ -218,6 +220,13 @@ create_user_disconects_message( User_id ) ->
 create_user_reconected_message() ->
 	Req = #request{ type = message_user_reconected },
 	protocol_pb:encode_request(Req).
+
+
+create_new_configuration_message( New_version, New_version_url ) ->
+	Req = #request{ type = message_new_configuration_version, 
+						new_configuration_content = #message_new_configuration{  new_version = New_version, new_url = New_version_url } },
+	protocol_pb:encode_request(Req).
+
 
 
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
