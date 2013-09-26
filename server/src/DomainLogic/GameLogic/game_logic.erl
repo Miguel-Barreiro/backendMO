@@ -144,19 +144,19 @@ place_piece( Piece = #piece{}, X, Y, up, Board = #board{} ) ->
 			 board:set_block( Piece#piece.block1, X , Y, 
 			 					board:set_block( Piece#piece.block2, X , Y - 1, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y - 1]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
 
 place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
-	case Y == Real_y of 
+	case Y == Real_y of
 		true ->
 			board:set_block( Piece#piece.block1, X , Y,
 		 						board:set_block( Piece#piece.block2, X , Y + 1, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
@@ -169,8 +169,8 @@ place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
 			board:set_block( Piece#piece.block1, X , Real_y,
 			 					board:set_block( Piece#piece.block2, X + 1, Real_y2, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
@@ -184,8 +184,8 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 			board:set_block( Piece#piece.block1, X , Real_y,
 			 					board:set_block( Piece#piece.block2, X - 1, Real_y2, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end.
