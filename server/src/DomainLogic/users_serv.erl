@@ -34,6 +34,8 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 
 	lager:info("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
+	swiss:subscribe(configuration),
+
 	gen_server:cast( Connection_pid , {register_user_process, self() }),
 	Connection_monitor = monitor(process, Connection_pid),
 
@@ -210,6 +212,13 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 
 handle_cast(accept, State ) ->
 	{noreply, State}.
+
+
+
+handle_info({configuration,new_configuration}, State = #user_process_state{connection_monitor = Connection_monitor, 
+																						game_pid = Game_process_pid,
+																						user_id = User_id}) 
+
 
 
 
