@@ -62,11 +62,15 @@
 %% @type messagelogin_success_record() = #messagelogin_success_record{
 %%   user_id() = binary(),
 %%   previous_state() = messagelogin_success__previous_state(),
+%%   configuration_url() = binary(),
+%%   configuration_version() = binary(),
 %%   game_state() = 'undefined' | #message_game_state{}
 %% }.
 -record(messagelogin_success,{
   user_id :: binary(),
   previous_state :: messagelogin_success__previous_state(),
+  configuration_url :: binary(),
+  configuration_version :: binary(),
   game_state :: 'undefined' | #message_game_state{}}).
 
 %% @type message_game_start_record() = #message_game_start_record{

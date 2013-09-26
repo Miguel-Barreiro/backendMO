@@ -8,7 +8,7 @@
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/2]).
 
 -export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
--export([create_login_success/1, create_login_success/13]).
+-export([create_login_success/3, create_login_success/15]).
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/1, create_user_reconected_message/0]).
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
@@ -57,14 +57,18 @@ handle_disconect() ->
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-create_login_success( User_id ) ->
+create_login_success( User_id, Configuration_url, Configuration_version ) ->
 	lager:info("LOGIN SUCCESS WITHOUT STATE "),
-	Req = #request{ type = message_login_sucess, login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = lobby }},
+	Req = #request{ type = message_login_sucess, 
+						login_sucess_content = #messagelogin_success{ user_id = User_id, 
+																		previous_state = lobby,
+																		configuration_url = Configuration_url,
+																		configuration_version = Configuration_version }},
 	protocol_pb:encode_request(Req).
 
 
 
-create_login_success( User_id, 
+create_login_success( User_id, Configuration_url, Configuration_version,
 						Player_current_random_step, Player_current_piece = #piece{}, 
 						Player_current_piece_angle, Player_block_list, Player_garbage_list,
 							Opponent_current_random_step, Opponent_current_piece = #piece{}, 
@@ -114,8 +118,10 @@ create_login_success( User_id,
 
 	Req = #request{ type = message_login_sucess,
 					login_sucess_content = #messagelogin_success{ user_id = User_id, 
-																	previous_state = playing_game, 
-																		game_state = Message_game_state }},
+																	previous_state = playing_game,
+																		configuration_url = Configuration_url,
+																			configuration_version = Configuration_version  
+																				game_state = Message_game_state }},
 	protocol_pb:encode_request(Req).
 
 

@@ -190,7 +190,9 @@ decode_messagelogin_success_impl(Binary) ->
   protocol_buffers:decode(Binary,#messagelogin_success{},
      fun(1,Val,Rec) -> Rec#messagelogin_success{user_id = protocol_buffers:cast(string,Val)};
         (2,{varint,Enum},Rec) -> Rec#messagelogin_success{previous_state=to_messagelogin_success__previous_state(Enum)};
-        (3,{length_encoded,Bin},Rec) -> Rec#messagelogin_success{game_state = decode_message_game_state_impl(Bin)}
+        (3,Val,Rec) -> Rec#messagelogin_success{configuration_url = protocol_buffers:cast(string,Val)};
+        (4,Val,Rec) -> Rec#messagelogin_success{configuration_version = protocol_buffers:cast(string,Val)};
+        (5,{length_encoded,Bin},Rec) -> Rec#messagelogin_success{game_state = decode_message_game_state_impl(Bin)}
       end).
 
 encode_messagelogin_success(undefined) -> undefined;
@@ -198,7 +200,9 @@ encode_messagelogin_success(R) when is_record(R,messagelogin_success) ->
   [
     protocol_buffers:encode(1,length_encoded,R#messagelogin_success.user_id),
     protocol_buffers:encode(2,int32,from_messagelogin_success__previous_state(R#messagelogin_success.previous_state)),
-    protocol_buffers:encode(3,length_encoded,encode_message_game_state(R#messagelogin_success.game_state))
+    protocol_buffers:encode(3,length_encoded,R#messagelogin_success.configuration_url),
+    protocol_buffers:encode(4,length_encoded,R#messagelogin_success.configuration_version),
+    protocol_buffers:encode(5,length_encoded,encode_message_game_state(R#messagelogin_success.game_state))
   ].
 
 decode_message_game_start(B) ->
