@@ -17,7 +17,7 @@
 
 create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 
-	{ New_random_state, Piece } = calculate_next_piece( { Initial_seed , 1337 } ),
+	{ New_random_state, Piece } = calculate_next_piece( Initial_seed ),
 
 	User1_gamestate = #user_gamestate{ user_pid = User1_pid, 
 										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ), 
@@ -144,19 +144,19 @@ place_piece( Piece = #piece{}, X, Y, up, Board = #board{} ) ->
 			 board:set_block( Piece#piece.block1, X , Y, 
 			 					board:set_block( Piece#piece.block2, X , Y - 1, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y - 1]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
 
 place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
-	case Y == Real_y of 
+	case Y == Real_y of
 		true ->
 			board:set_block( Piece#piece.block1, X , Y,
 		 						board:set_block( Piece#piece.block2, X , Y + 1, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
@@ -169,8 +169,8 @@ place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
 			board:set_block( Piece#piece.block1, X , Real_y,
 			 					board:set_block( Piece#piece.block2, X + 1, Real_y2, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
@@ -184,8 +184,8 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 			board:set_block( Piece#piece.block1, X , Real_y,
 			 					board:set_block( Piece#piece.block2, X - 1, Real_y2, Board ) );
 		false ->
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
-			lager:error("piece was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
+			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end.
@@ -312,7 +312,7 @@ calculate_next_piece( Gamestate = #user_gamestate{} ) ->
 		#piece{ block1 = #block{ type = color , color = get_block_color( Random ) }, 
 				block2 = #block{ type = color , color = get_block_color( Random2 ) } }};
 
-calculate_next_piece( Initial_random_state = { _ , _ } ) ->
+calculate_next_piece( Initial_random_state ) ->
 	{ New_random_state, Random } = get_next_random( Initial_random_state ),
 	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
 	{  New_random_state2,
