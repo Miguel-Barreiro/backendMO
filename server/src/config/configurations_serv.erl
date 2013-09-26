@@ -1,7 +1,7 @@
 -module(configurations_serv).
 -behaviour(gen_server).
 
--export([get_value/1]).
+-export([get_value/1, get_current_version/0, get_current_url/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).
 
 -define(CONFIGURATION_VERSION_URL,"http://s3-us-west-2.amazonaws.com/miniorbs-temp/latest.txt").
@@ -12,6 +12,7 @@
 
 -record(configurations_state, {
 	latest_version = undefined,
+	url = undefined,
 	values = gb_trees:empty() :: gb_tree()
 }).
 
@@ -24,8 +25,14 @@ init([]) ->
 
 
 
+get_current_version() ->
+	gen_server:call(whereis(?MODULE), get_version).
+
+get_current_url() ->
+	gen_server:call(whereis(?MODULE), get_url).
+
 get_value( Name ) ->
-	gen_server:call(whereis(?MODULE),{get_value, Name}).
+	gen_server:call(whereis(?MODULE), {get_value, Name}).
 
 
 
@@ -65,6 +72,12 @@ handle_info(Msg,State) ->
 
 handle_call({get_value, Name}, _From, State ) ->
 	{reply, gb_trees:get( Name, State#configurations_state.values) , State};
+
+handle_call( get_version, _From, State ) ->
+	{reply, State#configurations_state.latest_version , State};
+
+handle_call( get_url, _From, State ) ->
+	{reply, State#configurations_state.url , State};
 
 
 

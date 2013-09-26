@@ -39,7 +39,9 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 	gen_server:cast( Connection_pid , {register_user_process, self() }),
 	Connection_monitor = monitor(process, Connection_pid),
 
-	Msg =  message_processor:create_login_success( User_id ),
+	Msg =  message_processor:create_login_success( User_id, 
+													configurations_serv:get_current_version(), 
+													configurations_serv:get_current_version() ),
 	gen_server:cast( Connection_pid , { reply, Msg }),
 
 	{noreply, State#user_process_state{
@@ -209,13 +211,13 @@ handle_cast(accept, State ) ->
 
 
 handle_info({configuration,{new_configuration, New_version, New_version_url} }, State = #user_process_state{connection_monitor = Connection_monitor, 
-																						game_pid = Game_process_pid,
+																						game_pid = _Game_process_pid,
 																						user_id = User_id}) ->
 	lager:info("User ~p is going to be disconected due to new configuration",[User_id]),
 	
 	Msg = message_processor:create_new_configuration_message( New_version, New_version_url ),
 
-	gen_server:cast(Game_process_pid,{reply, Msg}),
+	gen_server:cast(Connection_monitor,{reply, Msg}),
 
 	{stop, normal, State};
 
