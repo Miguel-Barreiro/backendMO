@@ -897,6 +897,55 @@ simple_double_bomb_chain2_test() ->
 
 
 
+simple_bomb_chain_chromatic_bom_test() ->
+	Board = board:set_block( #block{ color = red }, 0 , 0, 
+				board:set_block( #block{ color = red }, 0 , 1, 
+					board:set_block( #block{ color = red }, 0 , 2, 
+						board:set_block( #block{ color = red }, 0, 3, 
+							board:set_block( #block{ color = red }, 0 , 4,
+
+								board:set_block( #block{ type = bomb }, 1 , 0,
+									board:set_block( #block{ color = yellow }, 1 , 1,
+										board:set_block( #block{ color = green }, 1 , 2,
+
+											board:set_block( #block{ color = green }, 2 , 0 ,
+												board:set_block( #block{ type = chromatic_bomb, color = purple }, 2 , 1,
+													board:set_block( #block{ color = blue }, 2 , 3,
+														board:set_block( #block{ color = purple }, 2 , 4,
+
+															board:set_block( #block{ color = purple }, 3 , 0,
+																board:set_block( #block{ color = white }, 3 , 1,
+																	board:set_block( #block{ color = red }, 3 , 2,
+																		board:set_block( #block{ color = red }, 3 , 3,
+																			board:new_empty(5,12))))))))))))))))),
+
+	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board ),
+
+	board:print_board(Result_loop_board),
+
+	?assertMatch( empty, board:get_block( 0, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 2, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 3, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 4, Result_loop_board ) ),
+
+	?assertMatch( #block{ color = green, x = 1, y = 0 }, board:get_block( 1, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 1, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 1, 2, Result_loop_board ) ),
+
+	?assertMatch( #block{ color = blue, x = 2, y = 0 }, board:get_block( 2, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 2, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 2, 2, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 2, 3, Result_loop_board ) ),
+
+	?assertMatch( #block{ color = white, x = 3, y = 0 }, board:get_block( 3, 0, Result_loop_board ) ),
+	?assertMatch( #block{ color = red, x = 3, y = 1 }, board:get_block( 3, 1, Result_loop_board ) ),
+	?assertMatch( #block{ color = red, x = 3, y = 2 }, board:get_block( 3, 2, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 3, 3, Result_loop_board ) ),
+
+	ok.
+
+
 %% --------------------         GARBAGE              ------------------------------------------
 
 
