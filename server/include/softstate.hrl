@@ -26,7 +26,7 @@
 	height :: integer()
 }).
 
--type block_type() :: color | garbage.
+-type block_type() :: color | garbage | bomb | chromatic_bomb.
 -type color_type() :: red | yellow | blue | green | purple | white.
 
 -record( block, {

@@ -284,30 +284,91 @@ pop_combos( Board = #board{}, Combo_list ) ->
 
 pop_combo( Board = #board{}, Combo ) ->
 	Fun = fun( Block = #block{}, New_board )->
-		New_board_witout_block = board:remove_block( Block#block.x, Block#block.y, New_board ),
-		pop_garbages_around( New_board_witout_block, Block#block.x, Block#block.y )
+		pop_combo_block(  Block#block.x, Block#block.y, New_board )
 	end,
 	lists:foldl( Fun, Board, sets:to_list(Combo)).
 
 
 
+pop_combo_block(  X, Y, Board = #board{} ) ->
+	New_board_witout_block = board:remove_block( X, Y, Board ),
+	pop_specials_around( New_board_witout_block, X, Y ).
 
 
 
 
-pop_garbages_around( Board = #board{}, X, Y) ->
-	pop_garbage_in( X + 1, Y, pop_garbage_in( X - 1, Y, pop_garbage_in( X, Y + 1, pop_garbage_in( X, Y - 1, Board)))).
 
 
-pop_garbage_in( X, Y, Board = #board{}) ->
+
+pop_specials_around( Board = #board{}, X, Y) ->
+	pop_special_in( X + 1, Y, pop_special_in( X - 1, Y, pop_special_in( X, Y + 1, pop_special_in( X, Y - 1, Board)))).
+
+pop_special_in( X, Y, Board = #board{}) ->
 	case board:get_block( X, Y , Board) of
 		empty ->
 			Board;
-		Garbage_Block when Garbage_Block#block.type == garbage ->
+		Garbage_block when Garbage_block#block.type == garbage ->
 			board:remove_block( X, Y , Board);
+		Bomb_block when Bomb_block#block.type == bomb ->
+			pop_bomb( X, Y, Board);
+		Chromatic_block when Chromatic_block#block.type == chromatic_bomb ->
+			pop_chromatic_bomb(X, Y, Chromatic_block#block.color, Board);
 		_Color_block ->
 			Board
 	end.
+
+
+
+
+
+pop_block(  X, Y, Board = #board{} ) ->
+	case board:get_block( X, Y , Board) of
+		empty ->
+			Board;
+		Garbage_block when Garbage_block#block.type == garbage ->
+			board:remove_block( X, Y , Board);
+		Bomb_block when Bomb_block#block.type == bomb ->
+			pop_bomb( X, Y, Board);
+		Chromatic_block when Chromatic_block#block.type == chromatic_bomb ->
+			pop_chromatic_bomb(X, Y, Chromatic_block#block.color, Board);
+		Color_block when Color_block#block.type == color ->
+			board:remove_block( X, Y , Board)
+	end.
+
+
+
+
+pop_bomb( X, Y, Board = #board{}) ->
+	pop_block( X + 1, Y , 
+		pop_block( X - 1, Y , 
+			pop_block( X, Y + 1, 
+				pop_block( X, Y -1, 
+					pop_block( X + 1, Y +1, 
+						pop_block( X - 1, Y -1, 
+							pop_block( X + 1, Y - 1, 
+								pop_block( X - 1, Y +1, board:remove_block( X, Y , Board))))))))).
+
+
+
+
+remove_all_same_color( Color, Board = #board{} ) ->	
+	Fun = fun( Block = #block{}, New_board = #board{} )->
+		case Block#block.type of
+			color when Block#block.color == Color ->
+				io:format("\npoping same color ~p block in ~p,~p",[Color,Block#block.x, Block#block.y]),
+				board:remove_block( Block#block.x, Block#block.y , New_board);
+			_other ->
+				New_board
+		end
+	end,
+	lists:foldl( Fun, Board, board:get_all_blocks(Board)).
+
+
+pop_chromatic_bomb( X, Y, Color, Board = #board{}) ->
+	io:format("poping ~p chromatic in ~p,~p",[Color,X,Y]),
+	New_board = remove_all_same_color( Color, Board),
+	board:remove_block( X, Y, New_board).
+
 
 
 
@@ -585,6 +646,94 @@ calculate_garbage_from_combo( Combo ) ->
 -ifdef(TEST).
 
 -include_lib("eunit/include/eunit.hrl").
+
+
+
+
+%% --------------------         POWERS             ------------------------------------------
+
+
+simple_chromatic_bomb_test() ->
+	Board = board:set_block( #block{ color = red }, 0 , 0, 
+				board:set_block( #block{ color = red }, 0 , 1, 
+					board:set_block( #block{ color = red }, 0 , 2, 
+						board:set_block( #block{ color = red }, 0, 3, 
+							board:set_block( #block{ color = red }, 0 , 4,
+
+								board:set_block( #block{ type = chromatic_bomb, color = green }, 1 , 0,
+									board:set_block( #block{ color = yellow }, 1 , 1,
+										board:set_block( #block{ color = green }, 1 , 2,
+
+											board:set_block( #block{ color = green }, 2 , 0 ,
+												board:set_block( #block{ color = green }, 2 , 1,
+													board:set_block( #block{ color = blue }, 2 , 3,
+
+														board:set_block( #block{ color = green }, 3 , 0,
+															board:new_empty(5,12))))))))))))),
+
+	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board ),
+
+	board:print_board(Result_loop_board),
+
+	?assertMatch( empty, board:get_block( 0, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 2, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 3, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 4, Result_loop_board ) ),
+
+	?assertMatch( #block{ color = yellow, x = 1, y = 0 }, board:get_block( 1, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 1, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 1, 2, Result_loop_board ) ),
+
+	?assertMatch( #block{ color = blue, x = 2, y = 0 }, board:get_block( 2, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 2, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 2, 2, Result_loop_board ) ),
+
+	?assertMatch( empty, board:get_block( 3, 0, Result_loop_board ) ),
+
+	ok.
+
+
+simple_bomb_test() ->
+	Board = board:set_block( #block{ color = red }, 0 , 0, 
+				board:set_block( #block{ color = red }, 0 , 1, 
+					board:set_block( #block{ color = red }, 0 , 2, 
+						board:set_block( #block{ color = red }, 0, 3, 
+							board:set_block( #block{ color = red }, 0 , 4,
+
+								board:set_block( #block{ type = bomb }, 1 , 0,
+									board:set_block( #block{ color = yellow }, 1 , 1,
+										board:set_block( #block{ color = green }, 1 , 2,
+
+											board:set_block( #block{ color = green }, 2 , 0 ,
+												board:set_block( #block{ color = green }, 2 , 1,
+													board:set_block( #block{ color = blue }, 2 , 3,
+
+														board:set_block( #block{ color = green }, 3 , 0,
+															board:new_empty(5,12))))))))))))),
+
+	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board ),
+
+	board:print_board(Result_loop_board),
+
+	?assertMatch( empty, board:get_block( 0, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 2, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 3, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 0, 4, Result_loop_board ) ),
+
+	?assertMatch( #block{ color = green, x = 1, y = 0 }, board:get_block( 1, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 1, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 1, 2, Result_loop_board ) ),
+
+	?assertMatch( #block{ color = blue, x = 2, y = 0 }, board:get_block( 2, 0, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 2, 1, Result_loop_board ) ),
+	?assertMatch( empty, board:get_block( 2, 2, Result_loop_board ) ),
+
+	?assertMatch( #block{ color = green, x = 3, y = 0 }, board:get_block( 3, 0, Result_loop_board ) ),
+
+	ok.
+
 
 
 
