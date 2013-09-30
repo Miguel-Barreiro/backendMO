@@ -419,6 +419,9 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, user1 =
 
 
 
+
+
+
 %%
 %	called when the any user process stops
 %%
@@ -429,16 +432,16 @@ handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{ use
 	case Reference == User1#game_user.monitor of
 		true ->
 			demonitor(User1#game_user.monitor),
-			message_processor:process_user_disconect(User2#game_user.pid, self()),
-			gen_server:cast( User1#game_user.pid, {send_message, Won_msg});
+			message_processor:process_user_disconect(User1#game_user.pid, self()),
+			gen_server:cast( User2#game_user.pid, {send_message, Won_msg});
 		false ->
 			demonitor(User2#game_user.monitor),
-			message_processor:process_user_disconect(User1#game_user.pid, self()),
+			message_processor:process_user_disconect(User2#game_user.pid, self()),
 			gen_server:cast( User1#game_user.pid, {send_message, Won_msg})
 	end,
-
-	lager:info("user ~p connection went down", [Pid]),
 	{stop, normal, State#game_state{ state = init }};
+
+
 
 
 

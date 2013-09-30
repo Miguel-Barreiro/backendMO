@@ -46,6 +46,13 @@ to_block_color(4) -> blue;
 to_block_color(5) -> green;
 to_block_color(6) -> purple;
 to_block_color(7) -> white;
+to_block_color(8) -> chromatic_bomb_red;
+to_block_color(9) -> chromatic_bomb_yellow;
+to_block_color(10) -> chromatic_bomb_blue;
+to_block_color(11) -> chromatic_bomb_green;
+to_block_color(12) -> chromatic_bomb_purple;
+to_block_color(13) -> chromatic_bomb_white;
+to_block_color(15) -> bomb;
 to_block_color(undefined) -> undefined.
 
 from_block_color(garbage) -> 1;
@@ -55,6 +62,13 @@ from_block_color(blue) -> 4;
 from_block_color(green) -> 5;
 from_block_color(purple) -> 6;
 from_block_color(white) -> 7;
+from_block_color(chromatic_bomb_red) -> 8;
+from_block_color(chromatic_bomb_yellow) -> 9;
+from_block_color(chromatic_bomb_blue) -> 10;
+from_block_color(chromatic_bomb_green) -> 11;
+from_block_color(chromatic_bomb_purple) -> 12;
+from_block_color(chromatic_bomb_white) -> 13;
+from_block_color(bomb) -> 15;
 from_block_color(undefined) -> undefined.
 
 decode_block_position(B) ->

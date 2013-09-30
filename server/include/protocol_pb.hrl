@@ -1,8 +1,8 @@
 %% @type piece_rotation() = up | down | right | left.
 -type piece_rotation() :: up | down | right | left.
 
-%% @type block_color() = garbage | red | yellow | blue | green | purple | white.
--type block_color() :: garbage | red | yellow | blue | green | purple | white.
+%% @type block_color() = garbage | red | yellow | blue | green | purple | white | chromatic_bomb_red | chromatic_bomb_yellow | chromatic_bomb_blue | chromatic_bomb_green | chromatic_bomb_purple | chromatic_bomb_white | bomb.
+-type block_color() :: garbage | red | yellow | blue | green | purple | white | chromatic_bomb_red | chromatic_bomb_yellow | chromatic_bomb_blue | chromatic_bomb_green | chromatic_bomb_purple | chromatic_bomb_white | bomb.
 
 %% @type block_position_record() = #block_position_record{
 %%   x() = integer(),
