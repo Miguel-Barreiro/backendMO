@@ -5,8 +5,8 @@
 
 -include("include/softstate.hrl").
 
--define(CONNECTION_TIMEOUT, 40000).
--define(DIFFICULT_CHANGE_SECONDS, 30).
+-define( CONNECTION_TIMEOUT, 40000).
+-define( DIFFICULT_CHANGE_SECONDS, 30).
 -define( COUNTDOWN_TO_START_SECONDS , 5).
 
 -type game_state_type() :: init | running | waiting_players | waiting_players_reconect.

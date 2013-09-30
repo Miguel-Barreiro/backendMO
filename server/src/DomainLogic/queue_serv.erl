@@ -1,8 +1,6 @@
 -module(queue_serv).
 -behaviour(gen_server).
 
--define(CONNECTION_TIMEOUT, 40000).
-
 -record(queue_state, {
 	queued_user_pid = undefined :: pid(),
 	queued_user_id,

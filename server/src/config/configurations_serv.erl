@@ -39,7 +39,6 @@ get_value( Name ) ->
 
 handle_cast( start, State) ->
 	erlang:send(self(), poll_configuration),
-	erlang:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
 	{noreply, State};
 
 handle_cast( Msg, State) ->
@@ -50,16 +49,20 @@ handle_cast( Msg, State) ->
 
 handle_info( poll_configuration , State = #configurations_state{} ) ->
 
-	Latest_version = download(?CONFIGURATION_VERSION_URL),
+	Lines = string:tokens( download(?CONFIGURATION_VERSION_URL), "\n"),
+	[ Latest_version | _ ] = Lines,
+
 	lager:info("latest version is ~p",[Latest_version]),
 
 	New_state = case Latest_version == State#configurations_state.latest_version of 
 		true ->			State;
-		false ->		State#configurations_state{  latest_version = Latest_version, 
+		false ->		swiss:notify( configuration, { new_configuration, 
+														Latest_version, 
+															get_configuration_url_from_version(Latest_version) } ),
+						State#configurations_state{  latest_version = Latest_version, 
 														values = get_gb_tree_from_json( Latest_version ),
 															url = ?CONFIGURATION_BUCKET_URL ++ Latest_version }
 	end,
-	swiss:notify( configuration, { new_configuration, Latest_version, get_configuration_url_from_version(Latest_version) } ),
 	erlang:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
 	{ noreply, New_state };
 
@@ -101,11 +104,11 @@ get_configuration_url_from_version( Version ) ->
 get_gb_tree_from_json( Version ) ->
 	Json = download( get_configuration_url_from_version(Version) ),
 	{Proplist} = ejson:decode(Json),
-    {All_values} = proplists:get_value(<<"values">>,Proplist),
-    Fun = fun( { Key, Value} , Tree ) ->  
-    	lager:info("configuration value ~p -> ~p",[ binary_to_list(Key),Value]),
-    	gb_trees:insert(Key, Value, Tree) 
-    end,
+	{All_values} = proplists:get_value(<<"values">>,Proplist),
+	Fun = fun( { Key, Value} , Tree ) ->  
+		lager:info("configuration value ~p -> ~p",[ binary_to_list(Key),Value]),
+		gb_trees:insert(Key, Value, Tree) 
+	end,
 	lists:foldl( Fun, gb_trees:empty(), All_values ).
 
 
