@@ -439,7 +439,7 @@ calculate_next_piece( Initial_random_state ) ->
 
 
 get_block_color_type( Random ) ->
-	case Random rem 20 of
+	case Random rem 8 of
 		0 ->
 			case Random rem 7 of
 				0 ->		{red, chromatic_bomb};

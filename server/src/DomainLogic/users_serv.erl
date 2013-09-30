@@ -1,7 +1,7 @@
 -module(users_serv).
 -behaviour(gen_server).
 
--define(CONNECTION_TIMEOUT, 180000).
+-define(CONNECTION_TIMEOUT, 10000).
 
 -include("include/softstate.hrl").
 

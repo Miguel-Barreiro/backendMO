@@ -67,7 +67,6 @@ handle_cast( Msg, State) ->
 %	called when the user connection stops
 %%
 handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #queue_state{user_monitor = Connection_monitor}) when Reference == Connection_monitor ->
-	lager:debug("queue_serv: user (~p) connection went down", [Pid]),
 	demonitor(Connection_monitor),
 	{noreply, State#queue_state{queued_user_pid = disconnected, user_monitor = disconnected}};
 

@@ -108,14 +108,24 @@ get_column_chars( X, Y, Board = #board{}) ->
 
 get_board_position( Board = #board{}, X, Y ) ->
 	case board:get_block( X , Y , Board) of
-		empty ->										" ";
-		#block{ type = color, color = red } ->			"R";
-		#block{ type = color, color = yellow } ->		"Y";
-		#block{ type = color, color = white } ->		"W";
-		#block{ type = color, color = blue } ->			"B";
-		#block{ type = color, color = purple } ->		"P";
-		#block{ type = color, color = green } ->		"G";
-		#block{ type = garbage } ->						"@"
+		empty ->												" ";
+		#block{ type = color, color = red } ->					"R";
+		#block{ type = color, color = yellow } ->				"Y";
+		#block{ type = color, color = white } ->				"W";
+		#block{ type = color, color = blue } ->					"B";
+		#block{ type = color, color = purple } ->				"P";
+		#block{ type = color, color = green } ->				"G";
+
+		#block{ type = chromatic_bomb, color = red } ->			"r";
+		#block{ type = chromatic_bomb, color = yellow } ->		"y";
+		#block{ type = chromatic_bomb, color = white } ->		"w";
+		#block{ type = chromatic_bomb, color = blue } ->		"b";
+		#block{ type = chromatic_bomb, color = purple } ->		"p";
+		#block{ type = chromatic_bomb, color = green } ->		"g";
+
+		#block{ type = bomb } ->								"@";
+		
+		#block{ type = garbage } ->								"#"
 	end.
 
 	
