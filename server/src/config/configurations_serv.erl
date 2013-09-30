@@ -56,7 +56,8 @@ handle_info( poll_configuration , State = #configurations_state{} ) ->
 	New_state = case Latest_version == State#configurations_state.latest_version of 
 		true ->			State;
 		false ->		State#configurations_state{  latest_version = Latest_version, 
-														values = get_gb_tree_from_json( Latest_version )}
+														values = get_gb_tree_from_json( Latest_version ),
+															url = ?CONFIGURATION_BUCKET_URL ++ Latest_version }
 	end,
 	swiss:notify( configuration, { new_configuration, Latest_version, get_configuration_url_from_version(Latest_version) } ),
 	erlang:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
