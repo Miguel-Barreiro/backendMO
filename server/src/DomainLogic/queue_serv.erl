@@ -27,6 +27,9 @@ leave(User_pid, User_id) ->
 
 
 
+
+
+
 handle_cast( { add_user , User_pid, User_id }, State = #queue_state{ queued_user_pid = Queued_user }) 
 				when Queued_user == undefined ->
 
@@ -51,9 +54,15 @@ handle_cast( { add_user , User_pid, User_id }, State = #queue_state{ queued_user
 		_ ->
 			lager:info("queue_serv: added a new user (~p) and started a game",[User_pid]),
 			demonitor(User_monitor),
-			game_sup:start_new_game_process( [ Queued_user, Queued_user_id, User_pid, User_id ] ),
+			game_sup:start_new_game_process( [ Queued_user, Queued_user_id, User_pid, User_id, 
+													configurations_serv:get_current_version(), configurations_serv:get_current_version()] ),
 			{noreply, State#queue_state{ queued_user_pid = undefined , user_monitor = undefined}}
 	end;
+
+
+
+
+
 
 
 

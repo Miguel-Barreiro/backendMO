@@ -1,7 +1,7 @@
 -module(game_serv).
 -behaviour(gen_server).
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/4]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/6]).
 
 -include("include/softstate.hrl").
 
@@ -25,6 +25,9 @@
 	game_difficult_change_timer = undefined,
 	time_difficult_change_left = 0,
 
+	configuration_url = undefined,
+	configuration_version = undefined,
+
 	user1 = #game_user{} :: #game_user{},
 	user2 = #game_user{} :: #game_user{},
 
@@ -37,8 +40,8 @@
 
 
 
-start_link( User_pid, User_id, User_pid2, User_id2  ) ->
-    gen_server:start_link(?MODULE, [ User_pid, User_id, User_pid2, User_id2 ], []).
+start_link( User_pid, User_id, User_pid2, User_id2, Conf_version, Conf_url  ) ->
+    gen_server:start_link(?MODULE, [ User_pid, User_id, User_pid2, User_id2, Conf_version, Conf_url ], []).
 
 init(InitData) ->
 	gen_server:cast(self(), InitData),
@@ -53,7 +56,7 @@ init(InitData) ->
 
 
 
-handle_cast([User_pid, User_id, User_pid2, User_id2], State = #game_state{ }) ->
+handle_cast([User_pid, User_id, User_pid2, User_id2, Conf_version, Conf_url], State = #game_state{ }) ->
 
 	lager:info("new game with user_id ~p user ~p",[User_pid,User_pid2]),
 
@@ -62,11 +65,12 @@ handle_cast([User_pid, User_id, User_pid2, User_id2], State = #game_state{ }) ->
 	Connection_monitor1 = monitor(process, User_pid),
 	Connection_monitor2 = monitor(process, User_pid2),
 
-
 	{noreply, State#game_state{
 				user1 = #game_user{ pid = User_pid, user_id = User_id, monitor = Connection_monitor1 },
 				user2 = #game_user{ pid = User_pid2, user_id = User_id2, monitor = Connection_monitor2 },
-				state = init
+				state = init,
+				configuration_url = Conf_url,
+				configuration_version = Conf_version
 			}
 	};
 
@@ -116,6 +120,8 @@ handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, 
 			end,
 			{ noreply, State#game_state{ user1 = User1#game_user{ is_ready = true} } }
 	end;
+
+
 
 
 
@@ -257,17 +263,19 @@ handle_cast( { send_message_to_other, Msg, From_pid }, State = #game_state{ user
 
 
 handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , user2 = User2, 
+																configuration_version = Conf_version,
+																configuration_url = Conf_url,
 																game_logic_state = #game{ user1_gamestate = User1_gamestate,
-																									user2_gamestate = User2_gamestate,
-																									difficult_level = _Current_difficult_level,
-																									initial_seed = Initial_seed} }  )  ->
+																							user2_gamestate = User2_gamestate,
+																							difficult_level = _Current_difficult_level,
+																							initial_seed = Initial_seed } }  )  ->
 	lager:info("USER ~p RECONNECTED WITH BOARD -----",[User_pid]),
 
 	case User_pid == User1#game_user.pid of
 		true ->
 
 			%gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
-			Msg = message_processor:create_login_success( User1#game_user.user_id, 
+			Msg = message_processor:create_login_success( User1#game_user.user_id, Conf_url, Conf_version,
 															User1_gamestate#user_gamestate.piece_generation_step,
 																User1_gamestate#user_gamestate.current_piece_x,
 																User1_gamestate#user_gamestate.current_piece_y,
@@ -291,7 +299,7 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 		false ->
 			%gen_server:cast( User1#game_user.pid, {send_message, message_processor:create_user_reconected_message() }),
 
-			Msg = message_processor:create_login_success( User2#game_user.user_id, 
+			Msg = message_processor:create_login_success( User2#game_user.user_id, Conf_url, Conf_version,
 															User2_gamestate#user_gamestate.piece_generation_step, 
 																User2_gamestate#user_gamestate.current_piece_x,
 																User2_gamestate#user_gamestate.current_piece_y,

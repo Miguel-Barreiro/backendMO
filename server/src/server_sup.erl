@@ -28,6 +28,7 @@ init([]) ->
 		?CHILD(users_sup, supervisor),
 		?CHILD(queue_sup, supervisor),
 		?CHILD(game_sup, supervisor),
-		?CHILD(stats_sup, supervisor)
+		?CHILD(stats_sup, supervisor),
+		?CHILD(configurations_sup, supervisor)
 	]} }.
 

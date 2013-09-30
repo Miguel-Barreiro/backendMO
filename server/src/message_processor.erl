@@ -6,15 +6,13 @@
 -include("include/protocol_pb.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/2]).
+
 -export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
-
--export([create_login_success/1, create_login_success/15]).
-
+-export([create_login_success/3, create_login_success/17]).
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/1, create_user_reconected_message/0]).
-
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
--export([create_update_piece_message/3]).
+-export([create_update_piece_message/3, create_new_configuration_message/2]).
 
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
@@ -59,14 +57,18 @@ handle_disconect() ->
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-create_login_success( User_id ) ->
+create_login_success( User_id, Configuration_url, Configuration_version ) ->
 	lager:info("LOGIN SUCCESS WITHOUT STATE "),
-	Req = #request{ type = message_login_sucess, login_sucess_content = #messagelogin_success{ user_id = User_id, previous_state = lobby }},
+	Req = #request{ type = message_login_sucess, 
+						login_sucess_content = #messagelogin_success{ user_id = User_id, 
+																		previous_state = lobby,
+																		configuration_url = Configuration_url,
+																		configuration_version = Configuration_version }},
 	protocol_pb:encode_request(Req).
 
 
 
-create_login_success( User_id, 
+create_login_success( User_id, Configuration_url, Configuration_version, 
 						Player_current_random_step, Player_current_piece_x, Player_current_piece_y, 
 						Player_current_piece_angle, Player_block_list, Player_garbage_list,
 							Opponent_current_random_step, Opponent_current_piece_x, Opponent_current_piece_y, 
@@ -116,9 +118,14 @@ create_login_success( User_id,
 
 	Req = #request{ type = message_login_sucess,
 					login_sucess_content = #messagelogin_success{ user_id = User_id, 
-																	previous_state = playing_game, 
-																		game_state = Message_game_state }},
+																	previous_state = playing_game,
+																		configuration_url = Configuration_url,
+																			configuration_version = Configuration_version,
+																				game_state = Message_game_state }},
 	protocol_pb:encode_request(Req).
+
+
+
 
 
 
@@ -219,6 +226,13 @@ create_user_disconects_message( User_id ) ->
 create_user_reconected_message() ->
 	Req = #request{ type = message_user_reconected },
 	protocol_pb:encode_request(Req).
+
+
+create_new_configuration_message( New_version, New_version_url ) ->
+	Req = #request{ type = message_new_configuration_version, 
+						new_configuration_content = #message_new_configuration{  new_version = New_version, new_url = New_version_url } },
+	protocol_pb:encode_request(Req).
+
 
 
 create_update_piece_message( Angle, X, Y) ->
