@@ -23,6 +23,7 @@
   encode_message_generic_power/1,decode_message_generic_power/1,
   encode_message_enter_queue/1,decode_message_enter_queue/1,
   encode_message_match_found/1,decode_message_match_found/1,
+  encode_message_new_configuration/1,decode_message_new_configuration/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -45,6 +46,13 @@ to_block_color(4) -> blue;
 to_block_color(5) -> green;
 to_block_color(6) -> purple;
 to_block_color(7) -> white;
+to_block_color(8) -> chromatic_bomb_red;
+to_block_color(9) -> chromatic_bomb_yellow;
+to_block_color(10) -> chromatic_bomb_blue;
+to_block_color(11) -> chromatic_bomb_green;
+to_block_color(12) -> chromatic_bomb_purple;
+to_block_color(13) -> chromatic_bomb_white;
+to_block_color(15) -> bomb;
 to_block_color(undefined) -> undefined.
 
 from_block_color(garbage) -> 1;
@@ -54,6 +62,13 @@ from_block_color(blue) -> 4;
 from_block_color(green) -> 5;
 from_block_color(purple) -> 6;
 from_block_color(white) -> 7;
+from_block_color(chromatic_bomb_red) -> 8;
+from_block_color(chromatic_bomb_yellow) -> 9;
+from_block_color(chromatic_bomb_blue) -> 10;
+from_block_color(chromatic_bomb_green) -> 11;
+from_block_color(chromatic_bomb_purple) -> 12;
+from_block_color(chromatic_bomb_white) -> 13;
+from_block_color(bomb) -> 15;
 from_block_color(undefined) -> undefined.
 
 decode_block_position(B) ->
@@ -189,7 +204,9 @@ decode_messagelogin_success_impl(Binary) ->
   protocol_buffers:decode(Binary,#messagelogin_success{},
      fun(1,Val,Rec) -> Rec#messagelogin_success{user_id = protocol_buffers:cast(string,Val)};
         (2,{varint,Enum},Rec) -> Rec#messagelogin_success{previous_state=to_messagelogin_success__previous_state(Enum)};
-        (3,{length_encoded,Bin},Rec) -> Rec#messagelogin_success{game_state = decode_message_game_state_impl(Bin)}
+        (3,Val,Rec) -> Rec#messagelogin_success{configuration_url = protocol_buffers:cast(string,Val)};
+        (4,Val,Rec) -> Rec#messagelogin_success{configuration_version = protocol_buffers:cast(string,Val)};
+        (5,{length_encoded,Bin},Rec) -> Rec#messagelogin_success{game_state = decode_message_game_state_impl(Bin)}
       end).
 
 encode_messagelogin_success(undefined) -> undefined;
@@ -197,7 +214,9 @@ encode_messagelogin_success(R) when is_record(R,messagelogin_success) ->
   [
     protocol_buffers:encode(1,length_encoded,R#messagelogin_success.user_id),
     protocol_buffers:encode(2,int32,from_messagelogin_success__previous_state(R#messagelogin_success.previous_state)),
-    protocol_buffers:encode(3,length_encoded,encode_message_game_state(R#messagelogin_success.game_state))
+    protocol_buffers:encode(3,length_encoded,R#messagelogin_success.configuration_url),
+    protocol_buffers:encode(4,length_encoded,R#messagelogin_success.configuration_version),
+    protocol_buffers:encode(5,length_encoded,encode_message_game_state(R#messagelogin_success.game_state))
   ].
 
 decode_message_game_start(B) ->
@@ -440,6 +459,26 @@ encode_message_match_found(R) when is_record(R,message_match_found) ->
     protocol_buffers:encode(3,int32,R#message_match_found.start_level)
   ].
 
+decode_message_new_configuration(B) ->
+  case decode_message_new_configuration_impl(B) of
+    undefined -> #message_new_configuration{};
+    Any -> Any
+  end.
+
+decode_message_new_configuration_impl(<<>>) -> undefined;
+decode_message_new_configuration_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_new_configuration{},
+     fun(1,Val,Rec) -> Rec#message_new_configuration{new_version = protocol_buffers:cast(string,Val)};
+        (2,Val,Rec) -> Rec#message_new_configuration{new_url = protocol_buffers:cast(string,Val)}
+      end).
+
+encode_message_new_configuration(undefined) -> undefined;
+encode_message_new_configuration(R) when is_record(R,message_new_configuration) ->
+  [
+    protocol_buffers:encode(1,length_encoded,R#message_new_configuration.new_version),
+    protocol_buffers:encode(2,length_encoded,R#message_new_configuration.new_url)
+  ].
+
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -459,6 +498,7 @@ to_request__request_type(16) -> message_enter_queue;
 to_request__request_type(17) -> message_match_found;
 to_request__request_type(18) -> message_generated_garbage_code;
 to_request__request_type(19) -> message_user_reconected;
+to_request__request_type(20) -> message_new_configuration_version;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -480,6 +520,7 @@ from_request__request_type(message_enter_queue) -> 16;
 from_request__request_type(message_match_found) -> 17;
 from_request__request_type(message_generated_garbage_code) -> 18;
 from_request__request_type(message_user_reconected) -> 19;
+from_request__request_type(message_new_configuration_version) -> 20;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -505,7 +546,8 @@ decode_request_impl(Binary) ->
         (12,{length_encoded,Bin},Rec) -> Rec#request{power_content = decode_message_generic_power_impl(Bin)};
         (13,{length_encoded,Bin},Rec) -> Rec#request{enter_queue_content = decode_message_enter_queue_impl(Bin)};
         (14,{length_encoded,Bin},Rec) -> Rec#request{match_found_content = decode_message_match_found_impl(Bin)};
-        (15,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)}
+        (15,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)};
+        (16,{length_encoded,Bin},Rec) -> Rec#request{new_configuration_content = decode_message_new_configuration_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -525,6 +567,7 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(12,length_encoded,encode_message_generic_power(R#request.power_content)),
     protocol_buffers:encode(13,length_encoded,encode_message_enter_queue(R#request.enter_queue_content)),
     protocol_buffers:encode(14,length_encoded,encode_message_match_found(R#request.match_found_content)),
-    protocol_buffers:encode(15,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content))
+    protocol_buffers:encode(15,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content)),
+    protocol_buffers:encode(16,length_encoded,encode_message_new_configuration(R#request.new_configuration_content))
   ].
 

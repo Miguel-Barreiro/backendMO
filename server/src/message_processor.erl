@@ -75,11 +75,7 @@ create_login_success( User_id,
 									Oppponent_user_id) ->
 
 	Fun = fun( Block = #block{}, Result_block_list ) -> 
-		Color = case Block#block.type of
-			color ->			Block#block.color;
-			garbage ->			garbage
-		end,
-		New_block_position = #block_position{ x = Block#block.x, y = Block#block.y, color = Color },
+		New_block_position = #block_position{ x = Block#block.x, y = Block#block.y, color = get_protocol_color_from_block(Block) },
 		[ New_block_position | Result_block_list]
 	end,
 
@@ -365,6 +361,22 @@ login_guest_user( User_id , Client_time ) ->
 
 
 
+
+get_protocol_color_from_block( Block = #block{ type = Type} ) when Type == color ->
+	Block#block.color;
+
+get_protocol_color_from_block( Block = #block{ type = Type} ) when Type == chromatic_bomb ->
+	case Block#block.color of 
+		red -> 		chromatic_bomb_red;
+		yellow -> 	chromatic_bomb_yellow;
+		blue -> 	chromatic_bomb_blue;
+		green ->	chromatic_bomb_green;
+		purple ->	chromatic_bomb_purple;
+		white ->	chromatic_bomb_white
+	end;
+
+get_protocol_color_from_block( #block{ type = Type} )  ->
+	Type.
 
 
 

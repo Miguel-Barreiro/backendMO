@@ -417,48 +417,60 @@ calculate_next_piece( Gamestate = #user_gamestate{} ) ->
 	{ New_random_state, Random } = get_next_random( Gamestate#user_gamestate.random_state ),
 	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
 
+	{ Color, Type } = get_block_color_type(Random),
+	{ Color2, Type2 } = get_block_color_type(Random2),
+
 	{ Gamestate#user_gamestate{ random_state = New_random_state2 }, 
-		#piece{ block1 = #block{ type = color , color = get_block_color( Random ) }, 
-				block2 = #block{ type = color , color = get_block_color( Random2 ) } }};
+		#piece{ block1 = #block{ type = Type, color = Color }, 
+				block2 = #block{ type = Type2, color = Color2 } }};
 
 calculate_next_piece( Initial_random_state ) ->
 	{ New_random_state, Random } = get_next_random( Initial_random_state ),
 	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
+
+	{ Color, Type } = get_block_color_type(Random),
+	{ Color2, Type2 } = get_block_color_type(Random2),
+
 	{  New_random_state2,
-		#piece{ block1 = #block{ type = color , color = get_block_color( Random ) }, 
-				block2 = #block{ type = color , color = get_block_color( Random2 ) } }}.
+		#piece{ block1 = #block{ type = Type, color = Color }, 
+				block2 = #block{ type = Type2, color = Color2 } }}.
 
 
-get_block_color( Random ) ->
-	case Random rem 6 of
-		0 ->		red;
-		1 ->		yellow;
-		2 ->		blue;
-		3 ->		green;
-		4 ->		purple;
-		5 ->		white
+
+
+get_block_color_type( Random ) ->
+	case Random rem 20 of
+		0 ->
+			case Random rem 7 of
+				0 ->		{red, chromatic_bomb};
+				1 ->		{yellow, chromatic_bomb};
+				2 ->		{blue, chromatic_bomb};
+				3 ->		{green, chromatic_bomb};
+				4 ->		{purple, chromatic_bomb};
+				5 ->		{white, chromatic_bomb};
+				6 ->		{red, bomb}
+			end;
+		_other ->
+			case Random rem 6 of
+				0 ->		{red, color};
+				1 ->		{yellow, color};
+				2 ->		{blue, color};
+				3 ->		{green, color};
+				4 ->		{purple, color};
+				5 ->		{white, color}
+			end
 	end.
 
 
 
-%	m_w = <choose-initializer>;    /* must not be zero, nor 0x464fffff */
-%	m_z = <choose-initializer>;    /* must not be zero, nor 0x9068ffff */
- 
-%	uint get_random()
-%	{
-%	    m_z = 36969 * (m_z & 65535) + (m_z >> 16);
-%	    m_w = 18000 * (m_w & 65535) + (m_w >> 16);
-%	    return (m_z << 16) + m_w;  /* 32-bit result */
-%	}
+
+
 
 get_next_random( X ) ->
 	Random = (1103515245 * X + 12345) rem 2147483648,
 	{ Random, Random }.
 
-%	New_z = 36969 * ( Z band 65535 ) + ( Z bsr 16),
-%	New_w = 18000 * ( W band 65535 ) + ( W bsr 16),
-%	Random = (New_z bsl 16) + New_w,
-%	{ {New_w, New_z}, Random }.
+
 
 
 
