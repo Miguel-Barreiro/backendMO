@@ -197,7 +197,9 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 	New_connection_monitor = monitor(process, New_connection_pid),
 
 	case Game_process_pid of
-		undefined ->	Msg = message_processor:create_login_success( User_id ),
+		undefined ->	Msg = message_processor:create_login_success( User_id, 
+																		configurations_serv:get_current_url(), 
+																			configurations_serv:get_current_version() ),
 						gen_server:cast( New_connection_pid , { reply, Msg });
 
 		_ ->			gen_server:cast( Game_process_pid , { reconnecting, self() } )
