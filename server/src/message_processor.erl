@@ -76,6 +76,11 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 								Starting_seed, 
 									Oppponent_user_id) ->
 
+
+
+	lager:info("active piece player us ~p  ~p,~p ",[Player_current_piece_angle,Player_current_piece_x,Player_current_piece_y]),
+	lager:info("active piece opponent is ~p  ~p,~p ",[Opponent_current_piece_angle,Opponent_current_piece_x,Opponent_current_piece_y]),
+
 	Fun = fun( Block = #block{}, Result_block_list ) -> 
 		New_block_position = #block_position{ x = Block#block.x, y = Block#block.y, color = get_protocol_color_from_block(Block) },
 		[ New_block_position | Result_block_list]

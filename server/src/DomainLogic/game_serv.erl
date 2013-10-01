@@ -269,7 +269,6 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 																							user2_gamestate = User2_gamestate,
 																							difficult_level = _Current_difficult_level,
 																							initial_seed = Initial_seed } }  )  ->
-	lager:info("USER ~p RECONNECTED WITH BOARD -----",[User_pid]),
 
 	case User_pid == User1#game_user.pid of
 		true ->
@@ -282,8 +281,7 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 																User1_gamestate#user_gamestate.current_piece_angle,
 																	board:get_all_blocks( User1_gamestate#user_gamestate.board), 
 																		User1_gamestate#user_gamestate.garbage_position_list,
-																			User2_gamestate#user_gamestate.piece_generation_step, 
-																				User2_gamestate#user_gamestate.current_piece,
+																			User2_gamestate#user_gamestate.piece_generation_step,
 																				 User2_gamestate#user_gamestate.current_piece_x,
 																				 User2_gamestate#user_gamestate.current_piece_x,
 																				 User2_gamestate#user_gamestate.current_piece_angle,
@@ -313,6 +311,8 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 																					board:get_all_blocks( User1_gamestate#user_gamestate.board), 
 																						User1_gamestate#user_gamestate.garbage_position_list,
 																							Initial_seed, User1#game_user.user_id ),
+
+
 
 			New_state = State#game_state{ user2 = User2#game_user{ is_connected = true } },
 

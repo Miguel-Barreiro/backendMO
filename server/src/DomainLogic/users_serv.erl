@@ -40,14 +40,14 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 	Connection_monitor = monitor(process, Connection_pid),
 
 	Msg =  message_processor:create_login_success( User_id, 
-													configurations_serv:get_current_version(), 
+													configurations_serv:get_current_url(), 
 													configurations_serv:get_current_version() ),
 	gen_server:cast( Connection_pid , { reply, Msg }),
 
 	{noreply, State#user_process_state{
 				client_start_time = Client_time,
 				connection_monitor = Connection_monitor,
-				user_id = User_id, 
+				user_id = User_id,
 				connection_pid = Connection_pid,
 				disconect_timer = undefined
 			}
@@ -59,12 +59,17 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 
 handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid }) 
 				when Connection_pid == undefined ->
-	lager:info("users_serv: tried sending msg ~p but connection is down",[Msg]),
+	lager:error("users_serv: tried sending msg ~p but connection is down",[Msg]),
 	{noreply, State};
 
 handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid })->
-	%lager:info("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
-	gen_server:cast( Connection_pid, {reply, Msg}),
+	lager:info("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
+	case is_process_alive(Connection_pid) of
+		true ->
+			gen_server:cast( Connection_pid, {reply, Msg});
+		false ->
+			lager:error("users_serv: tried sending msg ~p but connection is down",[Msg])
+	end,	
 	{noreply, State};
 
 
