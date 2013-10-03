@@ -1,5 +1,4 @@
--module(server_sup).
-
+-module(users_db_sup).
 -behaviour(supervisor).
 
 %% API
@@ -23,13 +22,5 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-	{ok, { {one_for_one, 5, 10}, [
-		?CHILD(sockserv_sup, supervisor),
-		?CHILD(users_sup, supervisor),
-		?CHILD(queue_sup, supervisor),
-		?CHILD(game_sup, supervisor),
-		?CHILD(stats_sup, supervisor),
-		?CHILD(configurations_sup, supervisor),
-		?CHILD(users_db_sup,supervisor)
-	]} }.
+	{ok, { {one_for_one, 5, 10}, [ ?CHILD(users_db_serv, worker) ] } }.
 

@@ -11,7 +11,8 @@
         emysql,
         lager,
         gproc,
-        inets
+        inets,
+        mc_user_store
     ]},
     {mod, { server, []} },
     {env, [
