@@ -4,6 +4,8 @@
 -export([
   to_piece_rotation/1,from_piece_rotation/1,
   to_block_color/1,from_block_color/1,
+  encode_user_item/1,decode_user_item/1,
+  encode_user_wallet/1,decode_user_wallet/1,
   encode_block_position/1,decode_block_position/1,
   encode_garbage_position/1,decode_garbage_position/1,
   encode_game_state/1,decode_game_state/1,
@@ -24,6 +26,9 @@
   encode_message_enter_queue/1,decode_message_enter_queue/1,
   encode_message_match_found/1,decode_message_match_found/1,
   encode_message_new_configuration/1,decode_message_new_configuration/1,
+  encode_message_buy_product/1,decode_message_buy_product/1,
+  to_message_buy_product_response__response_type/1,from_message_buy_product_response__response_type/1,
+  encode_message_buy_product_response/1,decode_message_buy_product_response/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -70,6 +75,45 @@ from_block_color(chromatic_bomb_purple) -> 12;
 from_block_color(chromatic_bomb_white) -> 13;
 from_block_color(bomb) -> 15;
 from_block_color(undefined) -> undefined.
+
+decode_user_item(B) ->
+  case decode_user_item_impl(B) of
+    undefined -> #user_item{};
+    Any -> Any
+  end.
+
+decode_user_item_impl(<<>>) -> undefined;
+decode_user_item_impl(Binary) ->
+  protocol_buffers:decode(Binary,#user_item{},
+     fun(1,Val,Rec) -> Rec#user_item{name = protocol_buffers:cast(string,Val)};
+        (2,Val,Rec) -> Rec#user_item{amount = protocol_buffers:cast(int32,Val)}
+      end).
+
+encode_user_item(undefined) -> undefined;
+encode_user_item(R) when is_record(R,user_item) ->
+  [
+    protocol_buffers:encode(1,length_encoded,R#user_item.name),
+    protocol_buffers:encode(2,int32,R#user_item.amount)
+  ].
+
+decode_user_wallet(B) ->
+  case decode_user_wallet_impl(B) of
+    undefined -> #user_wallet{};
+    Any -> Any
+  end.
+
+decode_user_wallet_impl(<<>>) -> undefined;
+decode_user_wallet_impl(Binary) ->
+  protocol_buffers:decode(Binary,#user_wallet{},
+     fun(1,{length_encoded,Bin},#user_wallet{items=F}=Rec) when is_list(F) -> Rec#user_wallet{items = Rec#user_wallet.items ++ [decode_user_item_impl(Bin)]}
+
+      end).
+
+encode_user_wallet(undefined) -> undefined;
+encode_user_wallet(R) when is_record(R,user_wallet) ->
+  [
+    [ protocol_buffers:encode(1,length_encoded,encode_user_item(X)) || X <- R#user_wallet.items]
+  ].
 
 decode_block_position(B) ->
   case decode_block_position_impl(B) of
@@ -206,7 +250,8 @@ decode_messagelogin_success_impl(Binary) ->
         (2,{varint,Enum},Rec) -> Rec#messagelogin_success{previous_state=to_messagelogin_success__previous_state(Enum)};
         (3,Val,Rec) -> Rec#messagelogin_success{configuration_url = protocol_buffers:cast(string,Val)};
         (4,Val,Rec) -> Rec#messagelogin_success{configuration_version = protocol_buffers:cast(string,Val)};
-        (5,{length_encoded,Bin},Rec) -> Rec#messagelogin_success{game_state = decode_message_game_state_impl(Bin)}
+        (5,{length_encoded,Bin},Rec) -> Rec#messagelogin_success{wallet = decode_user_wallet_impl(Bin)};
+        (6,{length_encoded,Bin},Rec) -> Rec#messagelogin_success{game_state = decode_message_game_state_impl(Bin)}
       end).
 
 encode_messagelogin_success(undefined) -> undefined;
@@ -216,7 +261,8 @@ encode_messagelogin_success(R) when is_record(R,messagelogin_success) ->
     protocol_buffers:encode(2,int32,from_messagelogin_success__previous_state(R#messagelogin_success.previous_state)),
     protocol_buffers:encode(3,length_encoded,R#messagelogin_success.configuration_url),
     protocol_buffers:encode(4,length_encoded,R#messagelogin_success.configuration_version),
-    protocol_buffers:encode(5,length_encoded,encode_message_game_state(R#messagelogin_success.game_state))
+    protocol_buffers:encode(5,length_encoded,encode_user_wallet(R#messagelogin_success.wallet)),
+    protocol_buffers:encode(6,length_encoded,encode_message_game_state(R#messagelogin_success.game_state))
   ].
 
 decode_message_game_start(B) ->
@@ -479,6 +525,52 @@ encode_message_new_configuration(R) when is_record(R,message_new_configuration) 
     protocol_buffers:encode(2,length_encoded,R#message_new_configuration.new_url)
   ].
 
+decode_message_buy_product(B) ->
+  case decode_message_buy_product_impl(B) of
+    undefined -> #message_buy_product{};
+    Any -> Any
+  end.
+
+decode_message_buy_product_impl(<<>>) -> undefined;
+decode_message_buy_product_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_buy_product{},
+     fun(1,Val,Rec) -> Rec#message_buy_product{product_id = protocol_buffers:cast(string,Val)}
+      end).
+
+encode_message_buy_product(undefined) -> undefined;
+encode_message_buy_product(R) when is_record(R,message_buy_product) ->
+  [
+    protocol_buffers:encode(1,length_encoded,R#message_buy_product.product_id)
+  ].
+
+to_message_buy_product_response__response_type(1) -> response_success;
+to_message_buy_product_response__response_type(2) -> response_fail;
+to_message_buy_product_response__response_type(undefined) -> undefined.
+
+from_message_buy_product_response__response_type(response_success) -> 1;
+from_message_buy_product_response__response_type(response_fail) -> 2;
+from_message_buy_product_response__response_type(undefined) -> undefined.
+
+decode_message_buy_product_response(B) ->
+  case decode_message_buy_product_response_impl(B) of
+    undefined -> #message_buy_product_response{};
+    Any -> Any
+  end.
+
+decode_message_buy_product_response_impl(<<>>) -> undefined;
+decode_message_buy_product_response_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_buy_product_response{},
+     fun(1,{varint,Enum},Rec) -> Rec#message_buy_product_response{type=to_message_buy_product_response__response_type(Enum)};
+        (2,{length_encoded,Bin},Rec) -> Rec#message_buy_product_response{new_amount = decode_user_item_impl(Bin)}
+      end).
+
+encode_message_buy_product_response(undefined) -> undefined;
+encode_message_buy_product_response(R) when is_record(R,message_buy_product_response) ->
+  [
+    protocol_buffers:encode(1,int32,from_message_buy_product_response__response_type(R#message_buy_product_response.type)),
+    protocol_buffers:encode(2,length_encoded,encode_user_item(R#message_buy_product_response.new_amount))
+  ].
+
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -499,6 +591,8 @@ to_request__request_type(17) -> message_match_found;
 to_request__request_type(18) -> message_generated_garbage_code;
 to_request__request_type(19) -> message_user_reconected;
 to_request__request_type(20) -> message_new_configuration_version;
+to_request__request_type(21) -> message_buy_product;
+to_request__request_type(22) -> message_buy_product_response;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -521,6 +615,8 @@ from_request__request_type(message_match_found) -> 17;
 from_request__request_type(message_generated_garbage_code) -> 18;
 from_request__request_type(message_user_reconected) -> 19;
 from_request__request_type(message_new_configuration_version) -> 20;
+from_request__request_type(message_buy_product) -> 21;
+from_request__request_type(message_buy_product_response) -> 22;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -547,7 +643,9 @@ decode_request_impl(Binary) ->
         (13,{length_encoded,Bin},Rec) -> Rec#request{enter_queue_content = decode_message_enter_queue_impl(Bin)};
         (14,{length_encoded,Bin},Rec) -> Rec#request{match_found_content = decode_message_match_found_impl(Bin)};
         (15,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)};
-        (16,{length_encoded,Bin},Rec) -> Rec#request{new_configuration_content = decode_message_new_configuration_impl(Bin)}
+        (16,{length_encoded,Bin},Rec) -> Rec#request{new_configuration_content = decode_message_new_configuration_impl(Bin)};
+        (17,{length_encoded,Bin},Rec) -> Rec#request{buy_product_content = decode_message_buy_product_impl(Bin)};
+        (18,{length_encoded,Bin},Rec) -> Rec#request{buy_product_response_content = decode_message_buy_product_response_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -568,6 +666,8 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(13,length_encoded,encode_message_enter_queue(R#request.enter_queue_content)),
     protocol_buffers:encode(14,length_encoded,encode_message_match_found(R#request.match_found_content)),
     protocol_buffers:encode(15,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content)),
-    protocol_buffers:encode(16,length_encoded,encode_message_new_configuration(R#request.new_configuration_content))
+    protocol_buffers:encode(16,length_encoded,encode_message_new_configuration(R#request.new_configuration_content)),
+    protocol_buffers:encode(17,length_encoded,encode_message_buy_product(R#request.buy_product_content)),
+    protocol_buffers:encode(18,length_encoded,encode_message_buy_product_response(R#request.buy_product_response_content))
   ].
 

@@ -14,6 +14,8 @@
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
 
+-export([create_fail_buy_product_response_message/0, create_success_buy_product_response_message/2]).
+
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
 
@@ -236,6 +238,20 @@ create_new_configuration_message( New_version, New_version_url ) ->
 
 
 
+
+create_fail_buy_product_response_message() ->
+	Req = #request{ type = message_buy_product_response, 
+						buy_product_response_content = #message_buy_product_response{ type = response_fail } },
+	protocol_pb:encode_request(Req).
+
+create_success_buy_product_response_message( _Item, New_amount ) ->
+	Req = #request{ type = message_buy_product_response, 
+						buy_product_response_content = #message_buy_product_response{ type = response_success , new_amount = New_amount } },
+	protocol_pb:encode_request(Req).
+
+
+
+
 create_update_piece_message( Angle, X, Y) ->
 	Req = #request{ type = message_update_piece_code, 
 						update_piece_content = #message_update_piece{ x = X, y = Y, state = Angle } },
@@ -287,7 +303,7 @@ process_message( message_ready_code, User_process_pid, _Message_decoded, _Messag
 
 process_message( message_enter_queue, User_process_pid, 
 					#request{ enter_queue_content = #message_enter_queue{ tier = Tier } }, 
-						_Message_encoded ) 
+						_Message_encoded )
 			when User_process_pid =/= no_user_process ->
 
 	lager:info("user ~p enters the queue",[User_process_pid]),
@@ -337,10 +353,16 @@ process_message( message_generic_power, User_process_pid, _Message_decoded, Mess
 
 
 
+process_message( message_buy_product, User_process_pid, #request{ buy_product_content = Message }, _Message_encoded ) ->
+	lager:info("buy product ~p received ~p ",[Message#message_buy_product.product_id, self()]),
+	gen_server:cast( User_process_pid, { buy_product, Message#message_buy_product.product_id, 2 }),
+	{no_reply};	
+
+
+
 process_message( Other_code, User_process_pid, _Message_decoded, _Message_encoded ) ->	
 	lager:error("I ~p , received unkown message code ~p when user is ~p",[self(),Other_code,User_process_pid]),
 	{reply_with_disconnect, create_disconect_message() }.
-
 
 
 

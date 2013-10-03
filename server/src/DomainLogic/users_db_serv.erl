@@ -4,8 +4,8 @@
 -include("include/softstate.hrl").
 -include_lib("mc_user_store/include/user_store.hrl").
 
--export([ create_user/1 ]).
--export([ get_user_by_guest_id/1 ]).
+-export([ create_user/1 , get_user_by_guest_id/1 ]).
+-export([ update_guest_wallet/3 ]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).
 
@@ -21,10 +21,15 @@
 create_user( Name ) ->
 	gen_server:call(whereis(?MODULE), {create_user, Name}).
 
--spec get_user_by_guest_id(binary()) -> {error, not_found} | {ok, mc_user()}.
+-spec get_user_by_guest_id( Guest_id :: binary()) -> {error, not_found} | {ok, mc_user()}.
 get_user_by_guest_id( Guest_id ) ->
 	gen_server:call(whereis(?MODULE), {get_user_by_guest_id, Guest_id}).
 
+
+-spec update_guest_wallet( Guest_id :: binary(), Item :: binary(), Increment_Amount :: integer() ) -> 
+				{ok, integer()} | {error, user_not_found} | {error, {insufficient, integer()}}.
+update_guest_wallet( Guest_id, Item, Increment_Amount ) ->
+	gen_server:call(whereis(?MODULE), {update_guest_wallet, Guest_id, Item, Increment_Amount}).
 
 
 
@@ -47,11 +52,12 @@ handle_call( {get_user_by_guest_id, Guest_id}, _From, State = #users_db_state{})
 	{reply,user_store:login_local_user(State#users_db_state.context, Guest_id),State};
 
 
+handle_call( {update_guest_wallet, Guest_id, Item, Increment_Amount}, _From, State = #users_db_state{}) ->
+	{reply,user_store:update_wallet_balance(State#users_db_state.context, Guest_id, Item, Increment_Amount ),State};
+
+
 handle_call(_E, _From, State) ->
 	{noreply, State}.
-
-
-
 
 
 

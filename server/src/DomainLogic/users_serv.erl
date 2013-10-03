@@ -167,6 +167,19 @@ handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
 
 
 
+handle_cast({ buy_product, Product_id, Amount } , State = #user_process_state{ user_id = User_id, connection_pid = Connection_pid } ) ->
+	Msg = case users_db_serv:update_guest_wallet( User_id, Product_id, Amount ) of
+		{ok, New_amount } ->					message_processor:create_success_buy_product_response_message(  Product_id, New_amount );
+		{error, {insufficient, _Amount}} ->		message_processor:create_fail_buy_product_response_message()
+	end,
+	gen_server:cast( Connection_pid, {reply, Msg}),
+	{noreply, State};
+
+
+
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
