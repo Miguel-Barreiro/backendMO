@@ -17,13 +17,14 @@
 
 -define(MAX_GUEST_USER_TIME, 9999999).
 
--spec create_user(binary()) -> {error, not_found} | {ok, binary()}.
+-spec create_user( Name :: binary()) -> {error, not_found} | {ok, binary()}.
 create_user( Name ) ->
 	gen_server:call(whereis(?MODULE), {create_user, Name}).
 
 -spec get_user_by_guest_id(binary()) -> {error, not_found} | {ok, mc_user()}.
 get_user_by_guest_id( Guest_id ) ->
 	gen_server:call(whereis(?MODULE), {get_user_by_guest_id, Guest_id}).
+
 
 
 
@@ -38,7 +39,7 @@ init([]) ->
 
 
 handle_call( {create_user, Name}, _From, State = #users_db_state{}) ->
-	{ok, Guest_id, _User} = user_store:create_local_user( State#users_db_state.context, Name, ?MAX_GUEST_USER_TIME),
+	{ok, {Guest_id, _User}} = user_store:create_local_user( State#users_db_state.context, Name, ?MAX_GUEST_USER_TIME),
 	{reply, {ok, Guest_id}, State};
 
 

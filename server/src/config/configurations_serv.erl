@@ -52,7 +52,7 @@ handle_info( poll_configuration , State = #configurations_state{} ) ->
 	Lines = string:tokens( download(?CONFIGURATION_VERSION_URL), "\n"),
 	[ Latest_version | _ ] = Lines,
 
-	lager:info("latest version is ~p",[Latest_version]),
+	%lager:info("latest version is ~p",[Latest_version]),
 
 	New_state = case Latest_version == State#configurations_state.latest_version of 
 		true ->			State;
@@ -114,6 +114,6 @@ get_gb_tree_from_json( Version ) ->
 
 
 download(Url) ->
-	lager:info("downloading ~p",[Url]),
+	%lager:info("downloading ~p",[Url]),
 	{ok, {{_Version, 200, _Reason}, _Headers, Body}} = httpc:request(Url),
 	Body.

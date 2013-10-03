@@ -257,7 +257,7 @@ process_message( message_login_code,
 	case {Client_time, User_id} of
 
 		{ _ , undefined } ->
-			{ ok, New_guest_id } = users_db_serv:create_user( "guest" ),
+			{ ok, New_guest_id } = users_db_serv:create_user( <<"Guest">> ),
 			login_guest_user( New_guest_id , Client_time );
 
 		{undefined, _ } -> 
@@ -269,7 +269,7 @@ process_message( message_login_code,
 
 			User_id_list = binary_to_list(User_id),
 			case users_db_serv:get_user_by_guest_id( User_id_list ) of
-				{ error, _error } ->	{ ok, New_guest_id } = users_db_serv:create_user( "Guest" ),										
+				{ error, _error } ->	{ ok, New_guest_id } = users_db_serv:create_user( <<"Guest">> ),										
 										login_guest_user( New_guest_id , Client_time );
 				{ok, _user } ->			login_guest_user( User_id_list , Client_time )
 			end
