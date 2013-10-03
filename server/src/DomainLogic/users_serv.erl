@@ -125,7 +125,7 @@ handle_cast( {game_start , StartTime },
 
 handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state, user_id = User_id }) 
 				when User_state == init, Game_pid == undefined ->
-	lager:debug("users_serv: ready to place in queue"),
+	lager:debug("users_serv: ready to place in queue with powers ~p",[Powers]),
 	queue_serv:enter( self(), User_id, Powers ),
 	{noreply, State#user_process_state{ game_state = in_queue }};
 
@@ -169,8 +169,8 @@ handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
 
 handle_cast({ buy_product, Product_id, Amount } , State = #user_process_state{ user_id = User_id, connection_pid = Connection_pid } ) ->
 	Msg = case user_store:update_wallet_balance( User_id, Product_id, Amount ) of
-		{ok, New_amount } ->					message_processor:create_success_buy_product_response_message(  Product_id, New_amount );
-		{error, {insufficient, _Amount}} ->		message_processor:create_fail_buy_product_response_message()
+		{ok, New_amount } ->						message_processor:create_success_buy_product_response_message(Product_id, New_amount );
+		{error, {insufficient, _Ins_Amount}} ->		message_processor:create_fail_buy_product_response_message()
 	end,
 	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State};

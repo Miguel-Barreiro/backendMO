@@ -210,20 +210,8 @@
   type :: message_buy_product_response__response_type(),
   new_amount :: 'undefined' | #user_item{}}).
 
-%% @type message_use_product_record() = #message_use_product_record{
-%%   product_id() = binary()
-%% }.
--record(message_use_product,{
-  product_id :: binary()}).
-
-%% @type message_use_product_response_record() = #message_use_product_response_record{
-%%   new_amount() = 'undefined' | #user_item{}
-%% }.
--record(message_use_product_response,{
-  new_amount :: 'undefined' | #user_item{}}).
-
-%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response | message_use_product | message_use_product_response.
--type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response | message_use_product | message_use_product_response.
+%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response.
+-type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response.
 
 %% @type request_record() = #request_record{
 %%   type() = request__request_type(),
@@ -243,9 +231,7 @@
 %%   generated_garbage_content() = 'undefined' | #message_generated_garbage{},
 %%   new_configuration_content() = 'undefined' | #message_new_configuration{},
 %%   buy_product_content() = 'undefined' | #message_buy_product{},
-%%   buy_product_response_content() = 'undefined' | #message_buy_product_response{},
-%%   use_product_content() = 'undefined' | #message_use_product{},
-%%   use_product_response_content() = 'undefined' | #message_use_product_response{}
+%%   buy_product_response_content() = 'undefined' | #message_buy_product_response{}
 %% }.
 -record(request,{
   type :: request__request_type(),
@@ -265,7 +251,5 @@
   generated_garbage_content :: 'undefined' | #message_generated_garbage{},
   new_configuration_content :: 'undefined' | #message_new_configuration{},
   buy_product_content :: 'undefined' | #message_buy_product{},
-  buy_product_response_content :: 'undefined' | #message_buy_product_response{},
-  use_product_content :: 'undefined' | #message_use_product{},
-  use_product_response_content :: 'undefined' | #message_use_product_response{}}).
+  buy_product_response_content :: 'undefined' | #message_buy_product_response{}}).
 

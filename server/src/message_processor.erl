@@ -243,9 +243,12 @@ create_fail_buy_product_response_message() ->
 						buy_product_response_content = #message_buy_product_response{ type = response_fail } },
 	protocol_pb:encode_request(Req).
 
-create_success_buy_product_response_message( _Item, New_amount ) ->
+create_success_buy_product_response_message( Item, New_amount ) ->
+	lager:debug("buy product response is ~p = ~p",[Item, New_amount]),
 	Req = #request{ type = message_buy_product_response, 
-						buy_product_response_content = #message_buy_product_response{ type = response_success , new_amount = New_amount } },
+						buy_product_response_content = #message_buy_product_response{ type = response_success , 
+																						new_amount = #user_item{ name = Item, 
+																													amount = New_amount } } },
 	protocol_pb:encode_request(Req).
 
 
