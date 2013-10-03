@@ -1,7 +1,6 @@
 -module(message_processor).
 
 -include("include/softstate.hrl").
--include("include/request_macros.hrl").
 
 -include("include/protocol_pb.hrl").
 
@@ -49,7 +48,7 @@ handle_connect() ->
 	ok.
 
 handle_disconect() ->
-	lager:info("client disconect"),
+	lager:debug("client disconect"),
 	ok.
 
 
@@ -60,7 +59,7 @@ handle_disconect() ->
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 create_login_success( User_id, Configuration_url, Configuration_version ) ->
-	lager:info("LOGIN SUCCESS WITHOUT STATE "),
+	lager:debug("LOGIN SUCCESS WITHOUT STATE "),
 	Req = #request{ type = message_login_sucess, 
 						login_sucess_content = #messagelogin_success{ user_id = User_id, 
 																		previous_state = lobby,
@@ -80,8 +79,8 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 
 
 
-	lager:info("active piece player us ~p  ~p,~p ",[Player_current_piece_angle,Player_current_piece_x,Player_current_piece_y]),
-	lager:info("active piece opponent is ~p  ~p,~p ",[Opponent_current_piece_angle,Opponent_current_piece_x,Opponent_current_piece_y]),
+	lager:debug("active piece player us ~p  ~p,~p ",[Player_current_piece_angle,Player_current_piece_x,Player_current_piece_y]),
+	lager:debug("active piece opponent is ~p  ~p,~p ",[Opponent_current_piece_angle,Opponent_current_piece_x,Opponent_current_piece_y]),
 
 	Fun = fun( Block = #block{}, Result_block_list ) -> 
 		New_block_position = #block_position{ x = Block#block.x, y = Block#block.y, color = get_protocol_color_from_block(Block) },
@@ -91,14 +90,14 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 	Opponent_block_position_list = lists:foldl(Fun, [], Opponent_block_list),
 	Player_block_position_list = lists:foldl(Fun, [], Player_block_list),
 
-%	lager:info("Opponent_block_position_list ~p",[Opponent_block_position_list]),
-%	lager:info("Player_block_position_list ~p",[Player_block_position_list]),
+%	lager:debug("Opponent_block_position_list ~p",[Opponent_block_position_list]),
+%	lager:debug("Player_block_position_list ~p",[Player_block_position_list]),
 
 	Opponent_garbage_message_list =  lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Player_garbage_list),
 	Player_garbage_message_list = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Opponent_garbage_list),
 
-%	lager:info("Player_garbage_message_list ~p",[Player_garbage_message_list]),
-%	lager:info("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),
+%	lager:debug("Player_garbage_message_list ~p",[Player_garbage_message_list]),
+%	lager:debug("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),
 
 	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
 										current_piece_x = Opponent_current_piece_x,
@@ -273,7 +272,7 @@ process_message( message_login_code,
 	case {Client_time, User_id} of
 
 		{ _ , undefined } ->
-			{ ok, New_guest_id } = users_db_serv:create_user( <<"Guest">> ),
+			{ ok, {New_guest_id , _ } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
 			login_guest_user( New_guest_id , Client_time );
 
 		{undefined, _ } -> 
@@ -283,11 +282,10 @@ process_message( message_login_code,
 
 			lager:info("User id no login e ~p",[User_id]),
 
-			User_id_list = binary_to_list(User_id),
-			case users_db_serv:get_user_by_guest_id( User_id_list ) of
-				{ error, _error } ->	{ ok, New_guest_id } = users_db_serv:create_user( <<"Guest">> ),										
+			case user_store:login_local_user( User_id ) of
+				{ error, _error } ->	{ ok, {New_guest_id , _ } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),										
 										login_guest_user( New_guest_id , Client_time );
-				{ok, _user } ->			login_guest_user( User_id_list , Client_time )
+				{ok, _user } ->			login_guest_user( User_id , Client_time )
 			end
 	end;
 
@@ -295,26 +293,26 @@ process_message( message_login_code,
 
 process_message( message_ready_code, User_process_pid, _Message_decoded, _Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
-	lager:info("user ~p is ready",[User_process_pid]),
+	lager:debug("user ~p is ready",[User_process_pid]),
 	gen_server:cast( User_process_pid, { ready, no_details }),
 	{no_reply};
 
 
 
 process_message( message_enter_queue, User_process_pid, 
-					#request{ enter_queue_content = #message_enter_queue{ tier = Tier } }, 
+					#request{ enter_queue_content = #message_enter_queue{ tier = Tier, powers_equipped = Powers } }, 
 						_Message_encoded )
 			when User_process_pid =/= no_user_process ->
 
-	lager:info("user ~p enters the queue",[User_process_pid]),
-	gen_server:cast( User_process_pid, { enter_queue, Tier }),
+	lager:debug("user ~p enters the queue",[User_process_pid]),
+	gen_server:cast( User_process_pid, { enter_queue, Tier, Powers }),
 	{no_reply};
 
 
 
 process_message( message_lost_game, User_process_pid, _Message_decoded, _Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
-	lager:info("user ~p said he lost",[User_process_pid]),
+	lager:debug("user ~p said he lost",[User_process_pid]),
 	gen_server:cast( User_process_pid, { lost_game, no_details }),
 	{no_reply};
 
@@ -326,7 +324,7 @@ process_message( message_place_piece_code,
 							_Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 
-	lager:info("place piece received to ~p",[User_process_pid]),
+	lager:debug("place piece received to ~p",[User_process_pid]),
 	gen_server:cast( User_process_pid, { place_piece, 
 											Message#message_place_piece.x, 
 												Message#message_place_piece.y, 
@@ -347,14 +345,14 @@ process_message( message_update_piece_code, User_process_pid, #request{ update_p
 
 process_message( message_generic_power, User_process_pid, _Message_decoded, Message_encoded )
 			when User_process_pid =/= no_user_process ->
-	lager:info("generic power received ~p",[self()]),
+	lager:debug("generic power received ~p",[self()]),
 	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
 	{no_reply};
 
 
 
 process_message( message_buy_product, User_process_pid, #request{ buy_product_content = Message }, _Message_encoded ) ->
-	lager:info("buy product ~p received ~p ",[Message#message_buy_product.product_id, self()]),
+	lager:debug("buy product ~p received ~p ",[Message#message_buy_product.product_id, self()]),
 	gen_server:cast( User_process_pid, { buy_product, Message#message_buy_product.product_id, 2 }),
 	{no_reply};	
 
@@ -375,8 +373,8 @@ process_message( Other_code, User_process_pid, _Message_decoded, _Message_encode
 
 
 login_guest_user( User_id , Client_time ) ->
-	User_creation_function = fun() -> 
-		lager:info("created a new user proccess in login"),
+	User_creation_function = fun() ->
+		lager:debug("created a new user proccess in login"),
 		{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
 		#user{ 	user_id = User_id, user_process_pid = Child_pid }
 	end,
@@ -386,7 +384,7 @@ login_guest_user( User_id , Client_time ) ->
 			false ->
 				{save, User_creation_function() };
 			true ->
-				lager:info("reconnected a user to an existing proccess"),
+				lager:debug("reconnected a user to an existing proccess"),
 				gen_server:cast( User_pid, { reconnecting , self() } ),
 				dont_save
 		end

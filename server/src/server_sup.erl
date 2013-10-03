@@ -23,13 +23,13 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
+	lager:set_loglevel(lager_console_backend, debug),
 	{ok, { {one_for_one, 5, 10}, [
 		?CHILD(sockserv_sup, supervisor),
 		?CHILD(users_sup, supervisor),
 		?CHILD(queue_sup, supervisor),
 		?CHILD(game_sup, supervisor),
 		?CHILD(stats_sup, supervisor),
-		?CHILD(configurations_sup, supervisor),
-		?CHILD(users_db_sup,supervisor)
+		?CHILD(configurations_sup, supervisor)
 	]} }.
 

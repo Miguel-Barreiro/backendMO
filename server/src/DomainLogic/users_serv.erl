@@ -32,7 +32,7 @@ init(InitData) ->
 
 handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_state{ }) ->
 
-	lager:info("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
+	lager:debug("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
 	swiss:subscribe(configuration),
 
@@ -63,7 +63,7 @@ handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid =
 	{noreply, State};
 
 handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid })->
-	lager:info("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
+	lager:debug("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
 	case is_process_alive(Connection_pid) of
 		true ->
 			gen_server:cast( Connection_pid, {reply, Msg});
@@ -114,7 +114,7 @@ handle_cast( {game_start , StartTime },
 	Msg = message_processor:create_start_message( Client_start_time ),
 	gen_server:cast( Connection_pid, {reply, Msg}),
 
-	lager:info("sending start game to ~p",[self()]),
+	lager:debug("sending start game to ~p",[self()]),
 
 	{noreply, State};
 
@@ -123,10 +123,10 @@ handle_cast( {game_start , StartTime },
 
 
 
-handle_cast( { enter_queue, _Tier }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state, user_id = User_id }) 
+handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state, user_id = User_id }) 
 				when User_state == init, Game_pid == undefined ->
-	lager:info("users_serv: ready to place in queue"),
-	queue_serv:enter( self(), User_id ),
+	lager:debug("users_serv: ready to place in queue"),
+	queue_serv:enter( self(), User_id, Powers ),
 	{noreply, State#user_process_state{ game_state = in_queue }};
 
 
@@ -141,7 +141,7 @@ handle_cast( { enter_game , Game_process_pid, Opponnent_name, Seed } , State = #
 	Msg = message_processor:create_match_found_message( Opponnent_name, Seed ),
 	gen_server:cast( Connection_pid, {reply, Msg}),
 
-	lager:info("i am now monitoring game ~p",[Game_process_pid]),
+	lager:debug("i am now monitoring game ~p",[Game_process_pid]),
 	New_state = State#user_process_state{ 	game_monitor =  monitor(process, Game_process_pid ) , 
 											game_pid = Game_process_pid, 
 											game_state = playing_game },
@@ -160,7 +160,7 @@ handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = 
 
 
 handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
-	lager:info("ready message sent at wrong time "),
+	lager:debug("ready message sent at wrong time "),
 	{noreply, State};
 
 
@@ -168,7 +168,7 @@ handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
 
 
 handle_cast({ buy_product, Product_id, Amount } , State = #user_process_state{ user_id = User_id, connection_pid = Connection_pid } ) ->
-	Msg = case users_db_serv:update_guest_wallet( User_id, Product_id, Amount ) of
+	Msg = case user_store:update_wallet_balance( User_id, Product_id, Amount ) of
 		{ok, New_amount } ->					message_processor:create_success_buy_product_response_message(  Product_id, New_amount );
 		{error, {insufficient, _Amount}} ->		message_processor:create_fail_buy_product_response_message()
 	end,
@@ -192,7 +192,7 @@ handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ c
 																				disconect_timer = Disconect_timer,
 																				user_id = User_id,
 																				game_pid = Game_process_pid } ) ->
-	lager:info("player '~p' reconnected" ,[self()]),
+	lager:debug("player '~p' reconnected" ,[self()]),
 
 	%cancels the timeout for disconect
 	case Disconect_timer of 
@@ -233,7 +233,7 @@ handle_cast(accept, State ) ->
 handle_info({configuration,{new_configuration, New_version, New_version_url} }, State = #user_process_state{connection_monitor = Connection_monitor, 
 																						game_pid = _Game_process_pid,
 																						user_id = User_id}) ->
-	lager:info("User ~p is going to be disconected due to new configuration",[User_id]),
+	lager:debug("User ~p is going to be disconected due to new configuration",[User_id]),
 	
 	Msg = message_processor:create_new_configuration_message( New_version, New_version_url ),
 
@@ -251,7 +251,7 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_s
 																						game_pid = Game_process_pid,
 																						user_id = User_id}) 
 				when Reference == Connection_monitor ->
-	lager:info("user connection went down", []),
+	lager:debug("user connection went down", []),
 	demonitor(Connection_monitor),
 	TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
 
@@ -271,7 +271,7 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_s
 %%
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = Game_monitor})
 				when Reference == Game_monitor ->
-	lager:info("game stoped (~p) but i will continue", [Reason]),
+	lager:debug("game stoped (~p) but i will continue", [Reason]),
 	demonitor(Game_monitor),
 	{noreply, State#user_process_state{ game_monitor = undefined, game_pid = undefined, game_state = init }};
 

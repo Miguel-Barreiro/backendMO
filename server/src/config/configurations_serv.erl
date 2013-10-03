@@ -52,7 +52,7 @@ handle_info( poll_configuration , State = #configurations_state{} ) ->
 	Lines = string:tokens( download(?CONFIGURATION_VERSION_URL), "\n"),
 	[ Latest_version | _ ] = Lines,
 
-	%lager:info("latest version is ~p",[Latest_version]),
+	%lager:debug("latest version is ~p",[Latest_version]),
 
 	New_state = case Latest_version == State#configurations_state.latest_version of 
 		true ->			State;
@@ -106,7 +106,7 @@ get_gb_tree_from_json( Version ) ->
 	{Proplist} = ejson:decode(Json),
 	{All_values} = proplists:get_value(<<"values">>,Proplist),
 	Fun = fun( { Key, Value} , Tree ) ->  
-		lager:info("configuration value ~p -> ~p",[ binary_to_list(Key),Value]),
+		lager:debug("configuration value ~p -> ~p",[ binary_to_list(Key),Value]),
 		gb_trees:insert(Key, Value, Tree) 
 	end,
 	lists:foldl( Fun, gb_trees:empty(), All_values ).
@@ -114,6 +114,6 @@ get_gb_tree_from_json( Version ) ->
 
 
 download(Url) ->
-	%lager:info("downloading ~p",[Url]),
+	%lager:debug("downloading ~p",[Url]),
 	{ok, {{_Version, 200, _Reason}, _Headers, Body}} = httpc:request(Url),
 	Body.

@@ -73,7 +73,7 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) ->
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
-			lager:info("invalid piece place: wrong piece",[]),
+			lager:debug("invalid piece place: wrong piece",[]),
 			throw( invalid_move );
 		true ->
 			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Gamestate#user_gamestate.board),
@@ -148,7 +148,7 @@ handle_update_piece( _User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gam
 
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
-			lager:info("invalid piece update: wrong piece",[]),
+			lager:debug("invalid piece update: wrong piece",[]),
 			throw( invalid_move );
 		true ->
 			gen_server:cast( Opponent_pid , { send_message, message_processor:create_update_piece_message( Angle, X, Y) } ),
@@ -167,14 +167,14 @@ handle_update_piece( _User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gam
 
 apply_gravity_combo_loop( Board = #board{} ) ->
 	Board_after_gravity = simulate_gravity( Board ),
-	lager:info("apply gravity"),
+	lager:debug("apply gravity"),
 	Combos = calculate_combos( Board_after_gravity ),
 	case Combos of
 		[] ->
 			{ [], Board_after_gravity};
 		_other ->
 			Board_after_pop_combos = pop_combos( Board_after_gravity, Combos ),
-			lager:info("poped combos"),
+			lager:debug("poped combos"),
 			{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_pop_combos ),
 			{ lists:append( Combos, New_Combos) , New_board}
 	end.
@@ -486,7 +486,7 @@ test_random( _ , Current, Max) when Current == Max ->
 	ok;
 test_random(Random_state, Current, Max) ->
 	{ Random_state2, Random}  = get_next_random( Random_state ),
-	lager:info("~p -> ~p",[Current,Random]),
+	lager:debug("~p -> ~p",[Current,Random]),
 	test_random(Random_state2, Current + 1, Max).
 	
 

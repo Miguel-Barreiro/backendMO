@@ -29,6 +29,8 @@
   encode_message_buy_product/1,decode_message_buy_product/1,
   to_message_buy_product_response__response_type/1,from_message_buy_product_response__response_type/1,
   encode_message_buy_product_response/1,decode_message_buy_product_response/1,
+  encode_message_use_product/1,decode_message_use_product/1,
+  encode_message_use_product_response/1,decode_message_use_product_response/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -474,13 +476,16 @@ decode_message_enter_queue(B) ->
 decode_message_enter_queue_impl(<<>>) -> undefined;
 decode_message_enter_queue_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_enter_queue{},
-     fun(1,Val,Rec) -> Rec#message_enter_queue{tier = protocol_buffers:cast(int32,Val)}
+     fun(1,Val,Rec) -> Rec#message_enter_queue{tier = protocol_buffers:cast(int32,Val)};
+        (2,Val,#message_enter_queue{powers_equipped=F}=Rec) when is_list(F) -> Rec#message_enter_queue{powers_equipped = Rec#message_enter_queue.powers_equipped ++ [protocol_buffers:cast(string,Val)]}
+
       end).
 
 encode_message_enter_queue(undefined) -> undefined;
 encode_message_enter_queue(R) when is_record(R,message_enter_queue) ->
   [
-    protocol_buffers:encode(1,int32,R#message_enter_queue.tier)
+    protocol_buffers:encode(1,int32,R#message_enter_queue.tier),
+    [ protocol_buffers:encode(2,length_encoded,X) || X <- R#message_enter_queue.powers_equipped]
   ].
 
 decode_message_match_found(B) ->
@@ -571,6 +576,42 @@ encode_message_buy_product_response(R) when is_record(R,message_buy_product_resp
     protocol_buffers:encode(2,length_encoded,encode_user_item(R#message_buy_product_response.new_amount))
   ].
 
+decode_message_use_product(B) ->
+  case decode_message_use_product_impl(B) of
+    undefined -> #message_use_product{};
+    Any -> Any
+  end.
+
+decode_message_use_product_impl(<<>>) -> undefined;
+decode_message_use_product_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_use_product{},
+     fun(1,Val,Rec) -> Rec#message_use_product{product_id = protocol_buffers:cast(string,Val)}
+      end).
+
+encode_message_use_product(undefined) -> undefined;
+encode_message_use_product(R) when is_record(R,message_use_product) ->
+  [
+    protocol_buffers:encode(1,length_encoded,R#message_use_product.product_id)
+  ].
+
+decode_message_use_product_response(B) ->
+  case decode_message_use_product_response_impl(B) of
+    undefined -> #message_use_product_response{};
+    Any -> Any
+  end.
+
+decode_message_use_product_response_impl(<<>>) -> undefined;
+decode_message_use_product_response_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_use_product_response{},
+     fun(1,{length_encoded,Bin},Rec) -> Rec#message_use_product_response{new_amount = decode_user_item_impl(Bin)}
+      end).
+
+encode_message_use_product_response(undefined) -> undefined;
+encode_message_use_product_response(R) when is_record(R,message_use_product_response) ->
+  [
+    protocol_buffers:encode(1,length_encoded,encode_user_item(R#message_use_product_response.new_amount))
+  ].
+
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -593,6 +634,8 @@ to_request__request_type(19) -> message_user_reconected;
 to_request__request_type(20) -> message_new_configuration_version;
 to_request__request_type(21) -> message_buy_product;
 to_request__request_type(22) -> message_buy_product_response;
+to_request__request_type(23) -> message_use_product;
+to_request__request_type(24) -> message_use_product_response;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -617,6 +660,8 @@ from_request__request_type(message_user_reconected) -> 19;
 from_request__request_type(message_new_configuration_version) -> 20;
 from_request__request_type(message_buy_product) -> 21;
 from_request__request_type(message_buy_product_response) -> 22;
+from_request__request_type(message_use_product) -> 23;
+from_request__request_type(message_use_product_response) -> 24;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -645,7 +690,9 @@ decode_request_impl(Binary) ->
         (15,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)};
         (16,{length_encoded,Bin},Rec) -> Rec#request{new_configuration_content = decode_message_new_configuration_impl(Bin)};
         (17,{length_encoded,Bin},Rec) -> Rec#request{buy_product_content = decode_message_buy_product_impl(Bin)};
-        (18,{length_encoded,Bin},Rec) -> Rec#request{buy_product_response_content = decode_message_buy_product_response_impl(Bin)}
+        (18,{length_encoded,Bin},Rec) -> Rec#request{buy_product_response_content = decode_message_buy_product_response_impl(Bin)};
+        (19,{length_encoded,Bin},Rec) -> Rec#request{use_product_content = decode_message_use_product_impl(Bin)};
+        (20,{length_encoded,Bin},Rec) -> Rec#request{use_product_response_content = decode_message_use_product_response_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -668,6 +715,8 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(15,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content)),
     protocol_buffers:encode(16,length_encoded,encode_message_new_configuration(R#request.new_configuration_content)),
     protocol_buffers:encode(17,length_encoded,encode_message_buy_product(R#request.buy_product_content)),
-    protocol_buffers:encode(18,length_encoded,encode_message_buy_product_response(R#request.buy_product_response_content))
+    protocol_buffers:encode(18,length_encoded,encode_message_buy_product_response(R#request.buy_product_response_content)),
+    protocol_buffers:encode(19,length_encoded,encode_message_use_product(R#request.use_product_content)),
+    protocol_buffers:encode(20,length_encoded,encode_message_use_product_response(R#request.use_product_response_content))
   ].
 

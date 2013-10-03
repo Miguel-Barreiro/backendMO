@@ -4,10 +4,11 @@
 -record(queue_state, {
 	queued_user_pid = undefined :: pid(),
 	queued_user_id,
+	powers_equipped,
 	user_monitor
 }).
 
--export([enter/2,leave/2]).
+-export([enter/3,leave/2]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).
 
 start_link() ->
@@ -17,8 +18,8 @@ init([]) ->
 	{ok, #queue_state{ }}.
 
 
-enter(User_pid, User_id) ->
-	gen_server:cast(whereis(?MODULE), {add_user, User_pid, User_id}).
+enter(User_pid, User_id, Powers) ->
+	gen_server:cast(whereis(?MODULE), {add_user, User_pid, User_id, Powers}).
 
 leave(User_pid, User_id) ->
 	gen_server:cast(whereis(?MODULE), {remove_user, User_pid, User_id}).
@@ -28,33 +29,38 @@ leave(User_pid, User_id) ->
 
 
 
-handle_cast( { add_user , User_pid, User_id }, State = #queue_state{ queued_user_pid = Queued_user }) 
+handle_cast( { add_user , User_pid, User_id, User_powers }, State = #queue_state{ queued_user_pid = Queued_user }) 
 				when Queued_user == undefined ->
 
-	lager:info("queue_serv: added a new user (~p) to the queue",[User_pid]),
+	lager:debug("queue_serv: added a new user (~p) to the queue",[User_pid]),
 	User_monitor = monitor(process, User_pid),
-	{noreply, State#queue_state{ queued_user_pid = User_pid, queued_user_id = User_id, user_monitor = User_monitor }};
+	{noreply, State#queue_state{ queued_user_pid = User_pid, queued_user_id = User_id, user_monitor = User_monitor, powers_equipped = User_powers }};
 
-handle_cast( { add_user , User_pid }, State = #queue_state{ queued_user_pid = Queued_user }) 
+handle_cast( { add_user , User_pid, _Powers }, State = #queue_state{ queued_user_pid = Queued_user }) 
 				when Queued_user =/= undefined, Queued_user == User_pid ->
 	{noreply, State};
 
-handle_cast( { add_user , User_pid, User_id }, State = #queue_state{ queued_user_pid = Queued_user, 
+handle_cast( { add_user , User_pid, User_id, User_powers }, State = #queue_state{ queued_user_pid = Queued_user, 
 																		queued_user_id = Queued_user_id, 
-																			user_monitor = User_monitor })
+																			user_monitor = User_monitor,
+																				powers_equipped = Queued_user_powers })
 				 when Queued_user =/= undefined, Queued_user =/= User_pid ->
 	
 	case User_monitor of
 		disconnected ->
-			lager:info("queue_serv: added a new user (~p) to the queue",[User_pid]),
+			lager:debug("queue_serv: added a new user (~p) to the queue",[User_pid]),
 			New_user_monitor = monitor(process, User_pid),
-			{noreply, State#queue_state{ queued_user_pid = User_pid, queued_user_id = User_id, user_monitor = New_user_monitor }};
+			{noreply, State#queue_state{ queued_user_pid = User_pid, 
+											queued_user_id = User_id, 
+												user_monitor = New_user_monitor, 
+													powers_equipped = User_powers }};
 		_ ->
-			lager:info("queue_serv: added a new user (~p) and started a game",[User_pid]),
+			lager:debug("queue_serv: added a new user (~p) and started a game",[User_pid]),
 			demonitor(User_monitor),
-			game_sup:start_new_game_process( [ Queued_user, Queued_user_id, User_pid, User_id, 
-													configurations_serv:get_current_version(), configurations_serv:get_current_version()] ),
-			{noreply, State#queue_state{ queued_user_pid = undefined , user_monitor = undefined}}
+			game_sup:start_new_game_process( [ Queued_user, Queued_user_id, Queued_user_powers, 
+													User_pid, User_id, User_powers,
+														configurations_serv:get_current_version(), configurations_serv:get_current_version()] ),
+			{noreply, State#queue_state{ queued_user_pid = undefined , user_monitor = undefined, powers_equipped = [] }}
 	end;
 
 
@@ -73,7 +79,7 @@ handle_cast( Msg, State) ->
 %%
 %	called when the user connection stops
 %%
-handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #queue_state{user_monitor = Connection_monitor}) when Reference == Connection_monitor ->
+handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #queue_state{user_monitor = Connection_monitor}) when Reference == Connection_monitor ->
 	demonitor(Connection_monitor),
 	{noreply, State#queue_state{queued_user_pid = disconnected, user_monitor = disconnected}};
 

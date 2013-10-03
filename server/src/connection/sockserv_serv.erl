@@ -4,7 +4,6 @@
 -define(SERVER, ?MODULE).
 
 -include("include/softstate.hrl").
--include("include/request_macros.hrl").
 
 -define(MAX_PACKET_SIZE, 4000).
 -define(COMPRESS_TRESHOLD, 80).
@@ -84,7 +83,7 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 
 handle_cast( { register_user_process, User_process_pid }, State = #connection_state{ } ) ->
-	lager:info(" register_user_process called ~p with ~p",[self(),User_process_pid]),
+	lager:debug(" register_user_process called ~p with ~p",[self(),User_process_pid]),
 	New_state = State#connection_state{ user_monitor =  monitor(process, User_process_pid ) , user_process_pid = User_process_pid },
 	{noreply, New_state};
 
@@ -103,7 +102,7 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
     case AcceptRet of
         {ok, AcceptSocket} ->
 
-			lager:info("accepted another connection"),
+			lager:debug("accepted another connection"),
 
             % Launch another acceptor so AWS LB wont kill us
 			sockserv_sup:start_socket(Type),
@@ -204,7 +203,7 @@ handle_info({ssl_closed, _Port}, State) ->
 	{stop, normal, State};
 
 handle_info(check_auth_state, State = #connection_state{connstate = Connstate}) when Connstate == unauthorized ->
-	lager:info("connection not authorized in time. terminating"),
+	lager:debug("connection not authorized in time. terminating"),
 	stats_serv:remove_connection(),
 	message_processor:handle_disconect(),
 	{stop, normal, State};
@@ -224,7 +223,7 @@ handle_info(check_inactivity_timeout, State = #connection_state{last_packet_time
 
     case swiss:unix_timestamp() - LastPacketTime > Timeout of
         true ->
-            lager:info("dropping connection due to inactivity"),
+            lager:debug("dropping connection due to inactivity"),
             message_processor:handle_disconect(),
             {stop, normal, State};
         false ->

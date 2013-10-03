@@ -3,13 +3,13 @@
     {vsn, "1"},
     {registered, []},
     {applications, [
+        lager,
         kernel,
         stdlib,
         crypto,
         public_key,
         ssl,
         emysql,
-        lager,
         gproc,
         inets,
         mc_user_store

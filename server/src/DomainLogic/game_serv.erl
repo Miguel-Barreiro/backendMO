@@ -1,7 +1,7 @@
 -module(game_serv).
 -behaviour(gen_server).
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/6]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/8]).
 
 -include("include/softstate.hrl").
 
@@ -17,7 +17,8 @@
 	user_id = undefined,
 	monitor = undefined,
 	is_ready = false,
-	is_connected = true
+	is_connected = true,
+	powers_equipped = []
 }).
 
 -record(game_state, {
@@ -40,8 +41,8 @@
 
 
 
-start_link( User_pid, User_id, User_pid2, User_id2, Conf_version, Conf_url  ) ->
-    gen_server:start_link(?MODULE, [ User_pid, User_id, User_pid2, User_id2, Conf_version, Conf_url ], []).
+start_link( User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url  ) ->
+    gen_server:start_link(?MODULE, [ User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url ], []).
 
 init(InitData) ->
 	gen_server:cast(self(), InitData),
@@ -56,9 +57,9 @@ init(InitData) ->
 
 
 
-handle_cast([User_pid, User_id, User_pid2, User_id2, Conf_version, Conf_url], State = #game_state{ }) ->
+handle_cast([User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url], State = #game_state{ }) ->
 
-	lager:info("new game with user_id ~p user ~p",[User_pid,User_pid2]),
+	lager:debug("new game with user_id ~p user ~p",[User_pid,User_pid2]),
 
 	gen_server:cast(self() , game_created ),
 
@@ -66,8 +67,8 @@ handle_cast([User_pid, User_id, User_pid2, User_id2, Conf_version, Conf_url], St
 	Connection_monitor2 = monitor(process, User_pid2),
 
 	{noreply, State#game_state{
-				user1 = #game_user{ pid = User_pid, user_id = User_id, monitor = Connection_monitor1 },
-				user2 = #game_user{ pid = User_pid2, user_id = User_id2, monitor = Connection_monitor2 },
+				user1 = #game_user{ pid = User_pid, user_id = User_id, monitor = Connection_monitor1, powers_equipped = User1_powers },
+				user2 = #game_user{ pid = User_pid2, user_id = User_id2, monitor = Connection_monitor2, powers_equipped = User2_powers },
 				state = init,
 				configuration_url = Conf_url,
 				configuration_version = Conf_version
@@ -137,7 +138,7 @@ handle_cast( start_game, State = #game_state{ time_difficult_change_left = Time_
 						User1#game_user.is_ready == true,
 							User2#game_user.is_ready == true ->
 	
-	lager:info("game ~p is going to start",[self()]),
+	lager:debug("game ~p is going to start",[self()]),
 
 	StartTime = swiss:unix_timestamp() + ?COUNTDOWN_TO_START_SECONDS, 	%the game will start in <COUNTDOWN_TO_START_SECONDS> seconds
 
@@ -169,7 +170,7 @@ handle_cast( { update_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) 
 	catch
 		throw:invalid_move ->
 			%% HACKER
-			lager:info("user is a hacker"),
+			lager:debug("user is a hacker"),
 			gen_server:cast( self(), { user_lost_game, User_pid } ),
 			{ noreply, State }
 	end;
@@ -183,12 +184,12 @@ handle_cast( { place_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) -
 		{ noreply, State#game_state{ game_logic_state = New_game_state } }
 	catch
 		throw:out_of_bounds ->
-			lager:info("user out of bounds"),
+			lager:debug("user out of bounds"),
 			gen_server:cast( self(), { user_lost_game, User_pid } ),
 			{ noreply, State };
 		throw:invalid_move ->
 			%% HACKER
-			lager:info("user is a hacker"),
+			lager:debug("user is a hacker"),
 			gen_server:cast( self(), { user_lost_game, User_pid } ),
 			{ noreply, State }
 	end;
@@ -204,7 +205,7 @@ handle_cast( { place_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) -
 
 
 handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = User1, user2 = User2 } )  ->
-	lager:info("game ~p is going to end",[self()]),
+	lager:debug("game ~p is going to end",[self()]),
 
 	Lost_msg = message_processor:create_lost_message(no_reason),
 	Won_msg = message_processor:create_won_message(normal),
@@ -319,7 +320,7 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 			board:print_board(User2_gamestate#user_gamestate.board)
 	end,
 
-	lager:info("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
+	lager:debug("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast( User_pid, {send_message, Msg }),
 	gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_game_restarts_message( User1#game_user.user_id ) }),
 	gen_server:cast( User1#game_user.pid, {send_message, message_processor:create_game_restarts_message( User2#game_user.user_id ) }),
@@ -346,7 +347,7 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 																				user1 = User1 , 
 																					user2 = User2 } ) ->
 
-	lager:info("user ~p disconected",[User_pid]),
+	lager:debug("user ~p disconected",[User_pid]),
 	Msg = message_processor:create_user_disconects_message(User_id),
 
 	State_with_user_disconected = case User_pid == User1#game_user.pid of 
@@ -406,7 +407,7 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, user1 =
 	gen_server:cast( User1#game_user.pid , {send_message, Msg } ),
 	gen_server:cast( User2#game_user.pid , {send_message, Msg } ),
 
-	lager:info("game_serv: GAME DIFFICULT CHANGED TO ~p",[New_level]),
+	lager:debug("game_serv: GAME DIFFICULT CHANGED TO ~p",[New_level]),
 
 	New_game_difficult_timer = erlang:send_after(timer:seconds(?DIFFICULT_CHANGE_SECONDS), self(), difficult_change),
 
