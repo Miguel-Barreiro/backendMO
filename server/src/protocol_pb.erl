@@ -275,13 +275,13 @@ decode_message_game_start(B) ->
 decode_message_game_start_impl(<<>>) -> undefined;
 decode_message_game_start_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_game_start{},
-     fun(4,Val,Rec) -> Rec#message_game_start{start_timestamp = protocol_buffers:cast(int32,Val)}
+     fun(4,Val,Rec) -> Rec#message_game_start{start_timestamp = protocol_buffers:cast(int64,Val)}
       end).
 
 encode_message_game_start(undefined) -> undefined;
 encode_message_game_start(R) when is_record(R,message_game_start) ->
   [
-    protocol_buffers:encode(4,int32,R#message_game_start.start_timestamp)
+    protocol_buffers:encode(4,int64,R#message_game_start.start_timestamp)
   ].
 
 decode_message_game_end(B) ->
@@ -436,14 +436,14 @@ decode_message_restart_game_impl(<<>>) -> undefined;
 decode_message_restart_game_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_restart_game{},
      fun(1,Val,Rec) -> Rec#message_restart_game{opponent = protocol_buffers:cast(string,Val)};
-        (2,Val,Rec) -> Rec#message_restart_game{start_timestamp = protocol_buffers:cast(int32,Val)}
+        (2,Val,Rec) -> Rec#message_restart_game{start_timestamp = protocol_buffers:cast(int64,Val)}
       end).
 
 encode_message_restart_game(undefined) -> undefined;
 encode_message_restart_game(R) when is_record(R,message_restart_game) ->
   [
     protocol_buffers:encode(1,length_encoded,R#message_restart_game.opponent),
-    protocol_buffers:encode(2,int32,R#message_restart_game.start_timestamp)
+    protocol_buffers:encode(2,int64,R#message_restart_game.start_timestamp)
   ].
 
 decode_message_generic_power(B) ->

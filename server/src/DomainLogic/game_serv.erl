@@ -7,7 +7,7 @@
 
 -define( CONNECTION_TIMEOUT, 40000).
 -define( DIFFICULT_CHANGE_SECONDS, 30).
--define( COUNTDOWN_TO_START_SECONDS , 5).
+-define( COUNTDOWN_TO_START_MSECONDS , 5000).
 
 -type game_state_type() :: init | running | waiting_players | waiting_players_reconect.
 
@@ -140,7 +140,7 @@ handle_cast( start_game, State = #game_state{ time_difficult_change_left = Time_
 	
 	lager:debug("game ~p is going to start",[self()]),
 
-	StartTime = swiss:unix_timestamp() + ?COUNTDOWN_TO_START_SECONDS, 	%the game will start in <COUNTDOWN_TO_START_SECONDS> seconds
+	StartTime = swiss:unix_timestamp_ms() + ?COUNTDOWN_TO_START_MSECONDS, 	%the game will start in <COUNTDOWN_TO_START_SECONDS> mseconds
 
 	gen_server:cast( User1#game_user.pid , {game_start , StartTime} ),
 	gen_server:cast( User2#game_user.pid , {game_start , StartTime} ),
@@ -322,8 +322,11 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 
 	lager:debug("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast( User_pid, {send_message, Msg }),
-	gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_game_restarts_message( User1#game_user.user_id ) }),
-	gen_server:cast( User1#game_user.pid, {send_message, message_processor:create_game_restarts_message( User2#game_user.user_id ) }),
+
+	StartTime = swiss:unix_timestamp_ms() + ?COUNTDOWN_TO_START_MSECONDS,
+
+	gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_game_restarts_message( User1#game_user.user_id, StartTime ) }),
+	gen_server:cast( User1#game_user.pid, {send_message, message_processor:create_game_restarts_message( User2#game_user.user_id, StartTime ) }),
 
 	{noreply, New_state#game_state{ state = waiting_players, 
 									user1 = User1#game_user{ is_ready = false}, 

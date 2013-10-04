@@ -9,7 +9,7 @@
 -export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
 -export([create_login_success/3, create_login_success/17]).
 -export([create_match_found_message/2, create_start_message/1]).
--export([create_user_disconects_message/1, create_game_restarts_message/1, create_user_reconected_message/0]).
+-export([create_user_disconects_message/1, create_game_restarts_message/2, create_user_reconected_message/0]).
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
 
@@ -215,8 +215,8 @@ create_disconect_message() ->
 
 
 
-create_game_restarts_message( User_id ) ->
-	Req = #request{ type = message_game_restart, restart_game_content = #message_restart_game{ opponent = User_id } },
+create_game_restarts_message( User_id , Start_date ) ->
+	Req = #request{ type = message_game_restart, restart_game_content = #message_restart_game{ opponent = User_id, start_timestamp = Start_date } },
 	protocol_pb:encode_request(Req).
 	
 
