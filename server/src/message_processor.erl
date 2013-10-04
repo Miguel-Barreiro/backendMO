@@ -15,6 +15,8 @@
 
 -export([create_fail_buy_product_response_message/0, create_success_buy_product_response_message/2]).
 
+-export([create_time_sync_message/2]).
+
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
 
@@ -261,6 +263,15 @@ create_update_piece_message( Angle, X, Y) ->
 	
 
 
+
+create_time_sync_message( Client_time, Server_time ) ->
+	Req = #request{ type = message_sync_time, 
+						message_sync_content = #message_time_sync{ client_timestamp = Client_time, 
+																	server_timestamp = Server_time } },
+	protocol_pb:encode_request(Req).
+
+
+
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 %%
 %%										MESSAGE PROCESSING
@@ -357,7 +368,15 @@ process_message( message_generic_power, User_process_pid, _Message_decoded, Mess
 process_message( message_buy_product, User_process_pid, #request{ buy_product_content = Message }, _Message_encoded ) ->
 	lager:debug("buy product ~p received ~p ",[Message#message_buy_product.product_id, self()]),
 	gen_server:cast( User_process_pid, { buy_product, Message#message_buy_product.product_id, 2 }),
-	{no_reply};	
+	{no_reply};
+
+
+
+
+process_message( message_sync_time, User_process_pid, #request{ message_sync_content = Message }, _Message_encoded ) ->
+	gen_server:cast( User_process_pid, { time_sync, Message#message_time_sync.client_timestamp }),
+	{no_reply};
+
 
 
 

@@ -29,6 +29,7 @@
   encode_message_buy_product/1,decode_message_buy_product/1,
   to_message_buy_product_response__response_type/1,from_message_buy_product_response__response_type/1,
   encode_message_buy_product_response/1,decode_message_buy_product_response/1,
+  encode_message_time_sync/1,decode_message_time_sync/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -574,6 +575,26 @@ encode_message_buy_product_response(R) when is_record(R,message_buy_product_resp
     protocol_buffers:encode(2,length_encoded,encode_user_item(R#message_buy_product_response.new_amount))
   ].
 
+decode_message_time_sync(B) ->
+  case decode_message_time_sync_impl(B) of
+    undefined -> #message_time_sync{};
+    Any -> Any
+  end.
+
+decode_message_time_sync_impl(<<>>) -> undefined;
+decode_message_time_sync_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_time_sync{},
+     fun(1,Val,Rec) -> Rec#message_time_sync{client_timestamp = protocol_buffers:cast(int64,Val)};
+        (2,Val,Rec) -> Rec#message_time_sync{server_timestamp = protocol_buffers:cast(int64,Val)}
+      end).
+
+encode_message_time_sync(undefined) -> undefined;
+encode_message_time_sync(R) when is_record(R,message_time_sync) ->
+  [
+    protocol_buffers:encode(1,int64,R#message_time_sync.client_timestamp),
+    protocol_buffers:encode(2,int64,R#message_time_sync.server_timestamp)
+  ].
+
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -596,6 +617,7 @@ to_request__request_type(19) -> message_user_reconected;
 to_request__request_type(20) -> message_new_configuration_version;
 to_request__request_type(21) -> message_buy_product;
 to_request__request_type(22) -> message_buy_product_response;
+to_request__request_type(23) -> message_sync_time;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -620,6 +642,7 @@ from_request__request_type(message_user_reconected) -> 19;
 from_request__request_type(message_new_configuration_version) -> 20;
 from_request__request_type(message_buy_product) -> 21;
 from_request__request_type(message_buy_product_response) -> 22;
+from_request__request_type(message_sync_time) -> 23;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -648,7 +671,8 @@ decode_request_impl(Binary) ->
         (15,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)};
         (16,{length_encoded,Bin},Rec) -> Rec#request{new_configuration_content = decode_message_new_configuration_impl(Bin)};
         (17,{length_encoded,Bin},Rec) -> Rec#request{buy_product_content = decode_message_buy_product_impl(Bin)};
-        (18,{length_encoded,Bin},Rec) -> Rec#request{buy_product_response_content = decode_message_buy_product_response_impl(Bin)}
+        (18,{length_encoded,Bin},Rec) -> Rec#request{buy_product_response_content = decode_message_buy_product_response_impl(Bin)};
+        (19,{length_encoded,Bin},Rec) -> Rec#request{message_sync_content = decode_message_time_sync_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -671,6 +695,7 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(15,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content)),
     protocol_buffers:encode(16,length_encoded,encode_message_new_configuration(R#request.new_configuration_content)),
     protocol_buffers:encode(17,length_encoded,encode_message_buy_product(R#request.buy_product_content)),
-    protocol_buffers:encode(18,length_encoded,encode_message_buy_product_response(R#request.buy_product_response_content))
+    protocol_buffers:encode(18,length_encoded,encode_message_buy_product_response(R#request.buy_product_response_content)),
+    protocol_buffers:encode(19,length_encoded,encode_message_time_sync(R#request.message_sync_content))
   ].
 

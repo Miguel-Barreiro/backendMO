@@ -9,7 +9,6 @@
 
 -record(user_process_state, {
 	session_start_time,
-	client_start_time,
 	user_id,
 	game_state = init :: user_states(), 
 	connection_pid = undefined :: pid(),
@@ -30,7 +29,7 @@ init(InitData) ->
 	{ok, #user_process_state{ session_start_time = swiss:unix_timestamp() }}.
 
 
-handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_state{ }) ->
+handle_cast([ Connection_pid , User_id, _Client_time ], State = #user_process_state{ }) ->
 
 	lager:debug("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
 
@@ -45,7 +44,6 @@ handle_cast([ Connection_pid , User_id, Client_time ], State = #user_process_sta
 	gen_server:cast( Connection_pid , { reply, Msg }),
 
 	{noreply, State#user_process_state{
-				client_start_time = Client_time,
 				connection_monitor = Connection_monitor,
 				user_id = User_id,
 				connection_pid = Connection_pid,
@@ -70,6 +68,18 @@ handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid =
 		false ->
 			lager:error("users_serv: tried sending msg ~p but connection is down",[Msg])
 	end,	
+	{noreply, State};
+
+
+
+
+
+
+
+handle_cast( { time_sync, Client_timestamp }, State = #user_process_state{ connection_pid = Connection_pid })->
+	Current_time = swiss:unix_timestamp_ms(),
+	Msg = message_processor:create_time_sync_message( Client_timestamp, Current_time),
+	gen_server:cast( Connection_pid, {reply, Msg } ),
 	{noreply, State};
 
 
@@ -107,11 +117,9 @@ handle_cast( { update_piece, X, Y, Angle }, State = #user_process_state{ game_pi
 
 handle_cast( {game_start , StartTime }, 
 					State = #user_process_state{ connection_pid = Connection_pid, 
-														session_start_time = Session_start,
-														client_start_time = Client_time }) ->
+														session_start_time = Session_start }) ->
 
-	Client_start_time = Client_time + ( StartTime - Session_start ),
-	Msg = message_processor:create_start_message( Client_start_time ),
+	Msg = message_processor:create_start_message( StartTime ),
 	gen_server:cast( Connection_pid, {reply, Msg}),
 
 	lager:debug("sending start game to ~p",[self()]),
