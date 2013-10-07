@@ -134,7 +134,10 @@ handle_cast( {game_start , StartTime },
 handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state, user_id = User_id }) 
 				when User_state == init, Game_pid == undefined ->
 	lager:debug("users_serv: ready to place in queue with powers ~p",[Powers]),
-	queue_serv:enter( self(), User_id, Powers ),
+
+	Elo = 10,
+	Tier = beginner,
+	queue_serv:enter( self(), User_id, Elo, Tier, Powers ),
 	{noreply, State#user_process_state{ game_state = in_queue }};
 
 
