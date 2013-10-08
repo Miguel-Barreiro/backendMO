@@ -12,6 +12,7 @@
 -export([create_user_disconects_message/1, create_game_restarts_message/2, create_user_reconected_message/0]).
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
+-export([create_rematch_message/0, create_no_rematch_message/0, create_rematch_timeout_message/0]).
 
 -export([create_fail_buy_product_response_message/0, create_success_buy_product_response_message/2]).
 
@@ -279,6 +280,21 @@ create_rematch_message() ->
 	Req = #request{ type = message_rematch },
 	protocol_pb:encode_request(Req).
 
+
+
+create_rematch_message() ->
+	Req = #request{ type = message_rematch },
+	protocol_pb:encode_request(Req).
+	
+
+create_no_rematch_message() ->
+	Req = #request{ type = message_no_rematch },
+	protocol_pb:encode_request(Req).
+
+
+create_rematch_timeout_message() ->
+	Req = #request{ type = message_rematch_timeout },
+	protocol_pb:encode_request(Req).
 
 
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
