@@ -30,7 +30,6 @@
   to_message_buy_product_response__response_type/1,from_message_buy_product_response__response_type/1,
   encode_message_buy_product_response/1,decode_message_buy_product_response/1,
   encode_message_time_sync/1,decode_message_time_sync/1,
-  encode_message_challenge_ready/1,decode_message_challenge_ready/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -596,25 +595,6 @@ encode_message_time_sync(R) when is_record(R,message_time_sync) ->
     protocol_buffers:encode(2,int64,R#message_time_sync.server_timestamp)
   ].
 
-decode_message_challenge_ready(B) ->
-  case decode_message_challenge_ready_impl(B) of
-    undefined -> #message_challenge_ready{};
-    Any -> Any
-  end.
-
-decode_message_challenge_ready_impl(<<>>) -> undefined;
-decode_message_challenge_ready_impl(Binary) ->
-  protocol_buffers:decode(Binary,#message_challenge_ready{},
-     fun(1,Val,#message_challenge_ready{powers_equipped=F}=Rec) when is_list(F) -> Rec#message_challenge_ready{powers_equipped = Rec#message_challenge_ready.powers_equipped ++ [protocol_buffers:cast(string,Val)]}
-
-      end).
-
-encode_message_challenge_ready(undefined) -> undefined;
-encode_message_challenge_ready(R) when is_record(R,message_challenge_ready) ->
-  [
-    [ protocol_buffers:encode(1,length_encoded,X) || X <- R#message_challenge_ready.powers_equipped]
-  ].
-
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -641,7 +621,6 @@ to_request__request_type(23) -> message_sync_time;
 to_request__request_type(24) -> message_rematch;
 to_request__request_type(25) -> message_no_rematch;
 to_request__request_type(26) -> message_rematch_timeout;
-to_request__request_type(27) -> message_challenge_ready;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -670,7 +649,6 @@ from_request__request_type(message_sync_time) -> 23;
 from_request__request_type(message_rematch) -> 24;
 from_request__request_type(message_no_rematch) -> 25;
 from_request__request_type(message_rematch_timeout) -> 26;
-from_request__request_type(message_challenge_ready) -> 27;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -700,8 +678,7 @@ decode_request_impl(Binary) ->
         (16,{length_encoded,Bin},Rec) -> Rec#request{new_configuration_content = decode_message_new_configuration_impl(Bin)};
         (17,{length_encoded,Bin},Rec) -> Rec#request{buy_product_content = decode_message_buy_product_impl(Bin)};
         (18,{length_encoded,Bin},Rec) -> Rec#request{buy_product_response_content = decode_message_buy_product_response_impl(Bin)};
-        (19,{length_encoded,Bin},Rec) -> Rec#request{message_sync_content = decode_message_time_sync_impl(Bin)};
-        (20,{length_encoded,Bin},Rec) -> Rec#request{message_challenge_ready = decode_message_challenge_ready_impl(Bin)}
+        (19,{length_encoded,Bin},Rec) -> Rec#request{message_sync_content = decode_message_time_sync_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -725,7 +702,6 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(16,length_encoded,encode_message_new_configuration(R#request.new_configuration_content)),
     protocol_buffers:encode(17,length_encoded,encode_message_buy_product(R#request.buy_product_content)),
     protocol_buffers:encode(18,length_encoded,encode_message_buy_product_response(R#request.buy_product_response_content)),
-    protocol_buffers:encode(19,length_encoded,encode_message_time_sync(R#request.message_sync_content)),
-    protocol_buffers:encode(20,length_encoded,encode_message_challenge_ready(R#request.message_challenge_ready))
+    protocol_buffers:encode(19,length_encoded,encode_message_time_sync(R#request.message_sync_content))
   ].
 

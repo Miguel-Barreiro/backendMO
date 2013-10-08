@@ -218,14 +218,8 @@
   client_timestamp :: 'undefined' | integer(),
   server_timestamp :: 'undefined' | integer()}).
 
-%% @type message_challenge_ready_record() = #message_challenge_ready_record{
-%%   powers_equipped() = [binary()]
-%% }.
--record(message_challenge_ready,{
-  powers_equipped = [] :: [binary()]}).
-
-%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response | message_sync_time | message_rematch | message_no_rematch | message_rematch_timeout | message_challenge_ready.
--type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response | message_sync_time | message_rematch | message_no_rematch | message_rematch_timeout | message_challenge_ready.
+%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response | message_sync_time | message_rematch | message_no_rematch | message_rematch_timeout.
+-type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response | message_sync_time | message_rematch | message_no_rematch | message_rematch_timeout.
 
 %% @type request_record() = #request_record{
 %%   type() = request__request_type(),
@@ -246,8 +240,7 @@
 %%   new_configuration_content() = 'undefined' | #message_new_configuration{},
 %%   buy_product_content() = 'undefined' | #message_buy_product{},
 %%   buy_product_response_content() = 'undefined' | #message_buy_product_response{},
-%%   message_sync_content() = 'undefined' | #message_time_sync{},
-%%   message_challenge_ready() = 'undefined' | #message_challenge_ready{}
+%%   message_sync_content() = 'undefined' | #message_time_sync{}
 %% }.
 -record(request,{
   type :: request__request_type(),
@@ -268,6 +261,5 @@
   new_configuration_content :: 'undefined' | #message_new_configuration{},
   buy_product_content :: 'undefined' | #message_buy_product{},
   buy_product_response_content :: 'undefined' | #message_buy_product_response{},
-  message_sync_content :: 'undefined' | #message_time_sync{},
-  message_challenge_ready :: 'undefined' | #message_challenge_ready{}}).
+  message_sync_content :: 'undefined' | #message_time_sync{}}).
 
