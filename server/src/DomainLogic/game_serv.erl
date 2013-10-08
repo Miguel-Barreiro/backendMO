@@ -322,7 +322,6 @@ handle_cast( {reconnecting, User_pid }, State = #game_state{ user1 = User1 , use
 
 	lager:debug("user ~p reconected, i will send the game state ~p",[User_pid,Msg]),
 	gen_server:cast( User_pid, {send_message, Msg }),
-
 	StartTime = swiss:unix_timestamp_ms() + ?COUNTDOWN_TO_START_MSECONDS,
 
 	gen_server:cast( User2#game_user.pid, {send_message, message_processor:create_game_restarts_message( User1#game_user.user_id, StartTime ) }),

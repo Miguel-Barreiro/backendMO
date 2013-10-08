@@ -181,6 +181,11 @@ message MessageTimeSync{
 }
 
 
+
+message MessageChallengeReady{
+	repeated string powersEquipped = 1;
+}
+
 message Request {
 	
 	enum request_type{
@@ -213,6 +218,13 @@ message Request {
 		MESSAGE_BUY_PRODUCT_RESPONSE = 22;
 
 		MESSAGE_SYNC_TIME = 23;
+
+		MESSAGE_REMATCH = 24;
+		MESSAGE_NO_REMATCH = 25;
+		MESSAGE_REMATCH_TIMEOUT = 26;
+
+		MESSAGE_CHALLENGE_READY = 27;
+
 	}
 
 	required request_type type = 1;
@@ -237,6 +249,8 @@ message Request {
 	optional MessageBuyProductResponse buyProductResponseContent = 18;
 
 	optional MessageTimeSync messageSyncContent = 19;
+
+	optional MessageChallengeReady messageChallengeReady = 20;
 
 };
 
