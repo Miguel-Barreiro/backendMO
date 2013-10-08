@@ -69,16 +69,18 @@ leave(User_pid, User_id) ->
 
 
 remove_user_by_pid( User_pid, State = #queue_state{})->
-
-	League_name = proplists:get_value( User_pid ,State#queue_state.league_by_pid),
-	League = proplists:get_value(League_name, State#queue_state.league_list),
-	Predicate = fun( User ) ->
-		User#queue_user.user_pid == User_pid
-	end,
-
-	New_list = gb_sets:filter(Predicate, League#queue_league.user_list ),
-	State#queue_state{ league_by_pid = proplists:delete(User_pid, State#queue_state.league_by_pid),
-							league_list = [ { League , League#queue_league{ user_list = New_list}} | proplists:delete(League, State#queue_state.league_list)] }.
+	case proplists:get_value( User_pid ,State#queue_state.league_by_pid) of
+		undefined ->
+			State
+		League_name ->
+			League = proplists:get_value(League_name, State#queue_state.league_list),
+			Predicate = fun( User ) ->
+				User#queue_user.user_pid == User_pid
+			end,
+			New_list = gb_sets:filter(Predicate, League#queue_league.user_list ),
+			State#queue_state{ league_by_pid = proplists:delete(User_pid, State#queue_state.league_by_pid),
+									league_list = [ { League , League#queue_league{ user_list = New_list}} | proplists:delete(League, State#queue_state.league_list)] }
+	end.
 
 
 
@@ -124,6 +126,9 @@ handle_info( match_make , State = #queue_state{} ) ->
 
 		Match_users = fun( [ User1, User2 ] )->
 			lager:info("new game with ~p and ~p",[User1#queue_user.user_id, User2#queue_user.user_id]),
+
+			demonitor( User1#queue_user.user_monitor ),
+			demonitor( User1#queue_user.user_monitor ),
 
 			game_sup:start_new_game_process( [User1#queue_user.user_pid, User1#queue_user.user_id, User1#queue_user.powers,
 												User2#queue_user.user_pid, User2#queue_user.user_id, User2#queue_user.powers,

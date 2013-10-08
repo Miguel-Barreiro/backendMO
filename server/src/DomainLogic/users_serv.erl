@@ -5,7 +5,7 @@
 
 -include("include/softstate.hrl").
 
--type user_states() :: init | in_queue | playing_game.
+-type user_states() :: init | in_rematch_queue | in_queue | playing_game.
 
 -record(user_process_state, {
 	session_start_time,
@@ -134,7 +134,6 @@ handle_cast( {game_start , StartTime },
 handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ game_pid = Game_pid, game_state = User_state, user_id = User_id }) 
 				when User_state == init, Game_pid == undefined ->
 	lager:debug("users_serv: ready to place in queue with powers ~p",[Powers]),
-
 	Elo = 10,
 	Tier = beginner,
 	queue_serv:enter( self(), User_id, Elo, Tier, Powers ),
@@ -189,8 +188,24 @@ handle_cast({ buy_product, Product_id, Amount } , State = #user_process_state{ u
 
 
 
+handle_cast(message_rematch , State = #user_process_state{ game_state = User_state } ) when User_state == in_rematch_queue ->
+	rematch_queue_serv:set_user_rematch(self()),
+	{noreply, State};
 
 
+handle_cast(message_no_rematch , State = #user_process_state{ game_state = User_state } ) when User_state == in_rematch_queue ->
+	rematch_queue_serv:remove_user(self()),
+	{noreply, State};
+
+
+handle_cast(set_rematch_queue_state , State = #user_process_state{} ) ->
+	{noreply, State#user_process_state{ game_state = in_rematch_queue } };
+
+
+handle_cast(remove_from_rematch_queue , State = #user_process_state{ connection_pid = Connection_pid } ) ->
+	Msg = message_processor:create_rematch_timeout_message(),
+	gen_server:cast( Connection_pid, {reply, Msg}),
+	{noreply, State#user_process_state{ game_state = init } };
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -275,16 +290,28 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_s
 
 	{noreply, State#user_process_state{ disconect_timer = TimerRef,
 											connection_monitor = undefined,  
-												connection_pid = undefined } };
+												connection_pid = undefined,
+													game_state = init } };
 
 %%
 %	called when the game stops
 %%
+
+handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = Game_monitor})
+				when Reference == Game_monitor andalso State#user_process_state.game_state == in_rematch_queue ->
+
+	lager:debug("game stoped (~p) but i will continue", [Reason]),
+	demonitor(Game_monitor),
+	{noreply, State#user_process_state{ game_monitor = undefined, game_pid = undefined }};
+
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = Game_monitor})
 				when Reference == Game_monitor ->
+
 	lager:debug("game stoped (~p) but i will continue", [Reason]),
 	demonitor(Game_monitor),
 	{noreply, State#user_process_state{ game_monitor = undefined, game_pid = undefined, game_state = init }};
+
+
 
 %%
 %	called when the user disconect timeouts

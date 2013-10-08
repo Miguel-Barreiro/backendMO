@@ -17,7 +17,6 @@
 -export([create_fail_buy_product_response_message/0, create_success_buy_product_response_message/2]).
 
 -export([create_time_sync_message/2]).
--export([create_rematch_message/0]).
 
 
 
@@ -279,12 +278,6 @@ create_time_sync_message( Client_time, Server_time ) ->
 create_rematch_message() ->
 	Req = #request{ type = message_rematch },
 	protocol_pb:encode_request(Req).
-
-
-
-create_rematch_message() ->
-	Req = #request{ type = message_rematch },
-	protocol_pb:encode_request(Req).
 	
 
 create_no_rematch_message() ->
@@ -403,6 +396,15 @@ process_message( message_sync_time, User_process_pid, #request{ message_sync_con
 	{no_reply};
 
 
+
+process_message( message_rematch, User_process_pid, #request{ message_sync_content = Message }, _Message_encoded ) ->
+	gen_server:cast( User_process_pid, message_rematch ),
+	{no_reply};
+
+
+process_message( message_no_rematch, User_process_pid, #request{ message_sync_content = Message }, _Message_encoded ) ->
+	gen_server:cast( User_process_pid, message_no_rematch),
+	{no_reply};
 
 
 process_message( Other_code, User_process_pid, _Message_decoded, _Message_encoded ) ->	

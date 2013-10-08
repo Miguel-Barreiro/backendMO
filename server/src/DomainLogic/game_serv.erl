@@ -221,6 +221,9 @@ handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = Us
 
 	erlang:cancel_timer(State#game_state.game_difficult_change_timer),
 
+	rematch_queue_serv:enter(User1#game_user.pid, User1#game_user.user_id,
+								User2#game_user.pid, User2#game_user.user_id),
+
 	{stop, normal, State#game_state{ state = init }};
 
 %	{noreply, State#game_state{ state = waiting_players, 
