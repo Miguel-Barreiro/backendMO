@@ -20,7 +20,7 @@ push_user_data( User = #user{ } ) ->
 	end.
 
 delete_user_data( User_id ) ->
-	lager:info("delete user from server_db"),
+	lager:debug("delete user from server_db"),
 	case mnesia:sync_transaction(fun() -> mnesia:delete(user, User_id ) end) of
 		{atomic, ok } -> 				ok;
 		{aborted, Reason} ->			{ error, Reason }
@@ -68,7 +68,7 @@ create_tables() ->
 		{attributes, record_info(fields, user)},
 		{disc_copies, [node()]}
 	]),
-	lager:info("creating mnesia tables result is ~p ", [Create_table_res]),
+	lager:debug("creating mnesia tables result is ~p ", [Create_table_res]),
 
 %	mnesia:create_table(broker_order, [
 %		{type, set},
@@ -78,7 +78,7 @@ create_tables() ->
 %	]),
 
 	mnesia:wait_for_tables([user], 60000),
-	lager:info("finished creating mnesia tables", []).
+	lager:debug("finished creating mnesia tables", []).
 
 %add_mem_node(Master) ->
 %	ok = mnesia:start(),

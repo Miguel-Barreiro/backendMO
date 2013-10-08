@@ -2,7 +2,6 @@
 
 -behaviour(supervisor).
 
--include("include/request_macros.hrl").
 
 -export([start_link/0, start_socket/1, launch_empty_listeners/0]).
 %-export([start_link/0]).
@@ -38,7 +37,7 @@ init([]) ->
    % CertFile = case application:get_env(poolserver, ssl_cert) of undefined -> "etc/server_cert.pem"; {ok, Any3} -> Any3 end,
    % KeyFile = case application:get_env(poolserver, ssl_key) of undefined -> "etc/server_key.pem"; {ok, Any4} -> Any4 end,
 
-    lager:info("setting up server at ~p:~p, SSL at port ~p", [IpInet, Port, SSLPort]),
+    lager:debug("setting up server at ~p:~p, SSL at port ~p", [IpInet, Port, SSLPort]),
 
 	TcpOptions = [
 		{ifaddr, IpInet},

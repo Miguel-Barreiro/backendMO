@@ -4,6 +4,20 @@
 %% @type block_color() = garbage | red | yellow | blue | green | purple | white | chromatic_bomb_red | chromatic_bomb_yellow | chromatic_bomb_blue | chromatic_bomb_green | chromatic_bomb_purple | chromatic_bomb_white | bomb.
 -type block_color() :: garbage | red | yellow | blue | green | purple | white | chromatic_bomb_red | chromatic_bomb_yellow | chromatic_bomb_blue | chromatic_bomb_green | chromatic_bomb_purple | chromatic_bomb_white | bomb.
 
+%% @type user_item_record() = #user_item_record{
+%%   name() = binary(),
+%%   amount() = integer()
+%% }.
+-record(user_item,{
+  name :: binary(),
+  amount :: integer()}).
+
+%% @type user_wallet_record() = #user_wallet_record{
+%%   items() = [#user_item{}]
+%% }.
+-record(user_wallet,{
+  items = [] :: [#user_item{}]}).
+
 %% @type block_position_record() = #block_position_record{
 %%   x() = integer(),
 %%   y() = integer(),
@@ -64,6 +78,7 @@
 %%   previous_state() = messagelogin_success__previous_state(),
 %%   configuration_url() = binary(),
 %%   configuration_version() = binary(),
+%%   wallet() = #user_wallet{},
 %%   game_state() = 'undefined' | #message_game_state{}
 %% }.
 -record(messagelogin_success,{
@@ -71,6 +86,7 @@
   previous_state :: messagelogin_success__previous_state(),
   configuration_url :: binary(),
   configuration_version :: binary(),
+  wallet :: #user_wallet{},
   game_state :: 'undefined' | #message_game_state{}}).
 
 %% @type message_game_start_record() = #message_game_start_record{
@@ -152,10 +168,12 @@
   power_data :: 'undefined' | binary()}).
 
 %% @type message_enter_queue_record() = #message_enter_queue_record{
-%%   tier() = integer()
+%%   tier() = integer(),
+%%   powers_equipped() = [binary()]
 %% }.
 -record(message_enter_queue,{
-  tier :: integer()}).
+  tier :: integer(),
+  powers_equipped = [] :: [binary()]}).
 
 %% @type message_match_found_record() = #message_match_found_record{
 %%   seed() = integer(),
@@ -175,8 +193,39 @@
   new_version :: binary(),
   new_url :: binary()}).
 
-%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version.
--type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version.
+%% @type message_buy_product_record() = #message_buy_product_record{
+%%   product_id() = binary()
+%% }.
+-record(message_buy_product,{
+  product_id :: binary()}).
+
+%% @type message_buy_product_response__response_type() = response_success | response_fail.
+-type message_buy_product_response__response_type() :: response_success | response_fail.
+
+%% @type message_buy_product_response_record() = #message_buy_product_response_record{
+%%   type() = message_buy_product_response__response_type(),
+%%   new_amount() = 'undefined' | #user_item{}
+%% }.
+-record(message_buy_product_response,{
+  type :: message_buy_product_response__response_type(),
+  new_amount :: 'undefined' | #user_item{}}).
+
+%% @type message_time_sync_record() = #message_time_sync_record{
+%%   client_timestamp() = 'undefined' | integer(),
+%%   server_timestamp() = 'undefined' | integer()
+%% }.
+-record(message_time_sync,{
+  client_timestamp :: 'undefined' | integer(),
+  server_timestamp :: 'undefined' | integer()}).
+
+%% @type message_challenge_ready_record() = #message_challenge_ready_record{
+%%   powers_equipped() = [binary()]
+%% }.
+-record(message_challenge_ready,{
+  powers_equipped = [] :: [binary()]}).
+
+%% @type request__request_type() = message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response | message_sync_time | message_rematch | message_no_rematch | message_rematch_timeout | message_challenge_ready.
+-type request__request_type() :: message_login_code | message_place_piece_code | message_update_piece_code | message_opponent_place_piece_code | message_game_end_code | message_game_start_code | message_ready_code | message_lost_game | message_login_sucess | message_disconect | message_difficult_change | message_get_game_state | message_user_disconected | message_game_restart | message_generic_power | message_enter_queue | message_match_found | message_generated_garbage_code | message_user_reconected | message_new_configuration_version | message_buy_product | message_buy_product_response | message_sync_time | message_rematch | message_no_rematch | message_rematch_timeout | message_challenge_ready.
 
 %% @type request_record() = #request_record{
 %%   type() = request__request_type(),
@@ -194,7 +243,11 @@
 %%   enter_queue_content() = 'undefined' | #message_enter_queue{},
 %%   match_found_content() = 'undefined' | #message_match_found{},
 %%   generated_garbage_content() = 'undefined' | #message_generated_garbage{},
-%%   new_configuration_content() = 'undefined' | #message_new_configuration{}
+%%   new_configuration_content() = 'undefined' | #message_new_configuration{},
+%%   buy_product_content() = 'undefined' | #message_buy_product{},
+%%   buy_product_response_content() = 'undefined' | #message_buy_product_response{},
+%%   message_sync_content() = 'undefined' | #message_time_sync{},
+%%   message_challenge_ready() = 'undefined' | #message_challenge_ready{}
 %% }.
 -record(request,{
   type :: request__request_type(),
@@ -212,5 +265,9 @@
   enter_queue_content :: 'undefined' | #message_enter_queue{},
   match_found_content :: 'undefined' | #message_match_found{},
   generated_garbage_content :: 'undefined' | #message_generated_garbage{},
-  new_configuration_content :: 'undefined' | #message_new_configuration{}}).
+  new_configuration_content :: 'undefined' | #message_new_configuration{},
+  buy_product_content :: 'undefined' | #message_buy_product{},
+  buy_product_response_content :: 'undefined' | #message_buy_product_response{},
+  message_sync_content :: 'undefined' | #message_time_sync{},
+  message_challenge_ready :: 'undefined' | #message_challenge_ready{}}).
 

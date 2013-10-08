@@ -1,0 +1,260 @@
+enum piece_rotation{
+	UP = 1;
+	DOWN = 2;
+	RIGHT = 3;
+	LEFT = 4;
+};
+
+enum block_color{
+	GARBAGE = 1;
+	RED = 2;
+	YELLOW = 3;
+	BLUE = 4;
+	GREEN = 5;
+	PURPLE = 6;
+	WHITE = 7;
+
+	CHROMATIC_BOMB_RED = 8;
+	CHROMATIC_BOMB_YELLOW = 9;
+	CHROMATIC_BOMB_BLUE = 10;
+	CHROMATIC_BOMB_GREEN = 11;
+	CHROMATIC_BOMB_PURPLE = 12;
+	CHROMATIC_BOMB_WHITE = 13;
+	BOMB = 15;
+}
+
+message UserItem{
+	required string name = 1;
+	required int32 amount = 2;
+}
+
+message UserWallet{
+	repeated UserItem items = 1;
+}
+
+
+message BlockPosition{
+	required int32 x = 1;
+	required int32 y = 2;
+	required block_color color = 3;
+};
+
+message GarbagePosition{
+	required int32 x = 1;
+};
+
+message GameState{
+
+	required int32 currentRandom = 1;
+	required int32 currentPieceX = 2;
+	required int32 currentPieceY = 3;
+	required piece_rotation currentPieceAngle = 4;
+
+	repeated BlockPosition blocks = 7;
+	repeated GarbagePosition garbage_message_list = 8;
+};
+
+
+message MessageGameState{
+	required GameState opponentState = 1;
+	required GameState playerState = 2;
+	required int32 startingSeed = 3;
+	required string opponentName = 4;
+};
+
+
+
+message MessageLogin{
+	optional string userId = 1;
+	required int32 clientTime = 2;
+};
+
+
+message MessageloginSuccess{
+	
+	enum previous_state{
+		LOBBY = 1;
+		PLAYING_GAME = 2;
+	}
+	required string userId = 1;
+	required previous_state previousState = 2;
+	required string configurationUrl = 3;
+	required string configurationVersion = 4;
+	required UserWallet wallet = 5;
+	optional MessageGameState gameState = 6;
+};
+
+
+
+message MessageGameStart{
+	required int64 startTimestamp = 4;
+};
+
+message MessageGameEnd{
+	required int32 reason = 1;
+};
+
+
+
+message MessageUpdatePiece{
+	required int32 x=1;
+	required int32 y=2;
+	required piece_rotation state=3;
+};
+
+message MessagePlacePiece{
+	required int32 x=1;
+	required int32 y=2;
+	required piece_rotation state=3;
+};
+
+
+
+message MessageOpponentPlacePiece{
+	required int32 x=1;
+	required int32 y=2;
+	required piece_rotation state=3;
+	repeated GarbagePosition garbage = 4;
+};
+
+message MessageGeneratedGarbage{
+	repeated GarbagePosition garbage = 4;
+};
+
+
+message MessageDifficultChange{ 
+	required int32 level = 1;
+};
+
+message MessageUserDisconected{
+	required string opponent = 1;
+};
+
+message MessageRestartGame{
+	required string opponent = 1;
+	required int64 startTimestamp = 2;
+};
+
+message MessageGenericPower{
+	required int32 type = 1;
+	optional string powerData = 2;
+};
+
+message MessageEnterQueue{
+	required int32 tier = 1;
+	repeated string powersEquipped = 2;
+}
+
+message MessageMatchFound{
+	required int32 seed = 1;
+	required string opponentName = 2;
+	required int32 startLevel = 3;
+}
+
+
+message MessageNewConfiguration{
+	required string newVersion = 1;
+	required string newUrl = 2;
+}
+
+
+
+
+message MessageBuyProduct{
+	required string productId = 1;
+}
+
+message MessageBuyProductResponse{
+	enum response_type{
+		RESPONSE_SUCCESS = 1;
+		RESPONSE_FAIL = 2;
+	}
+	required response_type type = 1;
+	optional UserItem newAmount = 2;
+}
+
+
+
+message MessageTimeSync{
+	optional int64 clientTimestamp = 1;
+	optional int64 serverTimestamp = 2;
+}
+
+
+
+message MessageChallengeReady{
+	repeated string powersEquipped = 1;
+}
+
+message Request {
+	
+	enum request_type{
+		MESSAGE_LOGIN_CODE = 1;
+		MESSAGE_PLACE_PIECE_CODE = 2;
+		MESSAGE_UPDATE_PIECE_CODE = 3;
+		MESSAGE_OPPONENT_PLACE_PIECE_CODE = 4;
+		MESSAGE_GAME_END_CODE = 5;
+		MESSAGE_GAME_START_CODE = 6;
+		MESSAGE_READY_CODE = 7;
+		MESSAGE_LOST_GAME = 8;
+		MESSAGE_LOGIN_SUCESS = 9;
+		MESSAGE_DISCONECT = 10;
+		MESSAGE_DIFFICULT_CHANGE = 11;
+		MESSAGE_GET_GAME_STATE = 12;
+		MESSAGE_USER_DISCONECTED = 13;
+		MESSAGE_GAME_RESTART = 14;
+		MESSAGE_GENERIC_POWER = 15;
+		
+		MESSAGE_ENTER_QUEUE = 16;
+		MESSAGE_MATCH_FOUND = 17;
+		
+		MESSAGE_GENERATED_GARBAGE_CODE = 18;
+		
+		MESSAGE_USER_RECONECTED = 19;
+		
+		MESSAGE_NEW_CONFIGURATION_VERSION = 20;
+
+		MESSAGE_BUY_PRODUCT = 21;
+		MESSAGE_BUY_PRODUCT_RESPONSE = 22;
+
+		MESSAGE_SYNC_TIME = 23;
+
+		MESSAGE_REMATCH = 24;
+		MESSAGE_NO_REMATCH = 25;
+		MESSAGE_REMATCH_TIMEOUT = 26;
+
+		MESSAGE_CHALLENGE_READY = 27;
+
+	}
+
+	required request_type type = 1;
+	
+	optional MessageLogin loginContent = 2;
+	optional MessagePlacePiece placePieceContent = 3;
+	optional MessageUpdatePiece updatePieceContent = 4;
+	optional MessageOpponentPlacePiece opponentPlacePieceContent = 5;
+	optional MessageGameEnd gameEndContent = 6;
+	optional MessageGameStart gameStartContent = 7;
+	optional MessageloginSuccess loginSucessContent = 8;
+	optional MessageDifficultChange difficultChangeContent = 9;
+	optional MessageUserDisconected userDisconectedContent = 10;
+	optional MessageRestartGame restartGameContent = 11;
+	optional MessageGenericPower powerContent = 12;
+	optional MessageEnterQueue enterQueueContent = 13;
+	optional MessageMatchFound matchFoundContent = 14;
+	optional MessageGeneratedGarbage generatedGarbageContent = 15;
+	optional MessageNewConfiguration newConfigurationContent = 16;
+
+	optional MessageBuyProduct buyProductContent = 17;
+	optional MessageBuyProductResponse buyProductResponseContent = 18;
+
+	optional MessageTimeSync messageSyncContent = 19;
+
+	optional MessageChallengeReady messageChallengeReady = 20;
+
+};
+
+
+
+
+

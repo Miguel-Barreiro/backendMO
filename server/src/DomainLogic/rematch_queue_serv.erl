@@ -66,47 +66,26 @@ init([]) ->
 
 
 
-
-
-
-
-handle_cast( { remove_user, User_pid }, State ) ->
-	handle_remove_user( User_pid , State);
-
-
-
-
-
-
-
-handle_cast( { set_user_powers, User_pid, Powers },
+handle_cast( { set_user_powers, User_pid, Powers }, 
 					State = #rematch_queue_state{ rematch_lobies = Lobies, loby_key_by_user_id = Keys_by_user} ) ->
 
 	Lobby_key = gb_trees:get( User_pid, Keys_by_user),
 	Lobby = gb_trees:get( Lobby_key, Lobies),
 	User = proplists:get_value(User_pid, Lobby#rematch_loby.user_list),
-	New_user_list = [ { User_pid, User#rematch_loby_user{ powers = Powers } }  |  proplists:delete(User_pid, Lobby#rematch_loby.user_list) ],
 
-	case lists:all(fun( { _ , Current_user}) -> Current_user#rematch_loby_user.powers =/= undefined end, New_user_list) of
-		true ->
-			[ { User1_pid, User1 } , {User2_pid , User2}] = New_user_list,
-			game_sup:start_new_game_process( [ User1_pid, User1#rematch_loby_user.user_id,
-													User2_pid, User2#rematch_loby_user.user_id,
-														configurations_serv:get_current_version(), configurations_serv:get_current_version()] ),
-			New_user_tree = gb_trees:delete( User2_pid, gb_trees:delete( User1_pid, State#rematch_queue_state.loby_key_by_user_id)),
-			{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } };
-		false ->
-			New_lobby = Lobby#rematch_loby{ user_list = New_user_list, state = pick_powers },
-			{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:insert( Lobby_key, New_lobby, gb_trees:delete(Lobby_key, Lobies))}}
-	end;
+	New_user_list = [ { User_pid, User#rematch_loby_user{ is_ready = true } }  |  proplists:delete(User_pid, Lobby#rematch_loby.user_list) ],
+	New_lobby = Lobby#rematch_loby{ user_list = New_user_list },
+
 	
+	{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:insert( Lobby_key, New_lobby ,gb_trees:delete(Lobby_key, Lobies)) } };
 
 
 
 
 
-handle_cast( { set_user_rematch, User_pid }, State = #rematch_queue_state{ rematch_lobies = Lobies, loby_key_by_user_id = Keys_by_user} ) ->
 
+handle_cast( { set_user_rematch, User_pid }, 
+					State = #rematch_queue_state{ rematch_lobies = Lobies, loby_key_by_user_id = Keys_by_user} ) ->
 	Lobby_key = gb_trees:get( User_pid, Keys_by_user),
 	Lobby = gb_trees:get( Lobby_key, Lobies),
 	User = proplists:get_value(User_pid, Lobby#rematch_loby.user_list),
@@ -114,18 +93,16 @@ handle_cast( { set_user_rematch, User_pid }, State = #rematch_queue_state{ remat
 	List_without_user = proplists:delete(User_pid, Lobby#rematch_loby.user_list),
 
 	Msg = message_processor:create_rematch_message(),
-	lists:foreach( fun({ _ , Current_user }) ->  gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
+	lists:foreach( fun({ _ , User }) ->  gen_server:cast( User#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
 
 	New_user_list = [ { User_pid, User#rematch_loby_user{ is_ready = true } }  |   List_without_user],
-	New_lobby = case lists:all(fun( { _ , Current_user}) -> Current_user#rematch_loby_user.is_ready end, New_user_list) of
+	New_lobby = case lists:all(fun( { _ , User}) -> User#rematch_loby_user.is_ready end, New_user_list) of
 		true ->
 			Lobby#rematch_loby{ user_list = New_user_list, state = pick_powers };
 		false ->
 			Lobby#rematch_loby{ user_list = New_user_list }
 	end,
 	{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:insert( Lobby_key, New_lobby ,gb_trees:delete(Lobby_key, Lobies)) } };
-
-
 
 
 
@@ -166,37 +143,14 @@ handle_cast( Msg, State) ->
 %	called when the user connection stops
 %%
 
-handle_info({'DOWN', _Reference, process, Pid, _Reason}, State = #rematch_queue_state{} ) ->
+handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #rematch_queue_state{} ) ->
 	lager:debug("rematch_queue_serv: user (~p) connection went down", [Pid]),
-	handle_remove_user( Pid , State);
+	{noreply, State };
 
 
-
-
-
-
-handle_info({ rematch_timeout, User1_pid, User2_pid }, State = #rematch_queue_state{ rematch_lobies = Lobies } ) ->
-	lager:debug("rematch_queue_serv: rematch_timeout for (~p,~p) reached", [User2_pid, User1_pid]),
-
-	Lobby_key = {User2_pid, User1_pid},
-
-	Msg = message_processor:create_rematch_timeout_message(),
-	gen_server:cast( User2_pid, {send_message, Msg } ),
-	gen_server:cast( User1_pid, {send_message, Msg } ),
-	
-	New_user_tree = gb_trees:delete( User2_pid, gb_trees:delete( User1_pid, State#rematch_queue_state.loby_key_by_user_id)),
-	{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } };
-
-
-
-
-
-
-
-
-
-
-
+handle_info({ rematch_timeout, User1_pid, User2_pid }, State = #rematch_queue_state{} ) ->
+	lager:debug("rematch_queue_serv: rematch_timeout for (~p,~p) reached", [User1_pid, User2_pid]),
+	{noreply, State };
 
 
 handle_info(Msg,State) ->
@@ -217,18 +171,13 @@ code_change(_OldVsn, State, _Extra) ->
 
 
 
-handle_remove_user( User_pid , State = #rematch_queue_state{ rematch_lobies = Lobies, loby_key_by_user_id = Keys_by_user}) ->
-	Lobby_key = gb_trees:get( User_pid, Keys_by_user),
-	Lobby = gb_trees:get( Lobby_key, Lobies),
-	List_without_user = proplists:delete(User_pid, Lobby#rematch_loby.user_list),
 
-	Msg = message_processor:create_no_rematch_message(),
-	lists:foreach( fun({ _ , Current_user }) ->  gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
 
-	Fun = fun( { Current_user_pid, Current_user } , New_tree ) ->
-		demonitor( Current_user#rematch_loby_user.user_monitor),
-		gb_trees:delete( Current_user_pid , New_tree)
-	end,
-	New_user_tree = lists:foldl( Fun, State#rematch_queue_state.loby_key_by_user_id , Lobby#rematch_loby.user_list),
-	{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } }.
+
+
+
+
+set_pick_powers_state( Loby = #rematch_loby{} ) ->
+	erlang:cancel_timer( Loby#rematch_loby.rematch_timeout ),
+	Loby#rematch_loby{ rematch_timeout = undefined, state = pick_powers }.
 
