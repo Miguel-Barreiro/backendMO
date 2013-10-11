@@ -71,7 +71,7 @@ leave(User_pid, User_id) ->
 remove_user_by_pid( User_pid, State = #queue_state{})->
 	case proplists:get_value( User_pid ,State#queue_state.league_by_pid) of
 		undefined ->
-			State
+			State;
 		League_name ->
 			League = proplists:get_value(League_name, State#queue_state.league_list),
 			Predicate = fun( User ) ->
