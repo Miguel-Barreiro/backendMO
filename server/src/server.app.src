@@ -12,7 +12,8 @@
         emysql,
         gproc,
         inets,
-        mc_user_store
+        mc_user_store,
+        eredis
     ]},
     {mod, { server, []} },
     {env, [
