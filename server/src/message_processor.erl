@@ -1,13 +1,12 @@
 -module(message_processor).
 
 -include("include/softstate.hrl").
-
 -include("include/protocol_pb.hrl").
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/2]).
 
 -export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
--export([create_login_success/3, create_login_success/17]).
+-export([create_login_success/4, create_login_success/18]).
 -export([create_match_found_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/2, create_user_reconected_message/0]).
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
@@ -63,13 +62,20 @@ handle_disconect() ->
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-create_login_success( User_id, Configuration_url, Configuration_version ) ->
+create_login_success( User_id, Configuration_url, Configuration_version, Wallet ) ->
 	lager:debug("LOGIN SUCCESS WITHOUT STATE "),
+
+	Convert_wallet_fun = fun( { Item_name, Amount } , Rest_items ) ->
+		[ #user_item{ name = Item_name , amount = Amount } | Rest_items]
+	end,
+	Message_wallet = #user_wallet{ items = lists:foldl( Convert_wallet_fun, [], Wallet ) },
+
 	Req = #request{ type = message_login_sucess, 
 						login_sucess_content = #messagelogin_success{ user_id = User_id, 
 																		previous_state = lobby,
 																		configuration_url = Configuration_url,
-																		configuration_version = Configuration_version }},
+																		configuration_version = Configuration_version,
+																		wallet = Message_wallet }},
 	protocol_pb:encode_request(Req).
 
 
@@ -80,9 +86,7 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 							Opponent_current_random_step, Opponent_current_piece_x, Opponent_current_piece_y, 
 							Opponent_current_piece_angle, Opponent_block_list, Opponent_garbage_list,
 								Starting_seed, 
-									Oppponent_user_id) ->
-
-
+									Oppponent_user_id, Wallet ) ->
 
 	lager:debug("active piece player us ~p  ~p,~p ",[Player_current_piece_angle,Player_current_piece_x,Player_current_piece_y]),
 	lager:debug("active piece opponent is ~p  ~p,~p ",[Opponent_current_piece_angle,Opponent_current_piece_x,Opponent_current_piece_y]),
@@ -123,12 +127,20 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 													starting_seed = Starting_seed, 
 														opponent_name = Oppponent_user_id },
 
+
+	Convert_wallet_fun = fun( { Item_name, Amount } , Rest_items ) ->
+		[ #user_item{ name = Item_name , amount = Amount } | Rest_items]
+	end,
+	Message_wallet = #user_wallet{ items = lists:foldl( Convert_wallet_fun, [], Wallet ) },
+
+
 	Req = #request{ type = message_login_sucess,
 					login_sucess_content = #messagelogin_success{ user_id = User_id, 
 																	previous_state = playing_game,
 																		configuration_url = Configuration_url,
 																			configuration_version = Configuration_version,
-																				game_state = Message_game_state }},
+																				game_state = Message_game_state,
+																					wallet = Message_wallet }},
 	protocol_pb:encode_request(Req).
 
 
@@ -304,8 +316,8 @@ process_message( message_login_code,
 	case {Client_time, User_id} of
 
 		{ _ , undefined } ->
-			{ ok, {New_guest_id , _ } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
-			login_guest_user( New_guest_id , Client_time );
+			{ ok, {New_guest_id , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
+			login_guest_user( New_guest_id , Client_time, User );
 
 		{undefined, _ } -> 
 			{ reply_with_disconnect, create_disconect_message() };
@@ -315,9 +327,9 @@ process_message( message_login_code,
 			lager:info("User id no login e ~p",[User_id]),
 
 			case user_store:login_local_user( User_id ) of
-				{ error, _error } ->	{ ok, {New_guest_id , _ } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),										
-										login_guest_user( New_guest_id , Client_time );
-				{ok, _user } ->			login_guest_user( User_id , Client_time )
+				{ error, _error } ->	{ ok, {New_guest_id , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),										
+										login_guest_user( New_guest_id , Client_time, User );
+				{ok, User } ->			login_guest_user( User_id , Client_time, User )
 			end
 	end;
 
@@ -397,12 +409,12 @@ process_message( message_sync_time, User_process_pid, #request{ message_sync_con
 
 
 
-process_message( message_rematch, User_process_pid, #request{ message_sync_content = Message }, _Message_encoded ) ->
+process_message( message_rematch, User_process_pid, #request{ message_sync_content = _Message }, _Message_encoded ) ->
 	gen_server:cast( User_process_pid, message_rematch ),
 	{no_reply};
 
 
-process_message( message_no_rematch, User_process_pid, #request{ message_sync_content = Message }, _Message_encoded ) ->
+process_message( message_no_rematch, User_process_pid, #request{ message_sync_content = _Message }, _Message_encoded ) ->
 	gen_server:cast( User_process_pid, message_no_rematch),
 	{no_reply};
 
@@ -421,10 +433,10 @@ process_message( Other_code, User_process_pid, _Message_decoded, _Message_encode
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-login_guest_user( User_id , Client_time ) ->
+login_guest_user( User_id , Client_time, User ) ->
 	User_creation_function = fun() ->
 		lager:debug("created a new user proccess in login"),
-		{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time ]),
+		{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time, User ]),
 		#user{ 	user_id = User_id, user_process_pid = Child_pid }
 	end,
 

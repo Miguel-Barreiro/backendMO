@@ -1,3 +1,4 @@
+-include_lib("mc_user_store/include/user_store.hrl").
 
 -record(user, {
 	user_id :: binary(),
@@ -65,4 +66,11 @@
 	user2_gamestate = #user_gamestate{},
 	initial_seed = undefined,
 	difficult_level = 0
+}).
+
+
+-record ( logic_user,{
+	lifes_generate_timer = undefined,
+	user = undefined :: mc_user(),
+	session_start_time = undefined
 }).
