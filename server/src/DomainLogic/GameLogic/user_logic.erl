@@ -10,6 +10,8 @@
 -define(LIFE_GAME_COST,1).
 
 
+-define(LIFES_KEY,<<"lifes">>).
+-define(LAST_LOGIN_KEY,<<"time_since_last_login">>).
 
 
 
@@ -34,7 +36,7 @@ logout( #logic_user{ user = User, lifes_generate_timer = Timer_ref } ) ->
 	end,
 	%we pretend to logout before we actually do so the lifes generation takes into account the time we already waited
 	Logout_timestamp = swiss:unix_timestamp() - ( ?LIFE_GENERATION_TIMEOUT - Time_left),
-	user_store:save_profile_fields( User#mc_user.user_id , [{ "time_since_last_login", Logout_timestamp, put}] ),
+	user_store:save_profile_fields( User#mc_user.user_id , [{ ?LAST_LOGIN_KEY, Logout_timestamp, put}] ),
 	ok.
 
 
@@ -42,7 +44,7 @@ logout( #logic_user{ user = User, lifes_generate_timer = Timer_ref } ) ->
 
 -spec can_enter_game( Logic_user :: #logic_user{ } ) -> false | true.
 can_enter_game( #logic_user{ user = User } ) ->
-	Current_lifes = proplists:get_value("lifes", User#mc_user.properties),
+	Current_lifes = proplists:get_value(?LIFES_KEY, User#mc_user.properties),
 	Current_lifes >= ?LIFE_GAME_COST.
 
 
@@ -61,10 +63,10 @@ handle_game_start( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, u
 
 
 
--spec handle_msg( generate_life ,  Logic_user :: #logic_user{ } ) -> { ok ,#logic_user{}}.
+-spec handle_msg( generate_life , Logic_user :: #logic_user{ } ) -> { ok ,#logic_user{}}.
 handle_msg( generate_life, Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User } ) ->
 	{ New_user ,New_timer_ref} = add_lifes_to_user( 1, User, Timer_ref),
-	Logic_user#logic_user{ lifes_generate_timer = New_timer_ref, user = New_user }.
+	{ok, Logic_user#logic_user{ lifes_generate_timer = New_timer_ref, user = New_user }}.
 
 
 
@@ -80,15 +82,24 @@ handle_msg( generate_life, Logic_user = #logic_user{ lifes_generate_timer = Time
 
 
 add_lifes_to_user( Amount, User = #mc_user{} , Timer_ref) ->
-	Current_lifes = proplists:get_value("lifes", User#mc_user.properties),
-	{New_properties, New_timer_ref } = case (Current_lifes + Amount) >= ?MAX_LIFES of
-		true ->
-			user_store:save_profile_fields( User#mc_user.user_id, [{ "lifes", ?MAX_LIFES, put}] ),
+	Current_lifes = case proplists:get_value(?LIFES_KEY, User#mc_user.properties) of
+		undefined ->	6;
+		Other -> 		Other
+	end,
+
+	lager:info("Current_lifes ~p  Amount ~p  MAX_LIFES ~p",[Current_lifes,Amount,?MAX_LIFES]),
+	{New_properties, New_timer_ref } = 
+	case ((Current_lifes + Amount) >= ?MAX_LIFES) of
+		true when Timer_ref == undefined->
+			user_store:save_profile_fields( User#mc_user.user_id, [{ ?LIFES_KEY, ?MAX_LIFES, put}] ),
+			{[ { ?LIFES_KEY , ?MAX_LIFES} | proplists:delete( ?LIFES_KEY, User#mc_user.properties ) ], undefined };	
+		true when Timer_ref =/= undefined->
+			user_store:save_profile_fields( User#mc_user.user_id, [{ ?LIFES_KEY, ?MAX_LIFES, put}] ),
 			erlang:cancel_timer( Timer_ref ),
-			{[ { "lifes" , ?MAX_LIFES} | proplists:delete( "lifes", User#mc_user.properties ) ], undefined };
+			{[ { ?LIFES_KEY , ?MAX_LIFES} | proplists:delete( ?LIFES_KEY, User#mc_user.properties ) ], undefined };
 		false ->
-			user_store:save_profile_fields( User#mc_user.user_id, [{ "lifes", Amount, add}] ),
-			{[ { "lifes" , Current_lifes + Amount} | proplists:delete( "lifes", User#mc_user.properties ) ], Timer_ref}
+			user_store:save_profile_fields( User#mc_user.user_id, [{ ?LIFES_KEY, Amount, add}] ),
+			{[ { ?LIFES_KEY , Current_lifes + Amount} | proplists:delete( ?LIFES_KEY, User#mc_user.properties ) ], Timer_ref}
 	end,
 	{User#mc_user{ properties = New_properties } , New_timer_ref}.
 
@@ -104,11 +115,14 @@ remove_lifes_from_user( Amount, User = #mc_user{}, Timer_ref ) ->
 		_other ->		Timer_ref
 	end,
 
-	Current_lifes = proplists:get_value("lifes", User#mc_user.properties),
+	Current_lifes = case proplists:get_value(?LIFES_KEY, User#mc_user.properties) of
+		undefined ->	6;
+		Other -> 		Other
+	end,
 	case Current_lifes >= Amount of
 		true ->
-			user_store:save_profile_fields( User#mc_user.user_id, [{ "lifes", -Amount, add}] ),
-			New_properties = [ { "lifes" , Current_lifes - Amount} | proplists:delete( "lifes", User#mc_user.properties ) ],
+			user_store:save_profile_fields( User#mc_user.user_id, [{ ?LIFES_KEY, -Amount, add}] ),
+			New_properties = [ { ?LIFES_KEY , Current_lifes - Amount} | proplists:delete( ?LIFES_KEY, User#mc_user.properties ) ],
 			{ User#mc_user{ properties = New_properties }, New_timer_ref };
 		false ->
 			{ error , not_enough_lifes}
@@ -123,7 +137,7 @@ remove_lifes_from_user( Amount, User = #mc_user{}, Timer_ref ) ->
 
 generate_missing_lifes( User = #mc_user{}, Timer_ref, Session_start_time ) ->
 
-	case proplists:get_value("time_since_last_login", User#mc_user.properties) of
+	case proplists:get_value(?LAST_LOGIN_KEY, User#mc_user.properties) of
 		
 		undefined ->	
 			{User, Timer_ref};

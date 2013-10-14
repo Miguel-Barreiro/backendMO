@@ -7,7 +7,7 @@
 
 -export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
 -export([create_login_success/4, create_login_success/18]).
--export([create_match_found_message/2, create_start_message/1]).
+-export([create_match_created_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/2, create_user_reconected_message/0]).
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
@@ -171,9 +171,9 @@ create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, 
 
 
 
-create_match_found_message( Opponnent_name , Seed  ) ->
-	Req = #request{ type = message_match_found,
-					match_found_content = #message_match_found{  
+create_match_created_message( Opponnent_name , Seed  ) ->
+	Req = #request{ type = message_match_created,
+					match_created_content = #message_match_created{  
 						seed = Seed,
 						opponent_name = Opponnent_name,
 						start_level = 0
