@@ -234,17 +234,23 @@ code_change(_OldVsn, State, _Extra) ->
 
 handle_remove_user( User_pid , State = #rematch_queue_state{ rematch_lobies = Lobies, loby_key_by_user_id = Keys_by_user}) ->
 
-	Lobby_key = gb_trees:get( User_pid, Keys_by_user),
-	Lobby = gb_trees:get( Lobby_key, Lobies),
-	List_without_user = proplists:delete(User_pid, Lobby#rematch_loby.user_list),
+	case gb_trees:get( User_pid, Keys_by_user) of
+		
+		undefined ->
+			{noreply, State};
 
-	Msg = message_processor:create_no_rematch_message(),
-	lists:foreach( fun({ _ , Current_user }) ->  gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
+		Lobby_key ->
+			Lobby = gb_trees:get( Lobby_key, Lobies),
+			List_without_user = proplists:delete(User_pid, Lobby#rematch_loby.user_list),
 
-	Fun = fun( { Current_user_pid, Current_user } , New_tree ) ->
-		demonitor( Current_user#rematch_loby_user.user_monitor),
-		gb_trees:delete( Current_user_pid , New_tree)
-	end,
-	New_user_tree = lists:foldl( Fun, State#rematch_queue_state.loby_key_by_user_id , Lobby#rematch_loby.user_list),
-	{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } }.
+			Msg = message_processor:create_no_rematch_message(),
+			lists:foreach( fun({ _ , Current_user }) ->  gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
+
+			Fun = fun( { Current_user_pid, Current_user } , New_tree ) ->
+				demonitor( Current_user#rematch_loby_user.user_monitor),
+				gb_trees:delete( Current_user_pid , New_tree)
+			end,
+			New_user_tree = lists:foldl( Fun, State#rematch_queue_state.loby_key_by_user_id , Lobby#rematch_loby.user_list),
+			{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } }
+	end.
 
