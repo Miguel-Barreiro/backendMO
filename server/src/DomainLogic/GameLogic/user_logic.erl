@@ -7,7 +7,7 @@
 -export([can_enter_game/2,handle_game_start/2,handle_game_lost/2,handle_game_win/2]).
 
 
--define(LIFE_GENERATION_TIMEOUT,10000).
+-define(LIFE_GENERATION_TIMEOUT,10).
 -define(MAX_LIFES,6).
 -define(LIFE_GAME_COST,1).
 
@@ -42,10 +42,10 @@ logout( #logic_user{ user = User, lifes_generate_timer = Timer_ref } ) ->
 	
 	Time_left = case Timer_ref of
 		undefined ->		?LIFE_GENERATION_TIMEOUT;
-		_other ->			erlang:cancel_timer( Timer_ref )
+		_other ->			erlang:cancel_timer( Timer_ref ) div 1000
 	end,
 	%we pretend to logout before we actually do so the lifes generation takes into account the time we already waited
-	Logout_timestamp = swiss:unix_timestamp() - (( ?LIFE_GENERATION_TIMEOUT - Time_left ) div 1000),
+	Logout_timestamp = swiss:unix_timestamp() - ( ?LIFE_GENERATION_TIMEOUT - Time_left ),
 	user_store:save_profile_fields( User#mc_user.user_id , [{ ?LAST_LOGIN_KEY, Logout_timestamp, put}] ),
 	ok.
 
@@ -54,8 +54,9 @@ logout( #logic_user{ user = User, lifes_generate_timer = Timer_ref } ) ->
 
 -spec can_enter_game( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> false | true.
 can_enter_game( #logic_user{ user = User }, _Powers ) ->
-	Current_lifes = proplists:get_value(?LIFES_KEY, User#mc_user.wallet),
-	Current_lifes >= ?LIFE_GAME_COST.
+	true.
+	%Current_lifes = proplists:get_value(?LIFES_KEY, User#mc_user.wallet),
+	%Current_lifes >= ?LIFE_GAME_COST.
 
 
 
@@ -68,11 +69,13 @@ handle_game_start( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, u
 
 -spec handle_game_lost( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_lost( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
+	%remove_lifes_from_user( 1 + length(Powers), User, Timer_ref )
 	{ ok , Logic_user}.
 
 
 -spec handle_game_win( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_win( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
+	%remove_lifes_from_user( length(Powers), User, Timer_ref )
 	{ ok , Logic_user}.
 
 
@@ -126,7 +129,7 @@ add_lifes_to_user( Amount, User = #mc_user{} , Timer_ref) ->
 remove_lifes_from_user( Amount, User = #mc_user{}, Timer_ref ) ->
 
 	New_timer_ref = case Timer_ref of
-		undefined ->	erlang:send_after(?LIFE_GENERATION_TIMEOUT, self(), { user_logic_msg, generate_life});
+		undefined ->	erlang:send_after(?LIFE_GENERATION_TIMEOUT * 1000, self(), { user_logic_msg, generate_life});
 		_other ->		Timer_ref
 	end,
 
@@ -157,7 +160,7 @@ generate_missing_lifes( User = #mc_user{}, Timer_ref, Session_start_time ) ->
 			lager:debug("generate_missing_lifes: Session_start_time ~p  , Time_since_last_login ~p",
 							[Session_start_time,Time_since_last_login]),
 
-			Delta_time = (Session_start_time - Time_since_last_login) * 1000,
+			Delta_time = (Session_start_time - Time_since_last_login),
 			case Delta_time div ?LIFE_GENERATION_TIMEOUT of
 				0 ->					do_nothing,{User, Timer_ref};
 				Lifes_to_generate when Lifes_to_generate < 0 ->

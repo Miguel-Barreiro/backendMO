@@ -150,19 +150,19 @@ handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ game_p
 
 
 
-handle_cast( { enter_game , Game_process_pid, Opponnent_name, Seed } , State = #user_process_state{ connection_pid = Connection_pid, 
+handle_cast( { enter_game, Powers, Game_process_pid, Opponnent_name, Seed } , State = #user_process_state{ connection_pid = Connection_pid, 
 																										game_state = User_state,
 																										logic_user = Logic_user }) 
 				when User_state == in_queue orelse User_state == in_rematch_queue ->
 
 	lager:info("enter game received when he is in ~p",[User_state]),
 
-	case user_logic:handle_game_start( Logic_user ) of
+	case user_logic:handle_game_start( Logic_user, Powers ) of
 
 		{error , not_enough_lifes} ->
 			{stop, not_enough_lifes, State};
 
-		{ok,New_logic_user} ->
+		{ok, New_logic_user} ->
 			Msg = message_processor:create_match_created_message( Opponnent_name, Seed ),
 			gen_server:cast( Connection_pid, {reply, Msg}),
 
@@ -363,8 +363,8 @@ handle_info(M,S) ->
 	{noreply, S}.
 
 
-handle_call( can_enter_game, _From, State = #user_process_state{ logic_user = Logic_user } ) ->
-	{reply, user_logic:can_enter_game( Logic_user ), State};
+handle_call( {can_enter_game, Powers }, _From, State = #user_process_state{ logic_user = Logic_user } ) ->
+	{reply, user_logic:can_enter_game( Logic_user, Powers ), State};
 
 handle_call(_E, _From, State) ->
 	{noreply, State}.

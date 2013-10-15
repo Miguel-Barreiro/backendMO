@@ -124,8 +124,8 @@ handle_info( match_make , State = #queue_state{} ) ->
 		Match_users = fun( [ User1, User2 ], Users_couldnt_match )->
 			lager:info("new game with ~p and ~p",[User1#queue_user.user_id, User2#queue_user.user_id]),
 
-			case { gen_server:call(User1#queue_user.user_pid, can_enter_game ), 
-					gen_server:call(User2#queue_user.user_pid, can_enter_game ) } of
+			case { gen_server:call(User1#queue_user.user_pid, {can_enter_game, User1#queue_user.powers} ), 
+					gen_server:call(User2#queue_user.user_pid, {can_enter_game, User2#queue_user.powers} ) } of
 
 				{true , true } ->
 					demonitor( User1#queue_user.user_monitor ),
