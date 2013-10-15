@@ -621,6 +621,7 @@ to_request__request_type(23) -> message_sync_time;
 to_request__request_type(24) -> message_rematch;
 to_request__request_type(25) -> message_no_rematch;
 to_request__request_type(26) -> message_rematch_timeout;
+to_request__request_type(27) -> message_not_enough_lifes;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -649,6 +650,7 @@ from_request__request_type(message_sync_time) -> 23;
 from_request__request_type(message_rematch) -> 24;
 from_request__request_type(message_no_rematch) -> 25;
 from_request__request_type(message_rematch_timeout) -> 26;
+from_request__request_type(message_not_enough_lifes) -> 27;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->

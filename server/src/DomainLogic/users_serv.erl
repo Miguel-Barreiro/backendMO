@@ -7,7 +7,6 @@
 -type user_states() :: init | in_rematch_queue | in_queue | playing_game.
 
 -record(user_process_state, {
-	session_start_time,
 	user_id,
 	game_state = init :: user_states(), 
 	connection_pid = undefined :: pid(),
@@ -17,13 +16,9 @@
 	disconect_timer,
 
 	logic_user = #logic_user{} :: #logic_user{}
-
 }).
 
-
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/4]).
-
-
 
 
 start_link(Connection_pid , User_id, Client_time, User ) ->
@@ -50,14 +45,14 @@ handle_cast([ Connection_pid , User_id, _Client_time, User = #mc_user{} ], State
 													User#mc_user.wallet),
 	gen_server:cast( Connection_pid , { reply, Msg }),
 
-	New_user = user_logic:login( User , swiss:unix_timestamp() ),
+	Logic_user = user_logic:login( User , swiss:unix_timestamp() ),
 
 	{noreply, State#user_process_state{
 				connection_monitor = Connection_monitor,
 				user_id = User_id,
 				connection_pid = Connection_pid,
 				disconect_timer = undefined,
-				logic_user = New_user
+				logic_user = Logic_user
 			}
 	};
 
@@ -131,7 +126,6 @@ handle_cast( {game_start , StartTime }, State = #user_process_state{ connection_
 	gen_server:cast( Connection_pid, {reply, Msg}),
 
 	lager:debug("sending start game to ~p",[self()]),
-
 	{noreply, State};
 
 
@@ -146,18 +140,12 @@ handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ game_p
 				when User_state == init, Game_pid == undefined ->
 	lager:debug("users_serv: ready to place in queue with powers ~p",[Powers]),
 	
-	case user_logic:can_enter_game( Logic_user ) of
-		true ->
-			Elo = 10,
-			Tier = beginner,
+	Elo = 10,
+	Tier = beginner,
 
-			queue_serv:enter( self(), User_id, Elo, Tier, Powers ),
-			{noreply, State#user_process_state{ game_state = in_queue }};
+	queue_serv:enter( self(), User_id, Elo, Tier, Powers ),
+	{noreply, State#user_process_state{ game_state = in_queue }};
 
-		false ->
-			lager:debug("users_serv: not enough lifes to enter the queue!"),
-			{noreply, State}
-	end;
 
 
 
@@ -171,8 +159,8 @@ handle_cast( { enter_game , Game_process_pid, Opponnent_name, Seed } , State = #
 
 	case user_logic:handle_game_start( Logic_user ) of
 
-		{error , not_enough_lifes} -> 
-			throw( not_enough_lifes_to_start_game );
+		{error , not_enough_lifes} ->
+			{stop, not_enough_lifes, State};
 
 		{ok,New_logic_user} ->
 			Msg = message_processor:create_match_created_message( Opponnent_name, Seed ),
@@ -185,6 +173,8 @@ handle_cast( { enter_game , Game_process_pid, Opponnent_name, Seed } , State = #
 													logic_user = New_logic_user },
 			{noreply, New_state}
 	end;
+
+
 
 
 handle_cast( { enter_game , _Game_process_pid, _Opponnent_name, _Seed } , State ) ->
@@ -237,6 +227,14 @@ handle_cast(remove_from_rematch_queue , State = #user_process_state{ connection_
 	Msg = message_processor:create_rematch_timeout_message(),
 	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State#user_process_state{ game_state = init } };
+
+
+handle_cast(remove_from_queue , State = #user_process_state{ connection_pid = Connection_pid } ) ->
+	Msg = message_processor:create_insufficient_lifes_message(),
+	gen_server:cast( Connection_pid, {reply, Msg}),
+	{noreply, State#user_process_state{ game_state = init } };
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -367,9 +365,6 @@ handle_info(M,S) ->
 
 handle_call( can_enter_game, _From, State = #user_process_state{ logic_user = Logic_user } ) ->
 	{reply, user_logic:can_enter_game( Logic_user ), State};
-
-	
-
 
 handle_call(_E, _From, State) ->
 	{noreply, State}.

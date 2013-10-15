@@ -12,6 +12,7 @@
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
 -export([create_rematch_message/0, create_no_rematch_message/0, create_rematch_timeout_message/0]).
+-export([ create_insufficient_lifes_message/0 ]).
 
 -export([create_fail_buy_product_response_message/0, create_success_buy_product_response_message/2]).
 
@@ -302,6 +303,11 @@ create_rematch_timeout_message() ->
 	protocol_pb:encode_request(Req).
 
 
+create_insufficient_lifes_message() ->
+	Req = #request{ type = message_not_enough_lifes },
+	protocol_pb:encode_request(Req).
+
+
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 %%
 %%										MESSAGE PROCESSING
@@ -317,7 +323,8 @@ process_message( message_login_code,
 
 		{ _ , undefined } ->
 			{ ok, {New_guest_id , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
-			login_guest_user( New_guest_id , Client_time, User );
+			User_initiated = user_logic:init( User ),
+			login_guest_user( New_guest_id , Client_time, User_initiated );
 
 		{undefined, _ } -> 
 			{ reply_with_disconnect, create_disconect_message() };
@@ -327,8 +334,9 @@ process_message( message_login_code,
 			lager:info("User id no login e ~p",[User_id]),
 
 			case user_store:login_local_user( User_id ) of
-				{ error, _error } ->	{ ok, {New_guest_id , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),										
-										login_guest_user( New_guest_id , Client_time, User );
+				{ error, _error } ->	{ ok, {New_guest_id , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
+										User_initiated = user_logic:init( User ),									
+										login_guest_user( New_guest_id , Client_time, User_initiated );
 				{ok, User } ->			login_guest_user( User_id , Client_time, User )
 			end
 	end;

@@ -129,7 +129,7 @@ handle_info( match_make , State = #queue_state{} ) ->
 
 				{true , true } ->
 					demonitor( User1#queue_user.user_monitor ),
-					demonitor( User1#queue_user.user_monitor ),
+					demonitor( User2#queue_user.user_monitor ),
 
 					game_sup:start_new_game_process( [User1#queue_user.user_pid, User1#queue_user.user_id, User1#queue_user.powers,
 														User2#queue_user.user_pid, User2#queue_user.user_id, User2#queue_user.powers,
@@ -138,12 +138,18 @@ handle_info( match_make , State = #queue_state{} ) ->
 					Users_couldnt_match;
 
 				{ true , false} ->
-					[ User1 | Users_couldnt_match];	
+					gen_server:cast( User1#queue_user.user_pid, remove_from_queue),
+					[ User2 | Users_couldnt_match];
 				
 				{ false , true} ->
-					[ User2 | Users_couldnt_match];	
+					gen_server:cast( User2#queue_user.user_pid, remove_from_queue),
+
+					[ User1 | Users_couldnt_match];	
 
 				_other ->
+					gen_server:cast( User2#queue_user.user_pid, remove_from_queue),
+					gen_server:cast( User1#queue_user.user_pid, remove_from_queue),
+
 					Users_couldnt_match
 			end
 		end,
