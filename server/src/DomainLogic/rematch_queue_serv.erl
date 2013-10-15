@@ -71,6 +71,7 @@ init([]) ->
 
 
 handle_cast( { remove_user, User_pid }, State ) ->
+	lager:debug("no rematch received by ~p",[User_pid]),
 	handle_remove_user( User_pid , State);
 
 
@@ -114,24 +115,35 @@ handle_cast( { set_user_rematch, User_pid },  State = #rematch_queue_state{ rema
 	User = proplists:get_value(User_pid, Lobby#rematch_loby.user_list),
 
 	List_without_user = proplists:delete(User_pid, Lobby#rematch_loby.user_list),
-
-	Msg = message_processor:create_rematch_message(),
-	lists:foreach( fun({ _ , Current_user }) ->  gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
-
 	New_user_list = [ { User_pid, User#rematch_loby_user{ is_ready = true } }  |   List_without_user],
+
 	case lists:all(fun( { _ , Current_user}) -> Current_user#rematch_loby_user.is_ready end, New_user_list) of
 		true ->
-			%lager:debug("--PICK POWERS MODE--",[]),
+			lager:debug("--PICK POWERS MODE--",[]),
+
+			erlang:cancel_timer( Lobby#rematch_loby.rematch_timeout),
+
 			%New_lobby = Lobby#rematch_loby{ user_list = New_user_list, state = pick_powers },
 			%{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:insert( Lobby_key, New_lobby ,gb_trees:delete(Lobby_key, Lobies)) } };
 			[ { User1_pid, User1 } , {User2_pid , User2}] = New_user_list,
-			game_sup:start_new_game_process( [ User1_pid, User1#rematch_loby_user.user_id,
-													User2_pid, User2#rematch_loby_user.user_id,
-														configurations_serv:get_current_version(), configurations_serv:get_current_version()] ),
-			New_user_tree = gb_trees:delete( User2_pid, gb_trees:delete( User1_pid, State#rematch_queue_state.loby_key_by_user_id)),
+			game_sup:start_new_game_process( [ User1_pid, User1#rematch_loby_user.user_id, [],
+													User2_pid, User2#rematch_loby_user.user_id, [],
+														configurations_serv:get_current_version(), 
+														configurations_serv:get_current_url()] ),
+
+			Fun = fun( { Current_user_pid, Current_user } , New_tree ) ->
+				demonitor( Current_user#rematch_loby_user.user_monitor),
+				gb_trees:delete( Current_user_pid , New_tree)
+			end,
+			New_user_tree = lists:foldl( Fun, State#rematch_queue_state.loby_key_by_user_id , Lobby#rematch_loby.user_list),
 			{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } };
 
 		false ->
+			Msg = message_processor:create_rematch_message(),
+			lists:foreach( fun({ _ , Current_user }) ->  
+								gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) 
+							end, List_without_user ),
+
 			New_lobby = Lobby#rematch_loby{ user_list = New_user_list },
 			{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:insert( Lobby_key, New_lobby ,gb_trees:delete(Lobby_key, Lobies)) } }
 	end;
@@ -185,12 +197,22 @@ handle_info({'DOWN', _Reference, process, Pid, _Reason}, State = #rematch_queue_
 handle_info({ rematch_timeout, User1_pid, User2_pid }, State = #rematch_queue_state{ rematch_lobies = Lobies } ) ->
 	lager:debug("rematch_queue_serv: rematch_timeout for (~p,~p) reached", [User2_pid, User1_pid]),
 
-	Lobby_key = {User2_pid, User1_pid},
-
 	gen_server:cast( User2_pid, remove_from_rematch_queue ),
 	gen_server:cast( User1_pid, remove_from_rematch_queue ),
 
-	New_user_tree = gb_trees:delete( User2_pid, gb_trees:delete( User1_pid, State#rematch_queue_state.loby_key_by_user_id)),
+	Msg = message_processor:create_rematch_timeout_message(),
+	gen_server:cast( User2_pid,{send_message, Msg}),
+	gen_server:cast( User1_pid,{send_message, Msg}),
+
+
+	Lobby_key = {User2_pid, User1_pid},
+	Lobby = gb_trees:get( Lobby_key, Lobies),
+
+	Fun = fun( { Current_user_pid, Current_user } , New_tree ) ->
+		demonitor( Current_user#rematch_loby_user.user_monitor),
+		gb_trees:delete( Current_user_pid , New_tree)
+	end,
+	New_user_tree = lists:foldl( Fun, State#rematch_queue_state.loby_key_by_user_id , Lobby#rematch_loby.user_list),
 	{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } };
 
 
@@ -211,23 +233,28 @@ code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
 
 
-
-
-
-
 handle_remove_user( User_pid , State = #rematch_queue_state{ rematch_lobies = Lobies, loby_key_by_user_id = Keys_by_user}) ->
 
-	Lobby_key = gb_trees:get( User_pid, Keys_by_user),
-	Lobby = gb_trees:get( Lobby_key, Lobies),
-	List_without_user = proplists:delete(User_pid, Lobby#rematch_loby.user_list),
+	case (catch gb_trees:get( User_pid, Keys_by_user)) of
+		
+		{'EXIT', _ } ->
+			{noreply, State};
 
-	Msg = message_processor:create_no_rematch_message(),
-	lists:foreach( fun({ _ , Current_user }) ->  gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
+		Lobby_key ->
+			Lobby = gb_trees:get( Lobby_key, Lobies),
+			List_without_user = proplists:delete(User_pid, Lobby#rematch_loby.user_list),
 
-	Fun = fun( { Current_user_pid, Current_user } , New_tree ) ->
-		demonitor( Current_user#rematch_loby_user.user_monitor),
-		gb_trees:delete( Current_user_pid , New_tree)
-	end,
-	New_user_tree = lists:foldl( Fun, State#rematch_queue_state.loby_key_by_user_id , Lobby#rematch_loby.user_list),
-	{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } }.
+			erlang:cancel_timer( Lobby#rematch_loby.rematch_timeout),
+
+			Msg = message_processor:create_no_rematch_message(),
+			lists:foreach( fun({ _ , Current_user }) ->  gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
+
+			Fun = fun( { Current_user_pid, Current_user } , New_tree ) ->
+				gen_server:cast( Current_user_pid, remove_from_rematch_queue ),
+				demonitor( Current_user#rematch_loby_user.user_monitor),
+				gb_trees:delete( Current_user_pid , New_tree)
+			end,
+			New_user_tree = lists:foldl( Fun, State#rematch_queue_state.loby_key_by_user_id , Lobby#rematch_loby.user_list),
+			{noreply, State#rematch_queue_state{ rematch_lobies = gb_trees:delete(Lobby_key, Lobies) , loby_key_by_user_id = New_user_tree } }
+	end.
 

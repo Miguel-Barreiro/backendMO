@@ -78,20 +78,18 @@ handle_cast([User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers,
 
 
 
-
-
-
-
 handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, state = Game_State} ) 
 				when Game_State == init ->
 	{A1,A2,A3} = now(),
 	random:seed(A1, A2, A3),
 	Seed = random:uniform(2147483646),
 
+	lager:debug("enter game was sent!"),
+
 	Starting_game_logic_state = game_logic:create_new_game( User1#game_user.pid, User2#game_user.pid, Seed ),
 
-	gen_server:cast( User1#game_user.pid , { enter_game, self(), User2#game_user.user_id, Seed } ),
-	gen_server:cast( User2#game_user.pid , { enter_game, self(), User1#game_user.user_id, Seed } ),
+	gen_server:cast( User1#game_user.pid , { enter_game, User1#game_user.powers_equipped, self(), User2#game_user.user_id, Seed } ),
+	gen_server:cast( User2#game_user.pid , { enter_game, User2#game_user.powers_equipped, self(), User1#game_user.user_id, Seed } ),
 
 	{ noreply, State#game_state{ game_logic_state = Starting_game_logic_state, state = waiting_players } };
 
@@ -207,16 +205,13 @@ handle_cast( { place_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) -
 handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = User1, user2 = User2 } )  ->
 	lager:debug("game ~p is going to end",[self()]),
 
-	Lost_msg = message_processor:create_lost_message(no_reason),
-	Won_msg = message_processor:create_won_message(normal),
-
 	case Lost_user_pid == User2#game_user.pid of
 		true ->
-			gen_server:cast( User2#game_user.pid, {send_message, Lost_msg}),
-			gen_server:cast( User1#game_user.pid, {send_message, Won_msg});
+			gen_server:cast( User2#game_user.pid, {game_lost, User2#game_user.powers_equipped, no_reason}),
+			gen_server:cast( User1#game_user.pid, {game_win, User1#game_user.powers_equipped, normal});
 		false ->
-			gen_server:cast( User1#game_user.pid, {send_message, Lost_msg}),
-			gen_server:cast( User2#game_user.pid, {send_message, Won_msg})
+			gen_server:cast( User1#game_user.pid, {game_lost, User1#game_user.powers_equipped, no_reason}),
+			gen_server:cast( User2#game_user.pid, {game_win, User2#game_user.powers_equipped, normal})
 	end,
 
 	erlang:cancel_timer(State#game_state.game_difficult_change_timer),

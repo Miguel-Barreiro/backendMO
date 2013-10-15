@@ -24,7 +24,7 @@
   encode_message_restart_game/1,decode_message_restart_game/1,
   encode_message_generic_power/1,decode_message_generic_power/1,
   encode_message_enter_queue/1,decode_message_enter_queue/1,
-  encode_message_match_found/1,decode_message_match_found/1,
+  encode_message_match_created/1,decode_message_match_created/1,
   encode_message_new_configuration/1,decode_message_new_configuration/1,
   encode_message_buy_product/1,decode_message_buy_product/1,
   to_message_buy_product_response__response_type/1,from_message_buy_product_response__response_type/1,
@@ -487,26 +487,26 @@ encode_message_enter_queue(R) when is_record(R,message_enter_queue) ->
     [ protocol_buffers:encode(2,length_encoded,X) || X <- R#message_enter_queue.powers_equipped]
   ].
 
-decode_message_match_found(B) ->
-  case decode_message_match_found_impl(B) of
-    undefined -> #message_match_found{};
+decode_message_match_created(B) ->
+  case decode_message_match_created_impl(B) of
+    undefined -> #message_match_created{};
     Any -> Any
   end.
 
-decode_message_match_found_impl(<<>>) -> undefined;
-decode_message_match_found_impl(Binary) ->
-  protocol_buffers:decode(Binary,#message_match_found{},
-     fun(1,Val,Rec) -> Rec#message_match_found{seed = protocol_buffers:cast(int32,Val)};
-        (2,Val,Rec) -> Rec#message_match_found{opponent_name = protocol_buffers:cast(string,Val)};
-        (3,Val,Rec) -> Rec#message_match_found{start_level = protocol_buffers:cast(int32,Val)}
+decode_message_match_created_impl(<<>>) -> undefined;
+decode_message_match_created_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_match_created{},
+     fun(1,Val,Rec) -> Rec#message_match_created{seed = protocol_buffers:cast(int32,Val)};
+        (2,Val,Rec) -> Rec#message_match_created{opponent_name = protocol_buffers:cast(string,Val)};
+        (3,Val,Rec) -> Rec#message_match_created{start_level = protocol_buffers:cast(int32,Val)}
       end).
 
-encode_message_match_found(undefined) -> undefined;
-encode_message_match_found(R) when is_record(R,message_match_found) ->
+encode_message_match_created(undefined) -> undefined;
+encode_message_match_created(R) when is_record(R,message_match_created) ->
   [
-    protocol_buffers:encode(1,int32,R#message_match_found.seed),
-    protocol_buffers:encode(2,length_encoded,R#message_match_found.opponent_name),
-    protocol_buffers:encode(3,int32,R#message_match_found.start_level)
+    protocol_buffers:encode(1,int32,R#message_match_created.seed),
+    protocol_buffers:encode(2,length_encoded,R#message_match_created.opponent_name),
+    protocol_buffers:encode(3,int32,R#message_match_created.start_level)
   ].
 
 decode_message_new_configuration(B) ->
@@ -611,7 +611,7 @@ to_request__request_type(13) -> message_user_disconected;
 to_request__request_type(14) -> message_game_restart;
 to_request__request_type(15) -> message_generic_power;
 to_request__request_type(16) -> message_enter_queue;
-to_request__request_type(17) -> message_match_found;
+to_request__request_type(17) -> message_match_created;
 to_request__request_type(18) -> message_generated_garbage_code;
 to_request__request_type(19) -> message_user_reconected;
 to_request__request_type(20) -> message_new_configuration_version;
@@ -621,6 +621,7 @@ to_request__request_type(23) -> message_sync_time;
 to_request__request_type(24) -> message_rematch;
 to_request__request_type(25) -> message_no_rematch;
 to_request__request_type(26) -> message_rematch_timeout;
+to_request__request_type(27) -> message_not_enough_lifes;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -639,7 +640,7 @@ from_request__request_type(message_user_disconected) -> 13;
 from_request__request_type(message_game_restart) -> 14;
 from_request__request_type(message_generic_power) -> 15;
 from_request__request_type(message_enter_queue) -> 16;
-from_request__request_type(message_match_found) -> 17;
+from_request__request_type(message_match_created) -> 17;
 from_request__request_type(message_generated_garbage_code) -> 18;
 from_request__request_type(message_user_reconected) -> 19;
 from_request__request_type(message_new_configuration_version) -> 20;
@@ -649,6 +650,7 @@ from_request__request_type(message_sync_time) -> 23;
 from_request__request_type(message_rematch) -> 24;
 from_request__request_type(message_no_rematch) -> 25;
 from_request__request_type(message_rematch_timeout) -> 26;
+from_request__request_type(message_not_enough_lifes) -> 27;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -673,7 +675,7 @@ decode_request_impl(Binary) ->
         (11,{length_encoded,Bin},Rec) -> Rec#request{restart_game_content = decode_message_restart_game_impl(Bin)};
         (12,{length_encoded,Bin},Rec) -> Rec#request{power_content = decode_message_generic_power_impl(Bin)};
         (13,{length_encoded,Bin},Rec) -> Rec#request{enter_queue_content = decode_message_enter_queue_impl(Bin)};
-        (14,{length_encoded,Bin},Rec) -> Rec#request{match_found_content = decode_message_match_found_impl(Bin)};
+        (14,{length_encoded,Bin},Rec) -> Rec#request{match_created_content = decode_message_match_created_impl(Bin)};
         (15,{length_encoded,Bin},Rec) -> Rec#request{generated_garbage_content = decode_message_generated_garbage_impl(Bin)};
         (16,{length_encoded,Bin},Rec) -> Rec#request{new_configuration_content = decode_message_new_configuration_impl(Bin)};
         (17,{length_encoded,Bin},Rec) -> Rec#request{buy_product_content = decode_message_buy_product_impl(Bin)};
@@ -697,7 +699,7 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(11,length_encoded,encode_message_restart_game(R#request.restart_game_content)),
     protocol_buffers:encode(12,length_encoded,encode_message_generic_power(R#request.power_content)),
     protocol_buffers:encode(13,length_encoded,encode_message_enter_queue(R#request.enter_queue_content)),
-    protocol_buffers:encode(14,length_encoded,encode_message_match_found(R#request.match_found_content)),
+    protocol_buffers:encode(14,length_encoded,encode_message_match_created(R#request.match_created_content)),
     protocol_buffers:encode(15,length_encoded,encode_message_generated_garbage(R#request.generated_garbage_content)),
     protocol_buffers:encode(16,length_encoded,encode_message_new_configuration(R#request.new_configuration_content)),
     protocol_buffers:encode(17,length_encoded,encode_message_buy_product(R#request.buy_product_content)),

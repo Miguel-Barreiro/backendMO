@@ -66,8 +66,6 @@ leave(User_pid, User_id) ->
 
 
 
-
-
 remove_user_by_pid( User_pid, State = #queue_state{})->
 	case proplists:get_value( User_pid ,State#queue_state.league_by_pid) of
 		undefined ->
@@ -123,22 +121,45 @@ handle_info( match_make , State = #queue_state{} ) ->
 		New_list = gb_sets:to_list(League#queue_league.user_list),
 		{ Matches , Unmatched_user_list } = match_make:match_users( New_list , fun calculate_match_desire_ratio/1 , ?GAME_SIZE ),
 
-
-		Match_users = fun( [ User1, User2 ] )->
+		Match_users = fun( [ User1, User2 ], Users_couldnt_match )->
 			lager:info("new game with ~p and ~p",[User1#queue_user.user_id, User2#queue_user.user_id]),
 
-			demonitor( User1#queue_user.user_monitor ),
-			demonitor( User1#queue_user.user_monitor ),
+			case { gen_server:call(User1#queue_user.user_pid, {can_enter_game, User1#queue_user.powers} ), 
+					gen_server:call(User2#queue_user.user_pid, {can_enter_game, User2#queue_user.powers} ) } of
 
-			game_sup:start_new_game_process( [User1#queue_user.user_pid, User1#queue_user.user_id, User1#queue_user.powers,
-												User2#queue_user.user_pid, User2#queue_user.user_id, User2#queue_user.powers,
-													configurations_serv:get_current_version(), configurations_serv:get_current_url()] )
+				{true , true } ->
+					demonitor( User1#queue_user.user_monitor ),
+					demonitor( User2#queue_user.user_monitor ),
+
+					game_sup:start_new_game_process( [User1#queue_user.user_pid, User1#queue_user.user_id, User1#queue_user.powers,
+														User2#queue_user.user_pid, User2#queue_user.user_id, User2#queue_user.powers,
+															configurations_serv:get_current_version(), 
+															configurations_serv:get_current_url()] ),
+					Users_couldnt_match;
+
+				{ true , false} ->
+					gen_server:cast( User1#queue_user.user_pid, remove_from_queue),
+					[ User2 | Users_couldnt_match];
+				
+				{ false , true} ->
+					gen_server:cast( User2#queue_user.user_pid, remove_from_queue),
+
+					[ User1 | Users_couldnt_match];	
+
+				_other ->
+					gen_server:cast( User2#queue_user.user_pid, remove_from_queue),
+					gen_server:cast( User1#queue_user.user_pid, remove_from_queue),
+
+					Users_couldnt_match
+			end
 		end,
-		lists:foreach(Match_users, Matches),
+		
+		{ Users_couldnt_match } = lists:foldl(Match_users, { [] }, Matches),
 
+		Users_still_in_queue = lists:append( Users_couldnt_match , Unmatched_user_list),
 
-		Unmatched_user_leagues_by_pid = [{ User#queue_user.user_pid , League_name} || User <- Unmatched_user_list ],
-		New_league = #queue_league{ user_list = gb_sets:from_list(Unmatched_user_list), tier_level = League_name },
+		Unmatched_user_leagues_by_pid = [{ User#queue_user.user_pid , League_name} || User <- Users_still_in_queue ],
+		New_league = #queue_league{ user_list = gb_sets:from_list(Users_still_in_queue), tier_level = League_name },
 
 		New_leagues = [{League_name , New_league} | Leagues],
 		New_league_by_pid = lists:append( Unmatched_user_leagues_by_pid , League_by_pid ),
