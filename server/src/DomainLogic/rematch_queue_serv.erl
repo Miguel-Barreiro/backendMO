@@ -71,6 +71,7 @@ init([]) ->
 
 
 handle_cast( { remove_user, User_pid }, State ) ->
+	lager:debug("no rematch received by ~p",[User_pid]),
 	handle_remove_user( User_pid , State);
 
 
@@ -196,9 +197,13 @@ handle_info({'DOWN', _Reference, process, Pid, _Reason}, State = #rematch_queue_
 handle_info({ rematch_timeout, User1_pid, User2_pid }, State = #rematch_queue_state{ rematch_lobies = Lobies } ) ->
 	lager:debug("rematch_queue_serv: rematch_timeout for (~p,~p) reached", [User2_pid, User1_pid]),
 
-
 	gen_server:cast( User2_pid, remove_from_rematch_queue ),
 	gen_server:cast( User1_pid, remove_from_rematch_queue ),
+
+	Msg = message_processor:create_rematch_timeout_message(),
+	gen_server:cast( User2_pid,{send_message, Msg}),
+	gen_server:cast( User1_pid,{send_message, Msg}),
+
 
 	Lobby_key = {User2_pid, User1_pid},
 	Lobby = gb_trees:get( Lobby_key, Lobies),
@@ -228,25 +233,24 @@ code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
 
 
-
-
-
-
 handle_remove_user( User_pid , State = #rematch_queue_state{ rematch_lobies = Lobies, loby_key_by_user_id = Keys_by_user}) ->
 
-	case gb_trees:get( User_pid, Keys_by_user) of
+	case (catch gb_trees:get( User_pid, Keys_by_user)) of
 		
-		undefined ->
+		{'EXIT', _ } ->
 			{noreply, State};
 
 		Lobby_key ->
 			Lobby = gb_trees:get( Lobby_key, Lobies),
 			List_without_user = proplists:delete(User_pid, Lobby#rematch_loby.user_list),
 
+			erlang:cancel_timer( Lobby#rematch_loby.rematch_timeout),
+
 			Msg = message_processor:create_no_rematch_message(),
 			lists:foreach( fun({ _ , Current_user }) ->  gen_server:cast( Current_user#rematch_loby_user.user_pid, {send_message, Msg }) end, List_without_user ),
 
 			Fun = fun( { Current_user_pid, Current_user } , New_tree ) ->
+				gen_server:cast( Current_user_pid, remove_from_rematch_queue ),
 				demonitor( Current_user#rematch_loby_user.user_monitor),
 				gb_trees:delete( Current_user_pid , New_tree)
 			end,

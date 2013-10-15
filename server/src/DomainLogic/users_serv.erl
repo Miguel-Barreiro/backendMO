@@ -261,12 +261,12 @@ handle_cast({ buy_product, Product_id, Amount } , State = #user_process_state{ u
 
 
 
-handle_cast(message_rematch , State = #user_process_state{ game_state = User_state } ) when User_state == in_rematch_queue ->
+handle_cast(message_rematch , State = #user_process_state{ game_state = User_state } ) ->
 	rematch_queue_serv:set_user_rematch(self()),
 	{noreply, State};
 
 
-handle_cast(message_no_rematch , State = #user_process_state{ game_state = User_state } ) when User_state == in_rematch_queue ->
+handle_cast(message_no_rematch , State = #user_process_state{ game_state = User_state } ) ->
 	rematch_queue_serv:remove_user(self()),
 	{noreply, State};
 
@@ -276,8 +276,6 @@ handle_cast(set_rematch_queue_state , State = #user_process_state{} ) ->
 
 
 handle_cast(remove_from_rematch_queue , State = #user_process_state{ connection_pid = Connection_pid } ) ->
-	Msg = message_processor:create_rematch_timeout_message(),
-	gen_server:cast( Connection_pid, {reply, Msg}),
 	{noreply, State#user_process_state{ game_state = init } };
 
 
