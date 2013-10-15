@@ -7,7 +7,7 @@
 -export([can_enter_game/2,handle_game_start/2,handle_game_lost/2,handle_game_win/2]).
 
 
--define(LIFE_GENERATION_TIMEOUT,10).
+-define(LIFE_GENERATION_TIMEOUT,120).
 -define(MAX_LIFES,6).
 -define(LIFE_GAME_COST,1).
 
@@ -53,29 +53,28 @@ logout( #logic_user{ user = User, lifes_generate_timer = Timer_ref } ) ->
 
 
 -spec can_enter_game( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> false | true.
-can_enter_game( #logic_user{ user = User }, _Powers ) ->
-	true.
-	%Current_lifes = proplists:get_value(?LIFES_KEY, User#mc_user.wallet),
-	%Current_lifes >= ?LIFE_GAME_COST.
+can_enter_game( #logic_user{ user = User }, Powers ) ->
+	Current_lifes = proplists:get_value(?LIFES_KEY, User#mc_user.wallet),
+	Current_lifes >= (?LIFE_GAME_COST + length(Powers)).
 
 
 
 
 -spec handle_game_start( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
-handle_game_start( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
+handle_game_start( Logic_user = #logic_user{ lifes_generate_timer = _Timer_ref, user = _User }, _Powers ) ->
 	{ ok , Logic_user}.
 
 
 
 -spec handle_game_lost( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_lost( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
-	%remove_lifes_from_user( 1 + length(Powers), User, Timer_ref )
+	remove_lifes_from_user( ?LIFE_GAME_COST + length(Powers), User, Timer_ref ),
 	{ ok , Logic_user}.
 
 
 -spec handle_game_win( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_win( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
-	%remove_lifes_from_user( length(Powers), User, Timer_ref )
+	remove_lifes_from_user( length(Powers), User, Timer_ref ),
 	{ ok , Logic_user}.
 
 
@@ -104,7 +103,7 @@ add_lifes_to_user( Amount, User = #mc_user{} , Timer_ref) ->
 		Other -> 		Other
 	end,
 
-	lager:info("Current_lifes ~p  Amount ~p  MAX_LIFES ~p",[Current_lifes,Amount,?MAX_LIFES]),
+	lager:debug("adding lifes: Current_lifes ~p  Amount ~p  MAX_LIFES ~p",[Current_lifes,Amount,?MAX_LIFES]),
 	{New_wallet, New_timer_ref } = 
 	case ((Current_lifes + Amount) >= ?MAX_LIFES) of
 		true when Timer_ref == undefined->
@@ -132,6 +131,12 @@ remove_lifes_from_user( Amount, User = #mc_user{}, Timer_ref ) ->
 		undefined ->	erlang:send_after(?LIFE_GENERATION_TIMEOUT * 1000, self(), { user_logic_msg, generate_life});
 		_other ->		Timer_ref
 	end,
+
+	Current_lifes = case proplists:get_value(?LIFES_KEY, User#mc_user.wallet) of
+		undefined ->	0;
+		Other -> 		Other
+	end,
+	lager:debug("removing lifes: Current_lifes ~p  Amount ~p  MAX_LIFES ~p",[Current_lifes,Amount,?MAX_LIFES]),
 
 	case user_store:update_wallet_balance( User#mc_user.user_id, ?LIFES_KEY, -Amount) of
 		{ok, New_amount} ->

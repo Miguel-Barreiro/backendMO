@@ -184,6 +184,45 @@ handle_cast( { enter_game , _Game_process_pid, _Opponnent_name, _Seed } , State 
 
 
 
+
+
+handle_cast( {game_lost, Powers, Reason}, State = #user_process_state{ connection_pid = Connection_pid, 
+														game_state = User_state, 
+														logic_user = Logic_user} ) ->
+
+	Msg = message_processor:create_lost_message(Reason),
+	gen_server:cast( Connection_pid, {reply, Msg}),
+
+	case user_logic:handle_game_lost( Logic_user, Powers ) of
+		{error , not_enough_lifes} ->
+			{noreply, State};
+
+		{ok, New_logic_user} ->
+			{noreply, State#user_process_state{ logic_user = New_logic_user }}
+	end;
+
+
+handle_cast( {game_win,Powers, Reason}, State = #user_process_state{ connection_pid = Connection_pid, 
+														game_state = User_state, 
+														logic_user = Logic_user} ) ->
+
+	Msg = message_processor:create_won_message(Reason),
+	gen_server:cast( Connection_pid, {reply, Msg}),
+
+	case user_logic:handle_game_win( Logic_user, Powers ) of
+		{error , not_enough_lifes} ->
+			{noreply, State};
+
+		{ok, New_logic_user} ->
+			{noreply, State#user_process_state{ logic_user = New_logic_user }}
+	end;
+
+
+
+
+
+
+
 handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid,  game_state = User_state }) 
 				when User_state == playing_game, Game_pid =/= undefined ->
 	gen_server:cast( Game_pid , { user_ready, self()}),
