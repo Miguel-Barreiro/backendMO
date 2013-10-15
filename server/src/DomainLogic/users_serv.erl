@@ -133,18 +133,30 @@ handle_cast( {game_start , StartTime }, State = #user_process_state{ connection_
 
 
 
-handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ game_pid = Game_pid, 
-																		game_state = User_state, 
-																		user_id = User_id,
-																		logic_user = Logic_user }) 
-				when User_state == init, Game_pid == undefined ->
-	lager:debug("users_serv: ready to place in queue with powers ~p",[Powers]),
-	
-	Elo = 10,
-	Tier = beginner,
 
-	queue_serv:enter( self(), User_id, Elo, Tier, Powers ),
-	{noreply, State#user_process_state{ game_state = in_queue }};
+handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ connection_pid = Connection_pid,
+																			game_pid = Game_pid, 
+																				game_state = User_state, 
+																					user_id = User_id,
+																						logic_user = Logic_user }) 
+				when User_state == init, Game_pid == undefined ->
+	
+	case user_logic:can_enter_game( Logic_user, Powers ) of
+		false ->
+			lager:debug("users_serv: not enough coins to place in queue with powers ~p",[Powers]),
+
+			Msg = message_processor:create_insufficient_lifes_message(),
+			gen_server:cast( Connection_pid, {reply, Msg}),
+			{noreply, State};
+		true ->
+			lager:debug("users_serv: ready to place in queue with powers ~p",[Powers]),
+			Elo = 10,
+			Tier = beginner,
+			queue_serv:enter( self(), User_id, Elo, Tier, Powers ),
+			{noreply, State#user_process_state{ game_state = in_queue }}
+	end;
+
+
 
 
 
@@ -186,9 +198,27 @@ handle_cast( { enter_game , _Game_process_pid, _Opponnent_name, _Seed } , State 
 
 
 
-handle_cast( {game_lost, Powers, Reason}, State = #user_process_state{ connection_pid = Connection_pid, 
-														game_state = User_state, 
-														logic_user = Logic_user} ) ->
+
+
+handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid,  game_state = User_state }) 
+				when User_state == playing_game, Game_pid =/= undefined ->
+	gen_server:cast( Game_pid , { user_ready, self()}),
+	{noreply, State};
+
+
+handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
+	lager:debug("ready message sent at wrong time (state = ~p)",[State]),
+	{noreply, State};
+
+
+
+
+
+
+
+
+
+handle_cast( {game_lost, Powers, Reason}, State = #user_process_state{ connection_pid = Connection_pid, logic_user = Logic_user} ) ->
 
 	Msg = message_processor:create_lost_message(Reason),
 	gen_server:cast( Connection_pid, {reply, Msg}),
@@ -202,9 +232,7 @@ handle_cast( {game_lost, Powers, Reason}, State = #user_process_state{ connectio
 	end;
 
 
-handle_cast( {game_win,Powers, Reason}, State = #user_process_state{ connection_pid = Connection_pid, 
-														game_state = User_state, 
-														logic_user = Logic_user} ) ->
+handle_cast( {game_win,Powers, Reason}, State = #user_process_state{ connection_pid = Connection_pid, logic_user = Logic_user} ) ->
 
 	Msg = message_processor:create_won_message(Reason),
 	gen_server:cast( Connection_pid, {reply, Msg}),
@@ -217,21 +245,6 @@ handle_cast( {game_win,Powers, Reason}, State = #user_process_state{ connection_
 			{noreply, State#user_process_state{ logic_user = New_logic_user }}
 	end;
 
-
-
-
-
-
-
-handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid,  game_state = User_state }) 
-				when User_state == playing_game, Game_pid =/= undefined ->
-	gen_server:cast( Game_pid , { user_ready, self()}),
-	{noreply, State};
-
-
-handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
-	lager:debug("ready message sent at wrong time (state = ~p)",[State]),
-	{noreply, State};
 
 
 
