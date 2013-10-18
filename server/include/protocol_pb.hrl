@@ -28,10 +28,15 @@
   y :: integer(),
   color :: block_color()}).
 
+%% @type garbage_position__garbage_type() = garbage_hard | garbage_normal | garbage_color_red | garbage_color_purple | garbage_color_white | garbage_color_yellow | garbage_color_green | garbage_color_blue.
+-type garbage_position__garbage_type() :: garbage_hard | garbage_normal | garbage_color_red | garbage_color_purple | garbage_color_white | garbage_color_yellow | garbage_color_green | garbage_color_blue.
+
 %% @type garbage_position_record() = #garbage_position_record{
+%%   type() = garbage_position__garbage_type(),
 %%   x() = integer()
 %% }.
 -record(garbage_position,{
+  type :: garbage_position__garbage_type(),
   x :: integer()}).
 
 %% @type game_state_record() = #game_state_record{

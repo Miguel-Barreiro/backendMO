@@ -12,7 +12,7 @@
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
 -export([create_rematch_message/0, create_no_rematch_message/0, create_rematch_timeout_message/0]).
--export([ create_insufficient_lifes_message/0 ]).
+-export([create_insufficient_lifes_message/0 ]).
 
 -export([create_fail_buy_product_response_message/0, create_success_buy_product_response_message/2]).
 
@@ -145,14 +145,28 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 	protocol_pb:encode_request(Req).
 
 
-
-
+get_garbage_protocol_type( garbage ) ->
+	garbage_normal;
+get_garbage_protocol_type( garbage_hard ) ->
+	garbage_hard;
+get_garbage_protocol_type( {garbage_color, Color} ) ->
+	case Color of
+		purple ->	garbage_color_purple;
+		blue ->		garbage_color_blue;
+		green ->	garbage_color_green;
+		yellow ->	garbage_color_yellow;
+		red -> 		garbage_color_red;
+		white ->	garbage_color_white
+	end.
 
 
 create_generated_garbage_message( Garbages_position_list) ->
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
-						garbage = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Garbages_position_list)
+						garbage = lists:foldl( 
+										fun( { Type, X}, Result) -> 
+											[ #garbage_position{ x = X, type = get_garbage_protocol_type(Type) } | Result] 
+										end , [], Garbages_position_list)
 					}},
 	protocol_pb:encode_request(Req).
 

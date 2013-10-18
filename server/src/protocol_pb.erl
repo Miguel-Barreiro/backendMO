@@ -7,6 +7,7 @@
   encode_user_item/1,decode_user_item/1,
   encode_user_wallet/1,decode_user_wallet/1,
   encode_block_position/1,decode_block_position/1,
+  to_garbage_position__garbage_type/1,from_garbage_position__garbage_type/1,
   encode_garbage_position/1,decode_garbage_position/1,
   encode_game_state/1,decode_game_state/1,
   encode_message_game_state/1,decode_message_game_state/1,
@@ -138,6 +139,26 @@ encode_block_position(R) when is_record(R,block_position) ->
     protocol_buffers:encode(3,int32,from_block_color(R#block_position.color))
   ].
 
+to_garbage_position__garbage_type(1) -> garbage_hard;
+to_garbage_position__garbage_type(2) -> garbage_normal;
+to_garbage_position__garbage_type(3) -> garbage_color_red;
+to_garbage_position__garbage_type(4) -> garbage_color_purple;
+to_garbage_position__garbage_type(5) -> garbage_color_white;
+to_garbage_position__garbage_type(6) -> garbage_color_yellow;
+to_garbage_position__garbage_type(7) -> garbage_color_green;
+to_garbage_position__garbage_type(8) -> garbage_color_blue;
+to_garbage_position__garbage_type(undefined) -> undefined.
+
+from_garbage_position__garbage_type(garbage_hard) -> 1;
+from_garbage_position__garbage_type(garbage_normal) -> 2;
+from_garbage_position__garbage_type(garbage_color_red) -> 3;
+from_garbage_position__garbage_type(garbage_color_purple) -> 4;
+from_garbage_position__garbage_type(garbage_color_white) -> 5;
+from_garbage_position__garbage_type(garbage_color_yellow) -> 6;
+from_garbage_position__garbage_type(garbage_color_green) -> 7;
+from_garbage_position__garbage_type(garbage_color_blue) -> 8;
+from_garbage_position__garbage_type(undefined) -> undefined.
+
 decode_garbage_position(B) ->
   case decode_garbage_position_impl(B) of
     undefined -> #garbage_position{};
@@ -147,13 +168,15 @@ decode_garbage_position(B) ->
 decode_garbage_position_impl(<<>>) -> undefined;
 decode_garbage_position_impl(Binary) ->
   protocol_buffers:decode(Binary,#garbage_position{},
-     fun(1,Val,Rec) -> Rec#garbage_position{x = protocol_buffers:cast(int32,Val)}
+     fun(1,{varint,Enum},Rec) -> Rec#garbage_position{type=to_garbage_position__garbage_type(Enum)};
+        (2,Val,Rec) -> Rec#garbage_position{x = protocol_buffers:cast(int32,Val)}
       end).
 
 encode_garbage_position(undefined) -> undefined;
 encode_garbage_position(R) when is_record(R,garbage_position) ->
   [
-    protocol_buffers:encode(1,int32,R#garbage_position.x)
+    protocol_buffers:encode(1,int32,from_garbage_position__garbage_type(R#garbage_position.type)),
+    protocol_buffers:encode(2,int32,R#garbage_position.x)
   ].
 
 decode_game_state(B) ->
