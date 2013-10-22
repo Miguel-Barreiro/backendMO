@@ -470,9 +470,9 @@ convert_wallet_to_protocol( { Item_name, Amount } , Rest_items ) ->
 
 convert_garbage_to_protocol_garbage( { Type , X} , Result ) ->
 	Garbage_result = case Type of
-		garbage ->					#garbage_position{ x = X, type = garbage };
+		garbage ->					#garbage_position{ x = X, type = garbage, color = undefined };
 		{garbage_color, Color } ->	#garbage_position{ x = X, type = garbage_color, color = Color };
-		garbage_hard ->				#garbage_position{ x = X, type = garbage_hard}
+		garbage_hard ->				#garbage_position{ x = X, type = garbage_hard, color = undefined }
 	end,
 	[ Garbage_result | Result].
 

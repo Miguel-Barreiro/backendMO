@@ -72,6 +72,7 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 
 
 handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) ->
+	lager:debug("placed the piece in ~p,~p",[X,Y]),
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
 			lager:debug("invalid piece place: wrong piece",[]),
@@ -82,11 +83,11 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece ),
 			
 			Board_after_release_garbage = release_garbage_list( Result_loop_board, Gamestate#user_gamestate.garbage_position_list ),
+
 			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate , Combos ),
 
-			%Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board ),
-			Generated_garbage_position_list = [],
-			
+			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board ),
+
 			case length(Generated_garbage_position_list) of
 				0 ->
 					do_nothing;
@@ -312,17 +313,16 @@ pop_garbage_in( X, Y, Board = #board{}) ->
 			Board;
 
 		Garbage_block when Garbage_block#block.type == garbage ->
-			board:remove_block( X, Y , Board);
+			board:remove_block( X, Y, Board);
 
 		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness == 1 ->
-			board:remove_block( X, Y , Board);			
+			board:remove_block( X, Y, Board);
 
 		Garbage_block when Garbage_block#block.type == garbage_hard ->
-			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 },
-							 board:remove_block( X, Y , Board));
+			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y,board:remove_block( X, Y, Board));
 
 		Garbage_block when Garbage_block#block.type == garbage_color ->
-			board:set_block( #block{ type = color , color = Garbage_block#block.color }, board:remove_block( X, Y , Board) );
+			board:set_block( #block{ type = color , color = Garbage_block#block.color }, X, Y, board:remove_block( X, Y , Board) );
 
 		_other_blocks ->
 			Board
@@ -341,14 +341,14 @@ pop_block(  X, Y, Board = #board{} ) ->
 			board:remove_block( X, Y , Board);			
 
 		Garbage_block when Garbage_block#block.type == garbage_hard ->
-			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 },
+			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y,
 							 	board:remove_block( X, Y , Board));
 
 		Garbage_block when Garbage_block#block.type == garbage ->
 			board:remove_block( X, Y , Board);
 
 		Garbage_block when Garbage_block#block.type == garbage_color ->
-			board:set_block( #block{ type = color , color = Garbage_block#block.color }, board:remove_block( X, Y , Board) );
+			board:set_block( #block{ type = color , color = Garbage_block#block.color }, X, Y, board:remove_block( X, Y , Board) );
 
 		Bomb_block when Bomb_block#block.type == bomb ->
 			pop_bomb( X, Y, Board);
@@ -411,7 +411,16 @@ simulate_gravity( Board = #board{} )->
 
 release_garbage_list( Board = #board{}, [] ) ->
 	Board;
-release_garbage_list( Board = #board{}, [Garbage_position | Rest ] ) ->
+
+release_garbage_list( Board = #board{}, [{{garbage_color, Color}, Garbage_position} | Rest ] ) ->
+	New_board = board:set_block( #block{ type = garbage_color, color = Color }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
+	release_garbage_list( New_board, Rest );
+	
+release_garbage_list( Board = #board{}, [{garbage_hard, Garbage_position} | Rest ] ) ->
+	New_board = board:set_block( #block{ type = garbage_hard }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
+	release_garbage_list( New_board, Rest );
+
+release_garbage_list( Board = #board{}, [{garbage, Garbage_position} | Rest ] ) ->
 	New_board = board:set_block( #block{ type = garbage }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
 	release_garbage_list( New_board, Rest ).
 
@@ -563,6 +572,7 @@ generate_random_garbage_color() ->
 
 
 generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{} ) ->
+	lager:debug("generating garbage: ~p hard , ~p color , ~p normal",[Hard_garbage_number,Color_garbage_number,Normal_garbage_number]),
 	generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board, lists:seq( 0, Board#board.width - 1 ) ).
 
 
@@ -682,7 +692,9 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 				empty ->
 					{ Combo, New_visited };
 
-				Current_block when Current_block#block.type =/= garbage, Current_block#block.color == Block#block.color ->
+				Current_block when Current_block#block.type =/= garbage,
+										Current_block#block.type =/= garbage_hard,
+											Current_block#block.type =/= garbage_color, Current_block#block.color == Block#block.color ->
 
 					New_combo = sets:add_element( Current_block, Combo ),
 
@@ -819,6 +831,7 @@ google_docs_test_() ->
 																		_other ->					false 
 																	end
 																end, Garbage_position_list)),
+
 					Calculated_number_hard_garbages = length( lists:filter( fun( {Garbage,_} )-> 
 																				Garbage == garbage_hard 
 																			end, Garbage_position_list)),

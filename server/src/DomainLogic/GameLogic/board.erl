@@ -128,7 +128,10 @@ get_board_position( Board = #board{}, X, Y ) ->
 
 		#block{ type = bomb } ->								"@";
 		
-		#block{ type = garbage } ->								"#"
+		#block{ type = garbage } ->								"+";
+		#block{ type = garbage_hard } ->						"#";
+		#block{ type = garbage_color } ->						"C"
+
 	end.
 
 	
