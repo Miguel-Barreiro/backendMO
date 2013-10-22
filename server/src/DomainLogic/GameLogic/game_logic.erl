@@ -84,7 +84,9 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 			Board_after_release_garbage = release_garbage_list( Result_loop_board, Gamestate#user_gamestate.garbage_position_list ),
 			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate , Combos ),
 
-			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board ),
+			%Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board ),
+			Generated_garbage_position_list = [],
+			
 			case length(Generated_garbage_position_list) of
 				0 ->
 					do_nothing;

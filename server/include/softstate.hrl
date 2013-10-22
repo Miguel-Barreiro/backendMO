@@ -75,3 +75,12 @@
 	user = undefined :: mc_user(),
 	session_start_time = undefined
 }).
+
+-type power_type() :: generate_bomb.
+
+
+-record( game_logic_power_rule,{
+	combo_size,
+	color = red :: color_type(),
+	power = generate_bomb :: power_type()
+}).
