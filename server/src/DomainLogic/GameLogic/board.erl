@@ -2,7 +2,7 @@
 
 -export([ new_empty/2 , get_all_blocks/1 ]).
 -export([ get_block/3, set_block/4, remove_block/3, is_valid_position/3 ]).
--export([ print_board/1, test_print/0 ]).
+-export([ print_board/1, are_boards_equal/2 ]).
 
 
 -include("include/softstate.hrl").
@@ -35,6 +35,25 @@ get_block( X , Y , #board{ blocks = Blocks }) ->
 	end.
 
 
+are_boards_equal(Board = #board{}, Board2 = #board{} ) ->
+
+	Board1_keys = gb_trees:keys(Board#board.blocks),
+	Board2_keys = gb_trees:keys(Board2#board.blocks),
+
+	Compare_fun = fun( Block_key ) ->
+		Block1 = gb_trees:lookup( Block_key, Board#board.blocks),
+		Block2 = gb_trees:lookup( Block_key, Board2#board.blocks),
+		Block2 == Block1
+	end,
+
+	case length(Board2_keys) == length(Board1_keys) of
+		false ->	false;
+		true ->		lists:all( Compare_fun, Board1_keys)
+	end.
+	
+
+	
+	
 
 
 %returns the new board record
@@ -63,22 +82,6 @@ remove_block( X , Y, Board = #board{ blocks = Blocks } ) ->
 
 
 
-
-
-
-
-
-test_print() ->
-	Board = board:set_block( #block{ type = color, color = red } , 0, 0,  
-				board:set_block( #block{ type = color, color = green } , 0, 1,  
-					board:set_block( #block{ type = color, color = yellow } , 1, 0,  
-						board:set_block( #block{ type = color, color = white } , 1, 1,  
-							board:set_block( #block{ type = color, color = purple } , 2, 0,  
-								board:set_block( #block{ type = color, color = blue } , 3, 0,  
-									board:set_block( #block{ type = garbage } , 4, 0,  
-										board:new_empty( 5, 14 )))))))),
-
-	print_board(Board).
 
 
 
@@ -125,7 +128,10 @@ get_board_position( Board = #board{}, X, Y ) ->
 
 		#block{ type = bomb } ->								"@";
 		
-		#block{ type = garbage } ->								"#"
+		#block{ type = garbage } ->								"+";
+		#block{ type = garbage_hard } ->						"#";
+		#block{ type = garbage_color } ->						"C"
+
 	end.
 
 	

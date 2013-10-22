@@ -27,12 +27,13 @@
 	height :: integer()
 }).
 
--type block_type() :: color | garbage | bomb | chromatic_bomb.
+-type block_type() :: color | garbage | bomb | chromatic_bomb | garbage_hard | garbage_color.
 -type color_type() :: red | yellow | blue | green | purple | white.
 
 -record( block, {
 	type = color :: block_type(),
-	color :: color_type(),
+	color = undefined :: color_type(),
+	hardness = 2,
 	x = 0 :: integer(),
 	y = 0 :: integer()
 }).
@@ -73,4 +74,13 @@
 	lifes_generate_timer = undefined,
 	user = undefined :: mc_user(),
 	session_start_time = undefined
+}).
+
+-type power_type() :: generate_bomb.
+
+
+-record( game_logic_power_rule,{
+	combo_size,
+	color = red :: color_type(),
+	power = generate_bomb :: power_type()
 }).

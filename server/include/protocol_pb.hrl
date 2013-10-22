@@ -1,8 +1,11 @@
 %% @type piece_rotation() = up | down | right | left.
 -type piece_rotation() :: up | down | right | left.
 
-%% @type block_color() = garbage | red | yellow | blue | green | purple | white | chromatic_bomb_red | chromatic_bomb_yellow | chromatic_bomb_blue | chromatic_bomb_green | chromatic_bomb_purple | chromatic_bomb_white | bomb.
--type block_color() :: garbage | red | yellow | blue | green | purple | white | chromatic_bomb_red | chromatic_bomb_yellow | chromatic_bomb_blue | chromatic_bomb_green | chromatic_bomb_purple | chromatic_bomb_white | bomb.
+%% @type color_block() = red | yellow | blue | green | purple | white.
+-type color_block() :: red | yellow | blue | green | purple | white.
+
+%% @type type_block() = garbage | garbage_hard | garbage_color | basic_block | bomb | chromatic_bomb.
+-type type_block() :: garbage | garbage_hard | garbage_color | basic_block | bomb | chromatic_bomb.
 
 %% @type user_item_record() = #user_item_record{
 %%   name() = binary(),
@@ -21,18 +24,24 @@
 %% @type block_position_record() = #block_position_record{
 %%   x() = integer(),
 %%   y() = integer(),
-%%   color() = block_color()
+%%   type() = type_block(),
+%%   color() = 'undefined' | color_block()
 %% }.
 -record(block_position,{
   x :: integer(),
   y :: integer(),
-  color :: block_color()}).
+  type :: type_block(),
+  color :: 'undefined' | color_block()}).
 
 %% @type garbage_position_record() = #garbage_position_record{
-%%   x() = integer()
+%%   type() = type_block(),
+%%   x() = integer(),
+%%   color() = 'undefined' | color_block()
 %% }.
 -record(garbage_position,{
-  x :: integer()}).
+  type :: type_block(),
+  x :: integer(),
+  color :: 'undefined' | color_block()}).
 
 %% @type game_state_record() = #game_state_record{
 %%   current_random() = integer(),

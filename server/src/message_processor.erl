@@ -12,7 +12,7 @@
 -export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
 -export([create_rematch_message/0, create_no_rematch_message/0, create_rematch_timeout_message/0]).
--export([ create_insufficient_lifes_message/0 ]).
+-export([create_insufficient_lifes_message/0 ]).
 
 -export([create_fail_buy_product_response_message/0, create_success_buy_product_response_message/2]).
 
@@ -66,10 +66,7 @@ handle_disconect() ->
 create_login_success( User_id, Configuration_url, Configuration_version, Wallet ) ->
 	lager:debug("LOGIN SUCCESS WITHOUT STATE "),
 
-	Convert_wallet_fun = fun( { Item_name, Amount } , Rest_items ) ->
-		[ #user_item{ name = Item_name , amount = Amount } | Rest_items]
-	end,
-	Message_wallet = #user_wallet{ items = lists:foldl( Convert_wallet_fun, [], Wallet ) },
+	Message_wallet = #user_wallet{ items = lists:foldl( fun convert_wallet_to_protocol/2, [], Wallet ) },
 
 	Req = #request{ type = message_login_sucess, 
 						login_sucess_content = #messagelogin_success{ user_id = User_id, 
@@ -93,7 +90,10 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 	lager:debug("active piece opponent is ~p  ~p,~p ",[Opponent_current_piece_angle,Opponent_current_piece_x,Opponent_current_piece_y]),
 
 	Fun = fun( Block = #block{}, Result_block_list ) -> 
-		New_block_position = #block_position{ x = Block#block.x, y = Block#block.y, color = get_protocol_color_from_block(Block) },
+		New_block_position = #block_position{ 	x = Block#block.x, 
+													y = Block#block.y, 
+														color = get_protocol_color_from_block(Block), 
+															type = get_protocol_type_from_block(Block) },
 		[ New_block_position | Result_block_list]
 	end,
 
@@ -103,8 +103,8 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 %	lager:debug("Opponent_block_position_list ~p",[Opponent_block_position_list]),
 %	lager:debug("Player_block_position_list ~p",[Player_block_position_list]),
 
-	Opponent_garbage_message_list =  lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Player_garbage_list),
-	Player_garbage_message_list = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Opponent_garbage_list),
+	Opponent_garbage_message_list =  lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Player_garbage_list),
+	Player_garbage_message_list = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Opponent_garbage_list),
 
 %	lager:debug("Player_garbage_message_list ~p",[Player_garbage_message_list]),
 %	lager:debug("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),
@@ -129,10 +129,7 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 														opponent_name = Oppponent_user_id },
 
 
-	Convert_wallet_fun = fun( { Item_name, Amount } , Rest_items ) ->
-		[ #user_item{ name = Item_name , amount = Amount } | Rest_items]
-	end,
-	Message_wallet = #user_wallet{ items = lists:foldl( Convert_wallet_fun, [], Wallet ) },
+	Message_wallet = #user_wallet{ items = lists:foldl( fun convert_wallet_to_protocol/2, [], Wallet ) },
 
 
 	Req = #request{ type = message_login_sucess,
@@ -146,20 +143,18 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 
 
 
-
-
-
 create_generated_garbage_message( Garbages_position_list) ->
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
-						garbage = lists:foldl( fun( X, Result) -> [ #garbage_position{ x = X } | Result] end , [], Garbages_position_list)
+						garbage = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Garbages_position_list)
 					}},
 	protocol_pb:encode_request(Req).
 
 
 create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle ) ->
 
-	Garbage_list_part = lists:foldl( fun( X_pposition, Result) -> [ #garbage_position{ x = X_pposition } | Result] end , [], Garbages_position_list),
+	Garbage_list_part = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Garbages_position_list),
+
 	Req = #request{ type = message_opponent_place_piece_code,
 					opponent_place_piece_content = #message_opponent_place_piece{ 
 						garbage = Garbage_list_part,
@@ -468,22 +463,28 @@ login_guest_user( User_id , Client_time, User ) ->
 	end.
 
 
+convert_wallet_to_protocol( { Item_name, Amount } , Rest_items ) ->
+		[ #user_item{ name = Item_name , amount = Amount } | Rest_items].
 
 
-get_protocol_color_from_block( Block = #block{ type = Type} ) when Type == color ->
-	Block#block.color;
 
-get_protocol_color_from_block( Block = #block{ type = Type} ) when Type == chromatic_bomb ->
-	case Block#block.color of 
-		red -> 		chromatic_bomb_red;
-		yellow -> 	chromatic_bomb_yellow;
-		blue -> 	chromatic_bomb_blue;
-		green ->	chromatic_bomb_green;
-		purple ->	chromatic_bomb_purple;
-		white ->	chromatic_bomb_white
-	end;
+convert_garbage_to_protocol_garbage( { Type , X} , Result ) ->
+	Garbage_result = case Type of
+		garbage ->					#garbage_position{ x = X, type = garbage, color = undefined };
+		{garbage_color, Color } ->	#garbage_position{ x = X, type = garbage_color, color = Color };
+		garbage_hard ->				#garbage_position{ x = X, type = garbage_hard, color = undefined }
+	end,
+	[ Garbage_result | Result].
 
-get_protocol_color_from_block( #block{ type = Type} )  ->
+
+
+get_protocol_color_from_block( Block = #block{} ) ->
+	Block#block.color.
+
+
+get_protocol_type_from_block( #block{ type = Type} ) when Type == color ->
+	basic_block;
+get_protocol_type_from_block( #block{ type = Type} ) ->
 	Type.
 
 

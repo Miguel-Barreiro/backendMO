@@ -204,7 +204,6 @@ handle_info({ rematch_timeout, User1_pid, User2_pid }, State = #rematch_queue_st
 	gen_server:cast( User2_pid,{send_message, Msg}),
 	gen_server:cast( User1_pid,{send_message, Msg}),
 
-
 	Lobby_key = {User2_pid, User1_pid},
 	Lobby = gb_trees:get( Lobby_key, Lobies),
 
