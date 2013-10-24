@@ -2,15 +2,12 @@
 
 -include("include/softstate.hrl").
 
--export([ handle_place_piece/5, handle_update_piece/5, create_new_game/3, test_random/1 ]).
+-export([ handle_place_piece/5, handle_update_piece/5, create_new_game/3 ]).
 
 -define( BOARD_WIDTH , 6).
 -define( BOARD_HEIGHT , 13).
 -define( STARTING_PIECE_X , 3).
 
-
--define(HARD_GARBAGE_RATIO, 1).
--define(COLOR_GARBAGE_RATIO, 2).
 
 %-------------- PUBLIC -------------------------
 
@@ -28,7 +25,10 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ),
 											current_piece = Piece,
 												random_state = New_random_state },
-	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed }.
+
+	Game_rules = game_rules:get_current_rules("easy"),
+
+	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed, game_rules = Game_rules }.
 
 
 
@@ -44,7 +44,8 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (
 																		(Game#game.user1_gamestate)#user_gamestate.current_piece, 
 																			X, Y, Angle, 
 																				Game#game.user1_gamestate, 
-																					Game#game.user2_gamestate ),
+																					Game#game.user2_gamestate,
+																						Game#game.game_rules ),
 
 	io:format("-------------------------------- ",[]),
 	io:format(" USER 1 ~p PLACE A PIECE ",[User_pid]),
@@ -61,7 +62,8 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 																		(Game#game.user2_gamestate)#user_gamestate.current_piece, 
 																			X, Y, Angle, 
 																				Game#game.user2_gamestate, 
-																					Game#game.user1_gamestate ),
+																					Game#game.user1_gamestate,
+																						Game#game.game_rules ),
 
 	io:format("-------------------------------- ",[]),
 	io:format(" USER 2 ~p PLACE A PIECE ",[User_pid]),
@@ -71,7 +73,13 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
 
 
-handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) ->
+
+
+handle_place_piece( User_pid, Opponent_pid, 
+						Piece = #piece{}, X, Y, 
+							Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}, 
+								Game_rules = #game_logic_rules{} ) ->
+
 	lager:debug("placed the piece in ~p,~p",[X,Y]),
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
@@ -80,13 +88,13 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 		true ->
 			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Gamestate#user_gamestate.board),
 
-			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece ),
+			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece, Game_rules ),
 			
 			Board_after_release_garbage = release_garbage_list( Result_loop_board, Gamestate#user_gamestate.garbage_position_list ),
 
-			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate , Combos ),
+			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate , Combos, Game_rules ),
 
-			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board ),
+			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
 
 			case length(Generated_garbage_position_list) of
 				0 ->
@@ -101,10 +109,10 @@ handle_place_piece( User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Games
 												current_piece = Next_piece,
 												current_piece_angle = down,
 												current_piece_x = ?STARTING_PIECE_X,
-												current_piece_y = ?BOARD_HEIGHT - 1,
+												current_piece_y = Board_after_release_garbage#board.height - 1,
 													piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
 
-			New_opponent_garbage_list = lists:append( Generated_garbage_position_list, Opponent_gamestate#user_gamestate.garbage_position_list ),
+			New_opponent_garbage_list = lists:append( Opponent_gamestate#user_gamestate.garbage_position_list, Generated_garbage_position_list ),
 			New_opponent_gamestate = Opponent_gamestate#user_gamestate{ garbage_position_list = New_opponent_garbage_list },
 
 
@@ -170,17 +178,17 @@ handle_update_piece( _User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gam
 %-------------- PRIVATE -------------------------
 
 
-apply_gravity_combo_loop( Board = #board{} ) ->
+apply_gravity_combo_loop( Board = #board{} , Game_rules = #game_logic_rules{} ) ->
 	Board_after_gravity = simulate_gravity( Board ),
 	lager:debug("apply gravity"),
-	Combos = calculate_combos( Board_after_gravity ),
+	Combos = calculate_combos( Board_after_gravity, Game_rules ),
 	case Combos of
 		[] ->
 			{ [], Board_after_gravity};
 		_other ->
 			Board_after_pop_combos = pop_combos( Board_after_gravity, Combos ),
 			lager:debug("poped combos"),
-			{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_pop_combos ),
+			{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_pop_combos, Game_rules ),
 			{ [ Combos | New_Combos ] , New_board}
 	end.
 
@@ -252,7 +260,7 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 
 
 
-calculate_combos( Board = #board{} )->
+calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 	Blocks = board:get_all_blocks(Board),
 
 	Fun = fun( Block = #block{} , Combos ) ->
@@ -270,10 +278,10 @@ calculate_combos( Board = #board{} )->
 	end,
 	All_Combos = lists:foldl(Fun, [], Blocks),
 
-	Pred_minimum_4 = fun( Combo ) ->
-		sets:size( Combo ) >= 4
+	Pred_minimum_combo_size = fun( Combo ) ->
+		sets:size( Combo ) >= Game_rules#game_logic_rules.min_combo_size
 	end,
-	lists:filter(Pred_minimum_4, All_Combos).
+	lists:filter(Pred_minimum_combo_size, All_Combos).
 
 
 
@@ -365,14 +373,11 @@ pop_block(  X, Y, Board = #board{} ) ->
 
 pop_bomb( X, Y, Board = #board{}) ->
 	io:format("poping bomb in ~p,~p \n",[X, Y]),
-	pop_block( X + 1, Y ,
+	pop_block( X + 1, Y,
 		pop_block( X - 1, Y ,
 			pop_block( X, Y + 1,
-				pop_block( X, Y -1,
-					pop_block( X + 1, Y +1,
-						pop_block( X - 1, Y -1,
-							pop_block( X + 1, Y - 1,
-								pop_block( X - 1, Y +1, board:remove_block( X, Y , Board))))))))).
+				pop_block( X, Y - 1,
+					board:remove_block( X, Y , Board))))).
 
 
 
@@ -427,32 +432,28 @@ release_garbage_list( Board = #board{}, [{garbage, Garbage_position} | Rest ] ) 
 
 
 
-calculate_garbage_from_combos( [], _ ) ->
+
+
+
+calculate_garbage_from_combos( [], _, _ ) ->
 	[];
 
-calculate_garbage_from_combos( Combos, Board = #board{} ) ->
-	Sum_garbage_from_combos = 
-	fun( Combo_sequence, { Combo_number_garbage, Combo_sequence_length_garbage } )->
-		{ Combo_number_garbage + lists:foldl( fun( Combo, Acc2 ) -> Acc2 + calculate_garbage_from_combo( Combo ) end, 0, Combo_sequence) ,
-			Combo_sequence_length_garbage + (length( Combo_sequence ) - 1 ) * ?HARD_GARBAGE_RATIO }
-	end,
-
-	Combo_sequence_garbage = (length( Combos ) - 1) * ?COLOR_GARBAGE_RATIO,
-
-	{ Combo_number_garbage, Combo_sequence_length_garbage } = lists:foldl( Sum_garbage_from_combos, {0,0}, Combos),
-
-	generate_garbage_positions( Combo_sequence_length_garbage, Combo_sequence_garbage, Combo_number_garbage, Board ).
+calculate_garbage_from_combos( Combos, Board = #board{}, Game_rules = #game_logic_rules{} ) ->
+	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = game_rules:get_garbage_number( Combos, Game_rules ),
+	generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{} ).
 
 
 
 
 
 
-calculate_next_piece( Gamestate = #user_gamestate{} , Combos ) ->
+
+
+calculate_next_piece( Gamestate = #user_gamestate{} , Combos, Game_rules = #game_logic_rules{} ) ->
 	{ New_random_state, Random } = get_next_random( Gamestate#user_gamestate.random_state ),
 	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
 
-	{ Color, Type } = get_block_color_type(Random, Combos),
+	{ Color, Type } = get_block_color_type(Random, Combos, Game_rules),
 	{ Color2, Type2 } = get_block_color_type(Random2),
 
 	{ Gamestate#user_gamestate{ random_state = New_random_state2 }, 
@@ -473,7 +474,7 @@ calculate_next_piece( Initial_random_state ) ->
 
 
 
-get_block_color_type( Random, Combos ) ->
+get_block_color_type( Random, Combos, Game_rules = #game_logic_rules{} ) ->
 	Color = case Random rem 6 of
 		0 ->		red;
 		1 ->		yellow;
@@ -482,12 +483,9 @@ get_block_color_type( Random, Combos ) ->
 		4 ->		purple;
 		5 ->		white
 	end,
-	Type = case lists:any( fun( Combo_Sequence ) -> 
-								lists:any( fun(Combo) ->sets:size(Combo) > 4 end, Combo_Sequence) 
-							end, Combos) of
-		true ->			bomb;
-		false ->		color
-	end,
+
+	Type = game_rules:get_next_piece_type( Combos, Game_rules),
+
 	{Color, Type}.
 
 
@@ -516,58 +514,8 @@ get_next_random( X ) ->
 
 
 
-test_random( Number ) ->
-	test_random(1999, 1, Number).
-
-test_random( _ , Current, Max) when Current == Max ->
-	ok;
-test_random(Random_state, Current, Max) ->
-	{ Random_state2, Random}  = get_next_random( Random_state ),
-	lager:debug("~p -> ~p",[Current,Random]),
-	test_random(Random_state2, Current + 1, Max).
-	
 
 
-
-
-
-
-
-
-
-
-%%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-%%
-%%										combos helper functions
-%%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-
-
-
-get_column_height( Column, Board = #board{} ) ->
-	get_column_height( Board, Column, 0 ).
-
-get_column_height( Board = #board{}, _X, Y ) when Y >= Board#board.height ->
-	throw( out_of_bounds );
-
-get_column_height( Board = #board{}, X, Y ) ->
-	case board:get_block( X , Y, Board ) of
-		empty ->		Y;
-		_other ->		get_column_height( Board, X , Y + 1)
-	end.
-
-
-
-
-generate_random_garbage_color() ->
-	case random:uniform( 6 ) of
-		1 ->	purple;
-		2 ->	blue;
-		3 ->	green;
-		4 ->	yellow;
-		5 ->	red;
-		6 ->	white
-	end.
 
 
 
@@ -618,7 +566,45 @@ generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_ga
 
 
 
+generate_random_garbage_color() ->
+	case random:uniform( 6 ) of
+		1 ->	purple;
+		2 ->	blue;
+		3 ->	green;
+		4 ->	yellow;
+		5 ->	red;
+		6 ->	white
+	end.
 
+
+
+
+
+
+
+
+
+
+
+%%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+%%
+%%										combos helper functions
+%%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+
+
+
+get_column_height( Column, Board = #board{} ) ->
+	get_column_height( Board, Column, 0 ).
+
+get_column_height( Board = #board{}, _X, Y ) when Y >= Board#board.height ->
+	throw( out_of_bounds );
+
+get_column_height( Board = #board{}, X, Y ) ->
+	case board:get_block( X , Y, Board ) of
+		empty ->		Y;
+		_other ->		get_column_height( Board, X , Y + 1)
+	end.
 
 
 
@@ -707,23 +693,6 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 					{ Combo, New_visited }
 			end
 	end.
-
-
-
-
-
-
-
-calculate_garbage_from_combo( Combo ) ->
-	case sets:size(Combo) of
-		4 ->		1;
-		5 ->		2;
-		6 ->		3;
-		7 ->		4;
-		8 ->		5;
-		_other ->	5
-	end.
-
 
 
 
@@ -851,6 +820,13 @@ google_docs_test_() ->
 
 		end,
 		lists:foldl( Fun,[], ejson:decode(Binary)).
+
+
+
+
+
+
+
 
 
 
@@ -1310,7 +1286,7 @@ release_garbage_into_full_column_test()->
 														board:set_block( #block{ color = green }, 1 , 0,
 															board:new_empty(5,12))))))))))))),
 
-	?assertThrow(out_of_bounds, release_garbage_list( Board, [1] ) ),
+	?assertThrow(out_of_bounds, release_garbage_list( Board, [{garbage,1}] ) ),
 
 	ok.
 
