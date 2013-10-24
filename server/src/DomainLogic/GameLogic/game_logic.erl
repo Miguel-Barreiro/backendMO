@@ -369,7 +369,12 @@ pop_bomb( X, Y, Board = #board{}) ->
 		pop_block( X - 1, Y ,
 			pop_block( X, Y + 1,
 				pop_block( X, Y -1,
-					board:remove_block( X, Y , Board))))).
+
+					pop_block( X + 1, Y + 1,
+						pop_block( X + 1, Y - 1,
+							pop_block( X - 1, Y + 1,
+								pop_block( X - 1, Y -1,
+									board:remove_block( X, Y , Board))))))))).
 
 
 
