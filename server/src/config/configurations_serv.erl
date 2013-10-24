@@ -119,34 +119,20 @@ get_garbage_combo_generation_rules( Tier ) ->
 		{13, {garbage,5} },
 		{14, {garbage,5} }
 	].
+
+
 	%gen_server:call(whereis(?MODULE), {get_garbage_combo_generation_rules, Tier}).
 
 
--spec get_garbage_chain_generation_rules( Tier :: string() ) -> [ { integer(), {garbage_type(),integer()} } ].
+-spec get_garbage_chain_generation_rules( Tier :: string() ) -> { integer(), [ garbage_type() ]}.
 get_garbage_chain_generation_rules( Tier ) ->
-	[	
-		{2, {garbage_color,1} },
-		{3, {garbage_color,2} },
-		{4, {garbage_color,2} },
-		{5, {garbage_color,3} },
-		{6, {garbage_color,3} },
-		{7, {garbage_color,4} },
-		{8, {garbage_color,4} }
-	].
+	{2, [garbage_color] }.
 	%gen_server:call(whereis(?MODULE), {get_garbage_chain_generation_rules, Tier}).
 
 
--spec get_garbage_simultaneous_combo_generation_rules( Tier :: string() ) -> [ { integer(), {garbage_type(),integer()} } ].
+-spec get_garbage_simultaneous_combo_generation_rules( Tier :: string() ) -> { integer(), [ garbage_type() ]}.
 get_garbage_simultaneous_combo_generation_rules( Tier ) ->
-	[	
-		{2, {garbage_hard,1} },
-		{3, {garbage_hard,2} },
-		{4, {garbage_hard,2} },
-		{5, {garbage_hard,3} },
-		{6, {garbage_hard,3} },
-		{7, {garbage_hard,4} },
-		{8, {garbage_hard,4} }
-	].
+	{2, [garbage_hard] }.
 	%gen_server:call(whereis(?MODULE), {get_garbage_simultaneous_combo_generation_rules, Tier}).
 
 
