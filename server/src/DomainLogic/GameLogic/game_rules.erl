@@ -12,7 +12,7 @@
 get_current_rules( Tier ) ->
 	#game_logic_rules{
 
-		version = configurations_serv:get_current_version(),
+		%version = configurations_serv:get_current_version(),
 
 		abilities_rule = configurations_serv:get_abilities_generation_rules( Tier ),
 		garbage_combo_rule = configurations_serv:get_garbage_combo_generation_rules( Tier ),
@@ -47,11 +47,19 @@ get_garbage_number( Combos, Game_rules = #game_logic_rules{} ) ->
 
 
 
+get_random_garbage_from_types( _, [] ) ->
+	[];
+get_random_garbage_from_types( 0, Types ) ->
+	[];
+get_random_garbage_from_types( Number, Types ) ->
+	Garbage = lists:nth( random:uniform( length(Types) ), Types), 
+	[Garbage | get_random_garbage_from_types( Number - 1, Types )].
+	
 
 
 
 get_garbage_from_single_combo( Combo , Game_rules = #game_logic_rules{} ) ->
-	case proplists:get_value( length(Combo), Game_rules#game_logic_rules.garbage_combo_rule ) of
+	case proplists:get_value( sets:size(Combo), Game_rules#game_logic_rules.garbage_combo_rule ) of
 		undefined ->					{ 0,0,0 };
 		{garbage, Value} ->				{ Value,0,0 };
 		{garbage_color, Value} ->		{ 0,Value,0 };
@@ -74,13 +82,20 @@ get_garbage_from_combo_sequence( Combo_sequence, Game_rules = #game_logic_rules{
 
 	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = lists:foldl( Combo_sum, { 0,0,0 } , Combo_sequence),
 	
-	case proplists:get_value( length(Combo_sequence), Game_rules#game_logic_rules.garbage_simultaneous_combo_rule ) of
+	{ Ratio , Garbage_types } = Game_rules#game_logic_rules.garbage_simultaneous_combo_rule,
 
-		undefined ->					{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number };
-		{garbage, Value} ->				{ Normal_garbage_number + Value, Color_garbage_number, Hard_garbage_number };
-		{garbage_color, Value} ->		{ Normal_garbage_number, Color_garbage_number + Value, Hard_garbage_number };
-		{garbage_hard, Value} ->		{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number + Value }
-	end.
+	Garbage_list = get_random_garbage_from_types( (length(Combo_sequence) - 1) * Ratio, Garbage_types ),
+
+	Fun = 
+	fun( Garbage_type, { Normal_garbage_number_acc, Color_garbage_number_acc, Hard_garbage_number_acc } ) ->
+		case Garbage_type of
+			garbage ->			{ Normal_garbage_number_acc + 1, Color_garbage_number_acc, Hard_garbage_number_acc };
+			garbage_color ->	{ Normal_garbage_number_acc, Color_garbage_number_acc + 1, Hard_garbage_number_acc };
+			garbage_hard ->		{ Normal_garbage_number_acc, Color_garbage_number_acc, Hard_garbage_number_acc + 1 }
+		end
+	end,
+	lists:foldl( Fun, { Normal_garbage_number, Color_garbage_number, Hard_garbage_number }, Garbage_list).
+
 
 
 
@@ -97,14 +112,19 @@ get_garbage_from_combo_chain( Combos, Game_rules = #game_logic_rules{} ) ->
 		end,
 
 	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = lists:foldl( Sum_sequence, { 0,0,0 } , Combos),
-	
-	case proplists:get_value( length(Combos), Game_rules#game_logic_rules.garbage_chain_rule ) of
-		undefined ->					{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number };
-		{garbage, Value} ->				{ Normal_garbage_number + Value, Color_garbage_number, Hard_garbage_number };
-		{garbage_color, Value} ->		{ Normal_garbage_number, Color_garbage_number + Value, Hard_garbage_number };
-		{garbage_hard, Value} ->		{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number + Value }
-	end.
+	{ Ratio , Garbage_types } = Game_rules#game_logic_rules.garbage_chain_rule,
 
+	Garbage_list = get_random_garbage_from_types( (length(Combos) - 1) * Ratio, Garbage_types ),
+
+	Fun = 
+	fun( Garbage_type, { Normal_garbage_number_acc, Color_garbage_number_acc, Hard_garbage_number_acc } ) ->
+		case Garbage_type of
+			garbage ->			{ Normal_garbage_number_acc + 1, Color_garbage_number_acc, Hard_garbage_number_acc };
+			garbage_color ->	{ Normal_garbage_number_acc, Color_garbage_number_acc + 1, Hard_garbage_number_acc };
+			garbage_hard ->		{ Normal_garbage_number_acc, Color_garbage_number_acc, Hard_garbage_number_acc + 1 }
+		end
+	end,
+	lists:foldl( Fun, { Normal_garbage_number, Color_garbage_number, Hard_garbage_number }, Garbage_list).
 
 
 

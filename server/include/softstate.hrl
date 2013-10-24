@@ -27,8 +27,12 @@
 	height :: integer()
 }).
 
--type block_type() :: color | garbage | bomb | chromatic_bomb | garbage_hard | garbage_color.
+-type garbage_type() :: garbage_hard | garbage_color | garbage.
 -type color_type() :: red | yellow | blue | green | purple | white.
+-type power_type() :: generate_bomb.
+
+-type block_type() :: color | bomb | chromatic_bomb | garbage_type().
+
 
 -record( block, {
 	type = color :: block_type(),
@@ -61,13 +65,6 @@
 	random_state = undefined
 }).
 
--record( game, {
-
-	user1_gamestate = #user_gamestate{},
-	user2_gamestate = #user_gamestate{},
-	initial_seed = undefined,
-	difficult_level = 0
-}).
 
 
 -record ( logic_user,{
@@ -76,11 +73,31 @@
 	session_start_time = undefined
 }).
 
--type power_type() :: generate_bomb.
 
 
--record( game_logic_power_rule,{
-	combo_size,
-	color = red :: color_type(),
-	power = generate_bomb :: power_type()
+-record( game_logic_rules,{
+	version :: string(),
+
+	abilities_rule = undefined :: [ { {integer(), color_type() | any}, power_type() } ],
+	
+	garbage_combo_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
+	garbage_chain_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
+	garbage_simultaneous_combo_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
+
+	total_color_number = 6 :: integer(),
+	min_combo_size = 4 :: integer()
 }).
+
+
+-record( game, {
+
+	user1_gamestate = #user_gamestate{},
+	user2_gamestate = #user_gamestate{},
+	initial_seed = undefined,
+	difficult_level = 0,
+
+	game_rules = undefined :: #game_logic_rules{}
+}).
+
+
+
