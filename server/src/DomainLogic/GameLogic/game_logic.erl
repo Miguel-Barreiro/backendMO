@@ -110,7 +110,7 @@ handle_place_piece( User_pid, Opponent_pid,
 												current_piece_angle = down,
 												current_piece_x = ?STARTING_PIECE_X,
 												current_piece_y = Board_after_release_garbage#board.height - 1,
-													piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
+												piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
 
 			New_opponent_garbage_list = lists:append( Opponent_gamestate#user_gamestate.garbage_position_list, Generated_garbage_position_list ),
 			New_opponent_gamestate = Opponent_gamestate#user_gamestate{ garbage_position_list = New_opponent_garbage_list },
@@ -210,6 +210,7 @@ place_piece( Piece = #piece{}, X, Y, up, Board = #board{} ) ->
 			throw( invalid_move )
 	end;
 
+
 place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
 	case Y == Real_y of
@@ -221,6 +222,7 @@ place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
+
 
 place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
@@ -277,17 +279,6 @@ remove_all_same_color( Color, Board = #board{} ) ->
 
 
 
-change_block_color( X, Y, New_color, Board = #board{} ) ->
-	case board:get_block( X, Y , Board) of
-		empty ->
-			Board;
-		Block ->
-			board:set_block( Block#block{ color = New_color }, X, Y, board:remove_block( X, Y, Board))
-	end.
-
-
-
-
 
 
 
@@ -323,7 +314,8 @@ pop_combos( Board = #board{}, Combo_list ) ->
 	Fun = fun( Combo, New_board )->
 		pop_combo( New_board, Combo )
 	end,
-	lists:foldl( Fun, Board, Combo_list ).
+	Final_board = lists:foldl( Fun, Board, Combo_list ),
+	Final_board#board{ painted = [] }.
 
 
 pop_combo( Board = #board{}, Combo ) ->
@@ -376,11 +368,14 @@ pop_block(  X, Y, Board = #board{} ) ->
 		empty ->
 			Board;
 
+		Paint_block when Paint_block#block.type == paint ->
+			pop_paint( X, Y, Board );
+
 		Tornado_block when Tornado_block#block.type == tornado ->
-			pop_tornado( X, Y, Board);
+			pop_tornado( X, Y, Board );
 
 		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness == 1 ->
-			board:remove_block( X, Y , Board);			
+			board:remove_block( X, Y, Board );
 
 		Garbage_block when Garbage_block#block.type == garbage_hard ->
 			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y,
@@ -405,10 +400,26 @@ pop_block(  X, Y, Board = #board{} ) ->
 
 
 pop_tornado( X, Y, Board = #board{}) ->
-	io:format("poping tornado in ~p,~p \n",[X, Y]).
+	io:format("poping tornado in ~p,~p \n",[X, Y]),
+	Board.
 
 
 
+
+
+change_block_color( X, Y, New_color, Board = #board{} ) ->
+	case board:get_block( X, Y , Board) of
+		empty ->
+			Board;
+		Block ->
+			case proplists:get_value( {X,Y}, Board#board.painted ) of
+				undefined ->
+					New_board = board:set_block( Block#block{ color = New_color }, X, Y, board:remove_block( X, Y, Board)),
+					New_board#board{ painted = [ {{X,Y}, New_color} | New_board#board.painted ] };
+				_color ->
+					board:set_block( Block#block{ type = shapeshifter }, X, Y, board:remove_block( X, Y, Board))
+			end
+	end.
 
 pop_paint( X, Y, Board = #board{}) ->
 	io:format("poping paint in ~p,~p \n",[X, Y]),
@@ -974,7 +985,6 @@ test_multiple_bombs(Game_rules) ->
 							board:set_block( #block{ color = white }, 4 , 5,
 
 								board:new_empty(5,12))))))))))))))))))))))))))),
-
 
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 

@@ -24,7 +24,9 @@
 -record( board, {
 	blocks = gb_trees:empty() :: gb_tree(),
 	width :: integer(),
-	height :: integer()
+	height :: integer(),
+
+	painted = []
 }).
 
 -type garbage_type() :: garbage_hard | garbage_color | garbage.
