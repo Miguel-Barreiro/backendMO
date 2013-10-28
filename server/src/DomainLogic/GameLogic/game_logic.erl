@@ -814,12 +814,12 @@ create_board( Block_list, X_offset ) ->
 			<<"Py">> -> {paint,yellow};
 			<<"Pb">> -> {paint,blue};
 
-			<<"W">> -> {bomb,white};
-			<<"P">> -> {bomb,purple};
-			<<"B">> -> {bomb,blue};
-			<<"G">> -> {bomb,green};
-			<<"R">> -> {bomb,red};
-			<<"Y">> -> {bomb,yellow}
+			<<"Bw">> -> {bomb,white};
+			<<"Bp">> -> {bomb,purple};
+			<<"Bb">> -> {bomb,blue};
+			<<"Bg">> -> {bomb,green};
+			<<"Br">> -> {bomb,red};
+			<<"By">> -> {bomb,yellow}
 
 		end,
 
