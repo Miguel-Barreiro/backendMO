@@ -127,6 +127,9 @@ get_board_position( Board = #board{}, X, Y ) ->
 		#block{ type = chromatic_bomb, color = green } ->		"g";
 
 		#block{ type = bomb } ->								"@";
+		#block{ type = shapeshifter } ->						"?";
+		#block{ type = paint } ->								"\~";
+		#block{ type = tornado } ->								"&";
 		
 		#block{ type = garbage } ->								"+";
 		#block{ type = garbage_hard } ->						"#";

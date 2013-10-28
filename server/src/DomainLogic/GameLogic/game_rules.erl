@@ -5,10 +5,30 @@
 -export([ get_current_rules/1, get_next_piece_type/2, get_garbage_number/2 ]).
 
 
+-export([ get_offline_current_rules/1]).
+
+
+-spec get_offline_current_rules( Tier::binary() ) -> #game_logic_rules{}.
+get_offline_current_rules( Tier ) ->
+
+	{ _Values , _Products, Ability_rules, 
+		Garbage_combo_rule, Garbage_chain_rule, Garbage_simultaneous_combo_rule, 
+			Total_color_number, Min_combo_size } = configurations_serv:get_offline_configuration(Tier),
+
+	#game_logic_rules{
+
+		abilities_rule = Ability_rules,
+		garbage_combo_rule = Garbage_combo_rule,
+		garbage_chain_rule = Garbage_chain_rule,
+		garbage_simultaneous_combo_rule = Garbage_simultaneous_combo_rule,
+
+		total_color_number = Total_color_number,
+		min_combo_size = Min_combo_size
+	}.
 
 
 
--spec get_current_rules( Tier::string()) -> #game_logic_rules{}.
+-spec get_current_rules( Tier::binary() ) -> #game_logic_rules{}.
 get_current_rules( Tier ) ->
 	#game_logic_rules{
 

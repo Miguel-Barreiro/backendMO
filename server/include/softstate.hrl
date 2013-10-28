@@ -28,10 +28,13 @@
 }).
 
 -type garbage_type() :: garbage_hard | garbage_color | garbage.
+-type ability_type() :: bomb | chromatic_bomb | paint | shapeshifter | tornado.
+-type block_type() :: color | ability_type() | garbage_type().
+
 -type color_type() :: red | yellow | blue | green | purple | white.
+
 -type power_type() :: generate_bomb.
 
--type block_type() :: color | bomb | chromatic_bomb | garbage_type().
 
 
 -record( block, {
@@ -89,6 +92,8 @@
 }).
 
 
+
+
 -record( game, {
 
 	user1_gamestate = #user_gamestate{},
@@ -100,4 +105,18 @@
 }).
 
 
+
+
+%% CONFIGURATION MODULE
+
+-record( configuration_tier,{
+	board_width,
+	board_height,
+
+	abilities_generation_rules :: [ { {integer(), color_type() | any}, power_type() } ] ,
+
+	garbage_combo_rules :: [ { integer(), {garbage_type(),integer()}  } ],
+	garbage_chain_rules :: { integer(), [ garbage_type() ]},
+	garbage_simultaneous_rules :: { integer(), [ garbage_type() ]}
+}).
 

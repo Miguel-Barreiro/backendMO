@@ -26,7 +26,7 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 											current_piece = Piece,
 												random_state = New_random_state },
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 
 	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed, game_rules = Game_rules }.
 
@@ -260,6 +260,37 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 
 
 
+
+remove_all_same_color( Color, Board = #board{} ) ->	
+	Fun = fun( Block = #block{}, New_board = #board{} )->
+		case Block#block.type of
+			color when Block#block.color == Color ->
+				io:format("\nremoving same color ~p block in ~p,~p",[Color,Block#block.x, Block#block.y]),
+				board:remove_block( Block#block.x, Block#block.y , New_board);
+			_other ->
+				New_board
+		end
+	end,
+	lists:foldl( Fun, Board, board:get_all_blocks(Board)).
+
+
+
+
+
+change_block_color( X, Y, New_color, Board = #board{} ) ->
+	case board:get_block( X, Y , Board) of
+		empty ->
+			Board;
+		Block ->
+			board:set_block( Block#block{ color = New_color }, X, Y, board:remove_block( X, Y, Board))
+	end.
+
+
+
+
+
+
+
 calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 	Blocks = board:get_all_blocks(Board),
 
@@ -345,6 +376,9 @@ pop_block(  X, Y, Board = #board{} ) ->
 		empty ->
 			Board;
 
+		Tornado_block when Tornado_block#block.type == tornado ->
+			pop_tornado( X, Y, Board);
+
 		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness == 1 ->
 			board:remove_block( X, Y , Board);			
 
@@ -370,6 +404,31 @@ pop_block(  X, Y, Board = #board{} ) ->
 
 
 
+pop_tornado( X, Y, Board = #board{}) ->
+	io:format("poping tornado in ~p,~p \n",[X, Y]).
+
+
+
+
+pop_paint( X, Y, Board = #board{}) ->
+	io:format("poping paint in ~p,~p \n",[X, Y]),
+	
+	Block = board:get_block( X, Y , Board),
+	New_color = Block#block.color,
+	Board_without_paint = board:remove_block( X, Y , Board),
+
+	change_block_color( X + 1, Y, New_color, 
+		change_block_color( X, Y + 1, New_color, 
+			change_block_color( X - 1, Y, New_color, 
+				change_block_color( X, Y -1, New_color, 
+					change_block_color( X + 1, Y + 1, New_color, 
+						change_block_color( X - 1, Y + 1, New_color,
+							change_block_color( X + 1, Y - 1, New_color,
+								change_block_color( X - 1, Y - 1, New_color, Board_without_paint)))))))).
+
+
+
+
 
 pop_bomb( X, Y, Board = #board{}) ->
 	io:format("poping bomb in ~p,~p \n",[X, Y]),
@@ -384,27 +443,16 @@ pop_bomb( X, Y, Board = #board{}) ->
 									board:remove_block( X, Y , Board))))))))).
 
 
-
-
-remove_all_same_color( Color, Board = #board{} ) ->	
-	Fun = fun( Block = #block{}, New_board = #board{} )->
-		case Block#block.type of
-			color when Block#block.color == Color ->
-				io:format("\nremoving same color ~p block in ~p,~p",[Color,Block#block.x, Block#block.y]),
-				board:remove_block( Block#block.x, Block#block.y , New_board);
-			_other ->
-				New_board
-		end
-	end,
-	lists:foldl( Fun, Board, board:get_all_blocks(Board)).
-
-
 pop_chromatic_bomb( X, Y, Color, Board = #board{}) ->
 	io:format("poping ~p chromatic in ~p,~p \n",[Color,X,Y]),
 	New_board = remove_all_same_color( Color, Board),
 	board:remove_block( X, Y, New_board).
 
 
+
+
+
+	
 
 
 
@@ -682,9 +730,11 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 				empty ->
 					{ Combo, New_visited };
 
-				Current_block when Current_block#block.type =/= garbage,
-										Current_block#block.type =/= garbage_hard,
-											Current_block#block.type =/= garbage_color, Current_block#block.color == Block#block.color ->
+				Current_block when (Current_block#block.type =/= garbage andalso
+										Current_block#block.type =/= garbage_hard andalso
+											Current_block#block.type =/= garbage_color andalso
+												Current_block#block.color == Block#block.color) orelse
+													Current_block#block.type == shapeshifter ->
 
 					New_combo = sets:add_element( Current_block, Combo ),
 
@@ -748,88 +798,125 @@ create_board( Block_list, X_offset ) ->
 			<<"#g">> -> {garbage_color,green};
 			<<"#y">> -> {garbage_color,yellow};
 			
+			<<"?">> -> {shapeshifter,undefined};
+
+			<<"Tw">> -> {tornado,white};
+			<<"Tp">> -> {tornado,purple};
+			<<"Tg">> -> {tornado,green};
+			<<"Tr">> -> {tornado,red};
+			<<"Ty">> -> {tornado,yellow};
+			<<"Tb">> -> {tornado,blue};
+
+			<<"Pw">> -> {paint,white};
+			<<"Pp">> -> {paint,purple};
+			<<"Pg">> -> {paint,green};
+			<<"Pr">> -> {paint,red};
+			<<"Py">> -> {paint,yellow};
+			<<"Pb">> -> {paint,blue};
+
 			<<"W">> -> {bomb,white};
 			<<"P">> -> {bomb,purple};
 			<<"B">> -> {bomb,blue};
 			<<"G">> -> {bomb,green};
 			<<"R">> -> {bomb,red};
 			<<"Y">> -> {bomb,yellow}
+
 		end,
 
 		board:set_block( #block{ type = Real_block_type, color = Color}, X, Y, Result)
 	end,
 
+
+
+
 	lists:foldl( Fun , board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT), Block_list ).
 
 
 
-google_docs_test_() ->
-
-		{ok, Dir} = file:get_cwd(),
-		io:format("filename is ~p",[Dir ++ "/../scripts/RESULT.json"]),
-		{ok, Binary} = file:read_file(Dir ++ "/../scripts/RESULT.json"),
-		
-		Fun = fun( {Test_data}, Result) ->
-
-			Final = proplists:get_value(<<"final">>,Test_data),
-			Start = proplists:get_value(<<"origin">>,Test_data),
-			Test_name = proplists:get_value(<<"name">>,Test_data),
-			{Generated_garbage} = proplists:get_value(<<"garbage">>,Test_data),
-
-			Color_garbage = proplists:get_value(<<"colorGarbage">>,Generated_garbage),
-			Hard_garbage = proplists:get_value(<<"hardGarbage">>,Generated_garbage),
-			Normal_garbage = proplists:get_value(<<"normalGarbage">>,Generated_garbage),
-			%Spawns_bomb = proplists:get_value(<<"spawnsBomb">>,Generated_garbage),
-
-			Start_board = create_board( Start, 0 ),
-			Final_board = create_board( Final, 9 ),
-
-		%	io:format("----------\n ~p  \n-----",[Start]),
+setup_tests() ->
+	application:start(inets),
+	application:start(httpc),
+	ok.
 
 
-			Game_rules = game_rules:get_current_rules("easy"),
-
-			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),
-			Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
-
-		%	io:format("\nanswer is ~p\n",[Result_loop_board]),
-		%	io:format("final is ~p",[Final_board]),
-		%	io:format("\ncomparison is ~p\n",[board:are_boards_equal(Result_loop_board,Final_board)])
-		%io:format("garbage list is ~p",[Garbage_position_list]),
-
-			[ {binary_to_list(Test_name),
-				fun () ->  			
-					?assertMatch( true , board:are_boards_equal(Result_loop_board,Final_board) ),
-
-					Calculated_number_color_garbages = length( lists:filter( fun( {Garbage,_} )-> 
-																	case Garbage of 
-																		{garbage_color, _color} -> 	true;
-																		_other ->					false 
-																	end
-																end, Garbage_position_list)),
-
-					Calculated_number_hard_garbages = length( lists:filter( fun( {Garbage,_} )-> 
-																				Garbage == garbage_hard 
-																			end, Garbage_position_list)),
-
-					Calculated_number_normal_garbages = length( lists:filter( fun( {Garbage,_} )-> 
-																				Garbage == garbage 
-																			end, Garbage_position_list)),
-					io:format("garbage ~p , garbage_hard ~p,  garbage_color ~p",[Calculated_number_normal_garbages,
-																					Calculated_number_hard_garbages,	
-										 												Calculated_number_color_garbages ] ),
-
-					?assertMatch( Normal_garbage, Calculated_number_normal_garbages ),
-					?assertMatch( Hard_garbage, Calculated_number_hard_garbages ),
-					?assertMatch( Color_garbage, Calculated_number_color_garbages ),
-					?assert( test_garbage_position( Garbage_position_list, Final_board ))
-				end } | Result]
-
-		end,
-		lists:foldl( Fun,[], ejson:decode(Binary)).
+tear_down_tests( _ ) ->
+	ok.
 
 
+get_google_docs_tests() ->
 
+	{ok, Dir} = file:get_cwd(),
+	{ok, Binary} = file:read_file(Dir ++ "/../scripts/RESULT.json"),
+	
+	Fun = fun( {Test_data}, Result) ->
+
+		Test_name = proplists:get_value(<<"name">>,Test_data),
+
+		[ {binary_to_list(Test_name),
+			fun () ->
+
+				Final = proplists:get_value(<<"final">>,Test_data),
+				Start = proplists:get_value(<<"origin">>,Test_data),
+				
+				{Generated_garbage} = proplists:get_value(<<"garbage">>,Test_data),
+
+				Color_garbage = proplists:get_value(<<"colorGarbage">>,Generated_garbage),
+				Hard_garbage = proplists:get_value(<<"hardGarbage">>,Generated_garbage),
+				Normal_garbage = proplists:get_value(<<"normalGarbage">>,Generated_garbage),
+				%Spawns_bomb = proplists:get_value(<<"spawnsBomb">>,Generated_garbage),
+
+				Start_board = create_board( Start, 0 ),
+				Final_board = create_board( Final, 9 ),
+
+
+				Game_rules = game_rules:get_offline_current_rules(<<"Easy">>),
+
+				{ Combos , Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),
+				Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
+
+
+				?assertMatch( true , board:are_boards_equal(Result_loop_board,Final_board) ),
+
+				Calculated_number_color_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+																case Garbage of 
+																	{garbage_color, _color} -> 	true;
+																	_other ->					false 
+																end
+															end, Garbage_position_list)),
+
+				Calculated_number_hard_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+																			Garbage == garbage_hard 
+																		end, Garbage_position_list)),
+
+				Calculated_number_normal_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+																			Garbage == garbage 
+																		end, Garbage_position_list)),
+
+				io:format("calculated garbage ~p , garbage_hard ~p,  garbage_color ~p",[Calculated_number_normal_garbages,
+																						Calculated_number_hard_garbages,	
+									 													Calculated_number_color_garbages ] ),
+
+				?assertMatch( Calculated_number_normal_garbages, Normal_garbage ),
+				?assertMatch( Calculated_number_hard_garbages, Hard_garbage ),
+				?assertMatch( Calculated_number_color_garbages, Color_garbage ),
+				?assert( test_garbage_position( Garbage_position_list, Final_board ) )
+			end } | Result]
+
+	end,
+	lists:foldl( Fun,[], ejson:decode(Binary)).
+
+
+full_game_logic_test_() ->
+
+		Google_test_list = get_google_docs_tests(),
+
+		{spawn,
+			{setup,	
+				fun setup_tests/0,
+				fun tear_down_tests/1,
+      			Google_test_list
+			}
+		}.
 
 
 
@@ -840,7 +927,7 @@ google_docs_test_() ->
 %% --------------------         POWERS             ------------------------------------------
 
 
-multiple_bombs_test() ->
+test_multiple_bombs(Game_rules) ->
 
 	BoardT = board:new_empty(5,12),
 	board:print_board( BoardT),
@@ -926,7 +1013,7 @@ multiple_bombs_test() ->
 
 
 
-simple_chromatic_bomb_test() ->
+test_simple_chromatic_bomb() ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -944,7 +1031,7 @@ simple_chromatic_bomb_test() ->
 														board:set_block( #block{ color = red }, 3 , 0,
 															board:new_empty(5,12))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
@@ -969,7 +1056,7 @@ simple_chromatic_bomb_test() ->
 	ok.
 
 
-simple2_chromatic_bomb_test() ->
+test_simple2_chromatic_bomb() ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 			board:set_block( #block{ color = red }, 0 , 1, 
 			board:set_block( #block{ color = red }, 0 , 2, 
@@ -1000,7 +1087,7 @@ simple2_chromatic_bomb_test() ->
 								board:new_empty(5,12)))))))))))))))))))))))),
 
 	
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Board),
@@ -1039,7 +1126,7 @@ simple2_chromatic_bomb_test() ->
 	ok.
 
 
-simple_bomb_test() ->
+test_simple_bomb() ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -1057,7 +1144,7 @@ simple_bomb_test() ->
 														board:set_block( #block{ color = green }, 3 , 0,
 															board:new_empty(5,12))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1081,7 +1168,7 @@ simple_bomb_test() ->
 	ok.
 
 
-simple_double_bomb_chain_test() ->
+test_simple_double_bomb_chain() ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -1101,7 +1188,7 @@ simple_double_bomb_chain_test() ->
 																board:set_block( #block{ color = green }, 3 , 2,
 																	board:new_empty(5,12))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1127,7 +1214,7 @@ simple_double_bomb_chain_test() ->
 	ok.
 
 
-simple_double_bomb_chain2_test() ->
+test_simple_double_bomb_chain2() ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -1149,7 +1236,7 @@ simple_double_bomb_chain2_test() ->
 																		board:set_block( #block{ color = red }, 3 , 3,
 																			board:new_empty(5,12))))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1178,7 +1265,7 @@ simple_double_bomb_chain2_test() ->
 
 
 
-simple_bomb_chain_chromatic_bom_test() ->
+test_simple_bomb_chain_chromatic_bom() ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -1200,7 +1287,7 @@ simple_bomb_chain_chromatic_bom_test() ->
 																		board:set_block( #block{ color = red }, 3 , 3,
 																			board:new_empty(5,12))))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1286,7 +1373,7 @@ test_garbage_position( Garbage_position_list, Board = #board{} ) ->
 
 
 
-release_garbage_into_full_column_test()->
+test_release_garbage_into_full_column()->
 	
 	Board = board:set_block( #block{ color = red }, 1 , 11, 
 				board:set_block( #block{ color = yellow }, 1 , 10, 
@@ -1308,10 +1395,10 @@ release_garbage_into_full_column_test()->
 
 
 
-no_combo_garbage_test() ->
+test_no_combo_garbage() ->
 	Board = board:new_empty(6,12),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Garbage_position_list = calculate_garbage_from_combos( [], Board, Game_rules ),
 
 	?assertMatch( 0, length( Garbage_position_list ) ),
@@ -1320,14 +1407,14 @@ no_combo_garbage_test() ->
 	ok.
 
 
-five_combo_garbage_test() ->
+test_five_combo_garbage() ->
 	Board = board:new_empty(6,12),
 	Combo = sets:add_element( #block{ color = red, x = 3, y = 0 } ,
 				sets:add_element( #block{ color = red, x = 3, y = 1 },
 					sets:add_element( #block{ color = red, x = 3, y = 2 },
 						sets:add_element( #block{ color = red, x = 3, y = 3 }, sets:new())))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Garbage_position_list = calculate_garbage_from_combos( [[Combo, Combo, Combo, Combo, Combo]], Board, Game_rules ),
 
 	io:format("garbage list is ~p",[Garbage_position_list]),
@@ -1342,14 +1429,14 @@ five_combo_garbage_test() ->
 	ok.
 
 
-single_combo_garbage_test() ->
+test_single_combo_garbage() ->
 	Board = board:new_empty(6,12),
 	Combo = sets:add_element( #block{ color = red, x = 3, y = 0 } ,
 				sets:add_element( #block{ color = red, x = 3, y = 1 },
 					sets:add_element( #block{ color = red, x = 3, y = 2 },
 						sets:add_element( #block{ color = red, x = 3, y = 3 }, sets:new())))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Garbage_position_list = calculate_garbage_from_combos( [[Combo]], Board, Game_rules ),
 
 	?assertMatch( 1, length( Garbage_position_list ) ),
@@ -1361,7 +1448,7 @@ single_combo_garbage_test() ->
 	ok.
 
 
-double_combo_garbage_test() ->
+test_double_combo_garbage() ->
 
 	Board = board:new_empty(6,12),
 
@@ -1377,7 +1464,7 @@ double_combo_garbage_test() ->
 							sets:add_element( #block{ color = blue, x = 4, y = 0 }, 
 								sets:add_element( #block{ color = blue, x = 5, y = 0 }, sets:new())))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Garbage_position_list = calculate_garbage_from_combos( [[Combo,Combo1]] , Board, Game_rules ),
 
 	?assertMatch( 6, length( Garbage_position_list ) ),
@@ -1392,7 +1479,7 @@ double_combo_garbage_test() ->
 %% --------------------         GAMEPLAY LOOP              ------------------------------------------
 
 
-simple_gameplay_loop_test() ->
+test_simple_gameplay_loop() ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 			board:set_block( #block{ color = red }, 0 , 1, 
 			board:set_block( #block{ color = red }, 0 , 2, 
@@ -1416,7 +1503,7 @@ simple_gameplay_loop_test() ->
 										
 								board:new_empty(5,12))))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1446,7 +1533,7 @@ simple_gameplay_loop_test() ->
 
 
 
-simple2_gameplay_loop_test() ->
+test_simple2_gameplay_loop() ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 			board:set_block( #block{ color = red }, 0 , 1, 
 			board:set_block( #block{ color = red }, 0 , 2, 
@@ -1470,7 +1557,7 @@ simple2_gameplay_loop_test() ->
 										
 								board:new_empty(5,12))))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1503,7 +1590,7 @@ simple2_gameplay_loop_test() ->
 %% --------------------         GRAVITY              ------------------------------------------
 
 
-simple2_gravity_test() ->
+test_simple2_gravity() ->
 
 	Board = board:set_block( #block{ color = green }, 5 , 5,
 				board:set_block( #block{ color = red }, 5 , 0,
@@ -1528,7 +1615,7 @@ simple2_gravity_test() ->
 
 
 
-simple_gravity_test() ->
+test_simple_gravity() ->
 	
 	Board = board:set_block( #block{ color = green }, 1 , 1,
 				board:set_block( #block{ color = blue }, 2 , 0,
@@ -1549,7 +1636,7 @@ simple_gravity_test() ->
 
 %% --------------------         COBMOS              ------------------------------------------
 
-simple_combo_test() ->
+test_simple_combo() ->
 
 	Board = board:set_block( #block{ color = yellow }, 3 , 2,
 				board:set_block( #block{ color = green }, 2 , 2,
@@ -1561,7 +1648,7 @@ simple_combo_test() ->
 										board:set_block( #block{ color = red }, 3 , 0,
 											board:new_empty(5,12))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assertMatch( 1, length( Combos ) ),
@@ -1580,7 +1667,7 @@ simple_combo_test() ->
 
 
 
-simple_combo_with_chromatic_test() ->
+test_simple_combo_with_chromatic() ->
 
 	Board = board:set_block( #block{ color = yellow }, 1 , 2,
 			board:set_block( #block{ color = green }, 2 , 2,
@@ -1596,7 +1683,7 @@ simple_combo_with_chromatic_test() ->
 											board:new_empty(5,12)))))))))),
 
 				
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assertMatch( 1, length( Combos ) ),
@@ -1613,7 +1700,7 @@ simple_combo_with_chromatic_test() ->
 	ok.
 
 
-double_combo_test() ->
+test_double_combo() ->
 
 	Board = board:set_block( #block{ color = yellow }, 1 , 2,
 				board:set_block( #block{ color = red }, 5 , 1,
@@ -1632,7 +1719,7 @@ double_combo_test() ->
 															board:set_block( #block{ color = blue }, 1 , 0,
 																board:new_empty(5,12)))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Combos = calculate_combos( Board, Game_rules ),
 
 %	Lists = lists:map( fun( Set ) ->  sets:to_list(Set) end, Combos),
@@ -1675,7 +1762,7 @@ double_combo_test() ->
 	ok.
 
 
-no_combos_test() ->
+test_no_combos() ->
 	
 	Board = board:set_block( #block{ color = yellow }, 1 , 2,
 				board:set_block( #block{ color = blue }, 1 , 1,
@@ -1685,7 +1772,7 @@ no_combos_test() ->
 								board:set_block( #block{ color = red }, 1 , 0,
 									board:new_empty(5,12))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assert( length( Combos ) == 0),
@@ -1693,7 +1780,7 @@ no_combos_test() ->
 
 
 
-simple_garbage_poping_combos_test() ->
+test_simple_garbage_poping_combos() ->
 	Board = board:set_block( #block{ color = yellow }, 3 , 2,
 				board:set_block( #block{ color = green }, 2 , 2,
 					board:set_block( #block{ color = yellow }, 2 , 0,
@@ -1708,7 +1795,7 @@ simple_garbage_poping_combos_test() ->
 												board:set_block( #block{ type = garbage }, 2 , 1,
 													board:new_empty(5,12))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assertMatch( 1, length( Combos ) ),
@@ -1743,7 +1830,7 @@ simple_garbage_poping_combos_test() ->
 
 
 
-simple_poping_combos_test() ->
+test_simple_poping_combos() ->
 	Board = board:set_block( #block{ color = yellow }, 3 , 2,
 				board:set_block( #block{ color = green }, 2 , 2,
 					board:set_block( #block{ color = yellow }, 2 , 0,
@@ -1754,7 +1841,7 @@ simple_poping_combos_test() ->
 										board:set_block( #block{ color = red }, 3 , 0,
 											board:new_empty(5,12))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Easy">>),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assertMatch( 1, length( Combos ) ),
@@ -1789,7 +1876,7 @@ simple_poping_combos_test() ->
 %% --------------------         PLACE PIECE              ------------------------------------------
 
 
-simple_up_place_piece_test() ->
+test_simple_up_place_piece() ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
@@ -1802,7 +1889,7 @@ simple_up_place_piece_test() ->
 
 	ok.
 
-simple_down_place_piece_test() ->
+test_simple_down_place_piece() ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
@@ -1816,7 +1903,7 @@ simple_down_place_piece_test() ->
 	ok.
 
 
-simple_right_piece_test() ->
+test_simple_right_piece() ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
@@ -1830,7 +1917,7 @@ simple_right_piece_test() ->
 	ok.
 
 
-simple_left_place_piece_test() ->
+test_simple_left_place_piece() ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
@@ -1845,7 +1932,7 @@ simple_left_place_piece_test() ->
 
 
 
-simple_invalid_place_piece_test() ->
+test_simple_invalid_place_piece() ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 
