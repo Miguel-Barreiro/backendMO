@@ -84,13 +84,13 @@ get_value( Name ) ->
 %% GAMEPLAY VALUES BY TIER
 
 -spec get_total_color_number( Tier :: string()) -> integer().
-get_total_color_number( Tier ) ->
+get_total_color_number( _Tier ) ->
 	6.
 	%gen_server:call(whereis(?MODULE), {get_total_color_number, Tier}).
 
 
 -spec get_min_combo_size( Tier :: string()) -> integer().
-get_min_combo_size( Tier ) ->
+get_min_combo_size( _Tier ) ->
 	4.
 	%gen_server:call(whereis(?MODULE), {get_min_combo_size, Tier}).
 

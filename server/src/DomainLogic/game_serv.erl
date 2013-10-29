@@ -426,7 +426,7 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, user1 =
 %%
 %	called when the any user process stops
 %%
-handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{ user1 = User1 , user2 = User2 }) ->
+handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #game_state{ user1 = User1 , user2 = User2 }) ->
 
 	Won_msg = message_processor:create_won_message(disconect),
 
