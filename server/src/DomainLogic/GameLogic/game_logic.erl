@@ -412,10 +412,13 @@ get_activated_by_block_abilities( Block = #block{}, Board = #board{} ) ->
 									add_block_to_list( X - 1, Y, Board,
 										add_block_to_list( X - 1, Y - 1, Board, [] ))))))));
 		chromatic_bomb ->
-			get_all_same_color( Block#block.color, Board = #board{} );
+			get_all_same_color( Block#block.color, Board );
 
 		tornado ->
-			get_tornado_activated_blocks( X, Y, Board )
+			get_tornado_activated_blocks( X, Y, Board );
+
+		_other ->
+			[]
 	end.
 
 
@@ -445,7 +448,7 @@ pop_block(  X, Y, Board = #board{} ) ->
 			board:set_block( #block{ type = color , color = Garbage_block#block.color }, X, Y, board:remove_block( X, Y , Board) );
 
 		_all_other ->
-			board:remove_block( X, Y , Board)
+			board:remove_block( X, Y, Board)
 	end.
 
 
@@ -530,7 +533,7 @@ get_all_same_color( Color, Board = #board{} ) ->
 			color when Block#block.color == Color ->
 				[ Block | Result_list];
 			_other ->
-				Board
+				Result_list
 		end
 	end,
 	lists:foldl( Fun, [], board:get_all_blocks(Board)).
