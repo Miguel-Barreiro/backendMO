@@ -87,7 +87,7 @@ get_tier_from_json( Tier_properties ) ->
 
 	Garbage_chain_rules = proplists:get_value( <<"garbagePerChain">>, Garbage_rules),
 	Garbage_combo_rules = proplists:get_value( <<"garbagePerCombo">>, Garbage_rules),
-	Garbage_simultaneous_rules = proplists:get_value( <<"garbagePerSimultaneos">>, Garbage_rules),
+	Garbage_simultaneous_rules = proplists:get_value( <<"garbagePerSimultaneous">>, Garbage_rules),
 
 	Abilities_generation_rules = proplists:get_value( <<"powersGeneration">>, Tier_properties),
 

@@ -262,26 +262,6 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 
 
 
-
-remove_all_same_color( Color, Board = #board{} ) ->	
-	Fun = fun( Block = #block{}, New_board = #board{} )->
-		case Block#block.type of
-			color when Block#block.color == Color ->
-				io:format("\nremoving same color ~p block in ~p,~p",[Color,Block#block.x, Block#block.y]),
-				board:remove_block( Block#block.x, Block#block.y , New_board);
-			_other ->
-				New_board
-		end
-	end,
-	lists:foldl( Fun, Board, board:get_all_blocks(Board)).
-
-
-
-
-
-
-
-
 calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 	Blocks = board:get_all_blocks(Board),
 
@@ -310,54 +290,141 @@ calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 
 
 
+% pop_combos( Board = #board{}, Combo_list ) ->
+% 	Fun = fun( Combo, New_board )->
+% 		pop_combo( New_board, Combo )
+% 	end,
+% 	Final_board = lists:foldl( Fun, Board, Combo_list ),
+% 	Final_board#board{ painted = [] }.
+
+
+
+% pop_combo( Board = #board{}, Combo ) ->
+% 	Fun = fun( Block = #block{}, New_board )->
+% 		pop_combo_block(  Block#block.x, Block#block.y, New_board )
+% 	end,
+% 	lists:foldl( Fun, Board, sets:to_list(Combo)).
+
+
+
+% pop_combo_block( X, Y, Board = #board{} ) ->
+% 	New_board_witout_block = pop_block(  X, Y, Board ),
+% 	pop_garbages_around( New_board_witout_block, X, Y ).
+
+
+
 pop_combos( Board = #board{}, Combo_list ) ->
-	Fun = fun( Combo, New_board )->
-		pop_combo( New_board, Combo )
+	Fun = fun( Combo, { List , All_combo_blocks} )->
+		{ lists:append( List, get_afected_by_combo_proximity(Combo , Board)),
+			lists:append( All_combo_blocks, sets:to_list(Combo) ) }
 	end,
-	Final_board = lists:foldl( Fun, Board, Combo_list ),
-	Final_board#board{ painted = [] }.
+	{ Blocks_by_proximity, All_blocks_in_combos } = lists:foldl( Fun, {[],[]} , Combo_list),
+	Board_after_remove_combos_proximity = activate_blocks( Blocks_by_proximity, Board),
+	activate_blocks( All_blocks_in_combos, Board_after_remove_combos_proximity).
 
 
-pop_combo( Board = #board{}, Combo ) ->
-	Fun = fun( Block = #block{}, New_board )->
-		pop_combo_block(  Block#block.x, Block#block.y, New_board )
+
+
+
+
+
+
+
+
+get_afected_by_combo_proximity( Combo , Board = #board{} ) ->
+	Fun = fun ( Block, Set) ->
+		add_garbages_around_to_set( Block#block.x, Block#block.y, Board, Set)
 	end,
-	lists:foldl( Fun, Board, sets:to_list(Combo)).
+	sets:to_list( lists:foldl(Fun , sets:new(), sets:to_list(Combo) ) ).
 
+add_garbages_around_to_set( X, Y, Board = #board{}, Set) ->
+	add_garbage_to_set( X + 1, Y, Board,
+		add_garbage_to_set( X, Y + 1, Board,
+			add_garbage_to_set( X - 1, Y, Board,
+				add_garbage_to_set( X, Y - 1, Board, Set )))).
 
-
-pop_combo_block(  X, Y, Board = #board{} ) ->
-	New_board_witout_block = pop_block(  X, Y, Board ),
-	pop_garbages_around( New_board_witout_block, X, Y ).
-
-
-
-
-
-pop_garbages_around( Board = #board{}, X, Y) ->
-	pop_garbage_in( X + 1, Y, pop_garbage_in( X - 1, Y, pop_garbage_in( X, Y + 1, pop_garbage_in( X, Y - 1, Board)))).
-
-pop_garbage_in( X, Y, Board = #board{}) ->
-	case board:get_block( X, Y , Board) of
-		
-		empty ->
-			Board;
-
-		Garbage_block when Garbage_block#block.type == garbage ->
-			board:remove_block( X, Y, Board);
-
-		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness == 1 ->
-			board:remove_block( X, Y, Board);
-
-		Garbage_block when Garbage_block#block.type == garbage_hard ->
-			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y,board:remove_block( X, Y, Board));
-
-		Garbage_block when Garbage_block#block.type == garbage_color ->
-			board:set_block( #block{ type = color , color = Garbage_block#block.color }, X, Y, board:remove_block( X, Y , Board) );
-
-		_other_blocks ->
-			Board
+add_garbage_to_set( X, Y, Board = #board{}, Set ) ->
+	case board:get_block( X, Y, Board ) of
+		empty ->	
+			Set;
+		Block when	Block#block.type == garbage_hard orelse 
+						Block#block.type == garbage_color orelse 
+							Block#block.type == garbage ->
+			sets:add_element(Block, Set);
+		_other ->
+			Set
 	end.
+	
+
+
+
+
+
+
+
+
+get_activated_by_blocks_abilities( Block_list , Board = #board{} ) ->
+	Fun = fun( Block, List ) ->
+		lists:append( get_activated_by_block_abilities( Block, Board ) , List)
+	end,
+	lists:foldl( Fun, [], Block_list ).
+
+
+
+
+
+
+
+activate_blocks( [], Board = #board{} ) ->
+	Board;
+activate_blocks( Block_list, Board = #board{} ) ->
+	Fun = fun( Block, Result_Board = #board{} ) ->
+		activate_block( Block, Result_Board )
+	end,
+	New_board = lists:foldl( Fun , Board, Block_list ),
+	New_activated_list = get_activated_by_blocks_abilities(Block_list , Board),
+	activate_blocks( New_activated_list, New_board).
+
+
+
+activate_block( Block = #block{}, Board = #board{} ) ->
+	pop_block( Block#block.x, Block#block.y, Board ).
+
+
+
+
+
+
+
+get_activated_by_block_abilities( Block = #block{}, Board = #board{} ) ->
+	X = Block#block.x,
+	Y = Block#block.y,
+	case Block#block.type of
+		bomb ->
+			add_block_to_list( X + 1, Y + 1, Board,
+				add_block_to_list( X + 1, Y, Board,
+					add_block_to_list( X + 1, Y - 1, Board,
+
+						add_block_to_list( X, Y + 1, Board,
+							add_block_to_list( X, Y - 1, Board,
+
+								add_block_to_list( X - 1, Y + 1, Board,
+									add_block_to_list( X - 1, Y, Board,
+										add_block_to_list( X - 1, Y - 1, Board, [] ))))))));
+		chromatic_bomb ->
+			get_all_same_color( Block#block.color, Board = #board{} );
+
+		tornado ->
+			get_tornado_activated_blocks( X, Y, Board )
+	end.
+
+
+add_block_to_list( X, Y, Board = #board{}, List) ->
+	case board:get_block( X, Y, Board) of
+		empty ->			List;
+		Block ->			[Block | List]
+	end.
+
 
 
 
@@ -371,37 +438,47 @@ pop_block(  X, Y, Board = #board{} ) ->
 		Paint_block when Paint_block#block.type == paint ->
 			pop_paint( X, Y, Board );
 
-		Tornado_block when Tornado_block#block.type == tornado ->
-			pop_tornado( X, Y, Board );
-
-		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness == 1 ->
-			board:remove_block( X, Y, Board );
-
-		Garbage_block when Garbage_block#block.type == garbage_hard ->
-			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y,
-							 	board:remove_block( X, Y , Board));
-
-		Garbage_block when Garbage_block#block.type == garbage ->
-			board:remove_block( X, Y , Board);
+		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness > 1 ->
+			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y, board:remove_block( X, Y , Board));
 
 		Garbage_block when Garbage_block#block.type == garbage_color ->
 			board:set_block( #block{ type = color , color = Garbage_block#block.color }, X, Y, board:remove_block( X, Y , Board) );
 
-		Bomb_block when Bomb_block#block.type == bomb ->
-			pop_bomb( X, Y, Board);
-
-		Chromatic_block when Chromatic_block#block.type == chromatic_bomb ->
-			pop_chromatic_bomb(X, Y, Chromatic_block#block.color, Board);
-
-		Color_block when Color_block#block.type == color ->
+		_all_other ->
 			board:remove_block( X, Y , Board)
 	end.
 
 
 
-pop_tornado( X, Y, Board = #board{}) ->
-	io:format("poping tornado in ~p,~p \n",[X, Y]),
-	Board.
+
+
+
+get_tornado_activated_blocks( X, Y, Board = #board{}) ->
+	io:format("getting tornado blocks in ~p,~p \n",[X, Y]),
+
+	First_ring = [ {1,0}, {-1,1}, {-1,-1}, {-1,0}, {1,-1}, {0,1}, {0,-1} ],
+	Second_ring = [ {0,2}, {-2,-2}, {2,-2}, {2,2}, {0,-2}, {-2,2}, {2,0}, {-1,2}, {-1,-2}, {2,1}, {-2,0}, {2,-1}, {1,-2}, {-2,1}, {1,2}, {-2,-1} ],
+
+	First_ring_pieces = get_tornado_pieces_at( 3, First_ring, X, Y, Board ),
+	Second_ring_pieces = get_tornado_pieces_at( 5, Second_ring, X, Y, Board ),
+	lists:append( First_ring_pieces, Second_ring_pieces).
+
+
+get_tornado_pieces_at( 0 , _, _, _, _ ) ->
+	[];
+
+get_tornado_pieces_at( _, [], _, _, _ ) ->
+	[];
+
+get_tornado_pieces_at( Amount, [ {Dx,Dy} | Rest], X, Y, Board = #board{} ) ->
+	case board:get_block( X + Dx , Y + Dy, Board) of
+		empty ->
+			get_tornado_pieces_at( Amount, Rest, X, Y, Board); 
+		Block ->
+			[ Block | get_tornado_pieces_at( Amount - 1, Rest, X, Y, Board) ]
+	end.
+
+
 
 
 
@@ -444,30 +521,22 @@ pop_paint( X, Y, Board = #board{}) ->
 
 
 
-
-pop_bomb( X, Y, Board = #board{}) ->
-	io:format("poping bomb in ~p,~p \n",[X, Y]),
-	pop_block( X + 1, Y,
-		pop_block( X - 1, Y ,
-			pop_block( X, Y + 1,
-				pop_block( X, Y - 1,
-					pop_block( X + 1, Y + 1,
-						pop_block( X - 1, Y + 1,
-							pop_block( X + 1, Y - 1,
-								pop_block( X - 1, Y - 1,
-									board:remove_block( X, Y , Board))))))))).
-
-
-pop_chromatic_bomb( X, Y, Color, Board = #board{}) ->
-	io:format("poping ~p chromatic in ~p,~p \n",[Color,X,Y]),
-	New_board = remove_all_same_color( Color, Board),
-	board:remove_block( X, Y, New_board).
-
-
-
-
-
 	
+
+
+get_all_same_color( Color, Board = #board{} ) ->	
+	Fun = fun( Block = #block{}, Result_list )->
+		case Block#block.type of
+			color when Block#block.color == Color ->
+				[ Block | Result_list];
+			_other ->
+				Board
+		end
+	end,
+	lists:foldl( Fun, [], board:get_all_blocks(Board)).
+
+
+
 
 
 
@@ -537,6 +606,10 @@ calculate_next_piece( Initial_random_state ) ->
 	{  New_random_state2,
 		#piece{ block1 = #block{ type = Type, color = Color }, 
 				block2 = #block{ type = Type2, color = Color2 } }}.
+
+
+
+
 
 
 
@@ -803,7 +876,7 @@ create_board( Block_list, X_offset ) ->
 			<<"g">> -> {color,green};
 			<<"y">> -> {color,yellow};
 
-			<<"+">> -> {garbage,red};
+			<<"@">> -> {garbage,red};
 			<<"#">> -> {garbage_hard,red};
 
 			<<"#w">> -> {garbage_color,white};
