@@ -26,11 +26,12 @@
 	width :: integer(),
 	height :: integer(),
 
+	reinforcements = [] :: [color_type()],
 	painted = []
 }).
 
 -type garbage_type() :: garbage_hard | garbage_color | garbage.
--type ability_type() :: bomb | chromatic_bomb | paint | shapeshifter | tornado.
+-type ability_type() :: bomb | chromatic_bomb | paint | shapeshifter | tornado | reinforcements.
 -type block_type() :: color | ability_type() | garbage_type().
 
 -type color_type() :: red | yellow | blue | green | purple | white.

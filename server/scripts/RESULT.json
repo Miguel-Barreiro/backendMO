@@ -175,6 +175,164 @@
     {
         "final": [
             {
+                "block": "r",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "spawnsBomb?": true
+        },
+        "name": "simplePaintPop",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "Pg",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
                 "block": "w",
                 "x": 12,
                 "y": 12
@@ -231,7 +389,7 @@
             "normalGarbage": 2,
             "spawnsBomb?": true
         },
-        "name": "SimpleColorGarbageGeneration",
+        "name": "simpleColorGarbageGeneration",
         "origin": [
             {
                 "block": "r",
@@ -285,6 +443,578 @@
             },
             {
                 "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 2,
+            "hardGarbage": 0,
+            "normalGarbage": 3,
+            "spawnsBomb?": true
+        },
+        "name": "simpleReinforcePop",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "Rr",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "spawnsBomb?": false
+        },
+        "name": "single4Combo",
+        "origin": [
+            {
+                "block": "g",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 2,
+            "spawnsBomb?": true
+        },
+        "name": "simpleShapeshifter",
+        "origin": [
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "?",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 3,
+            "spawnsBomb?": true
+        },
+        "name": "simpleTornado",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "Tp",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "@",
                 "x": 5,
                 "y": 13
             },
@@ -506,37 +1236,12 @@
     {
         "final": [
             {
-                "block": "w",
-                "x": 12,
-                "y": 12
-            },
-            {
-                "block": "b",
-                "x": 13,
-                "y": 12
-            },
-            {
-                "block": "p",
-                "x": 14,
-                "y": 12
-            },
-            {
                 "block": "r",
                 "x": 11,
                 "y": 13
             },
             {
-                "block": "y",
-                "x": 12,
-                "y": 13
-            },
-            {
-                "block": "w",
-                "x": 13,
-                "y": 13
-            },
-            {
-                "block": "p",
+                "block": "g",
                 "x": 14,
                 "y": 13
             },
@@ -577,13 +1282,18 @@
             }
         ],
         "garbage": {
-            "colorGarbage": 0,
+            "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": false
+            "normalGarbage": 2,
+            "spawnsBomb?": true
         },
-        "name": "single4Combo",
+        "name": "dualPaintPop",
         "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
             {
                 "block": "g",
                 "x": 3,
@@ -600,23 +1310,23 @@
                 "y": 11
             },
             {
+                "block": "r",
+                "x": 4,
+                "y": 11
+            },
+            {
                 "block": "g",
                 "x": 2,
                 "y": 12
             },
             {
-                "block": "w",
+                "block": "Pg",
                 "x": 3,
                 "y": 12
             },
             {
-                "block": "b",
+                "block": "Py",
                 "x": 4,
-                "y": 12
-            },
-            {
-                "block": "p",
-                "x": 5,
                 "y": 12
             },
             {

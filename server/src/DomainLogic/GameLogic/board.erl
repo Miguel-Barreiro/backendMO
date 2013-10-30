@@ -19,7 +19,7 @@ get_all_blocks( Board = #board{} ) ->
 
 
 is_valid_position( X , Y, Board = #board{} )
-				when Board#board.height > Y, Board#board.height > Y, Y >= 0, X >= 0 ->
+				when Board#board.width > X, Board#board.height > Y, Y >= 0, X >= 0 ->
 	true;
 is_valid_position( _X , _Y, #board{} ) ->
 	false.
@@ -70,7 +70,8 @@ set_block( Block = #block{}, X , Y, Board = #board{ blocks = Blocks } )  ->
 			end;
 		false ->
 			lager:debug("Out of bounds in ~p,~p when board is ~p,~p",[X,Y,Board#board.width,Board#board.height]),
-			throw( out_of_bounds )
+			print_board(Board),
+			throw(out_of_bounds)
 	end.
 
 
