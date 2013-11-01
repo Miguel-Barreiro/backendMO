@@ -112,29 +112,78 @@ get_column_chars( X, Y, Board = #board{}) ->
 
 get_board_position( Board = #board{}, X, Y ) ->
 	case board:get_block( X , Y , Board) of
-		empty ->												" ";
-		#block{ type = color, color = red } ->					"R";
-		#block{ type = color, color = yellow } ->				"Y";
-		#block{ type = color, color = white } ->				"W";
-		#block{ type = color, color = blue } ->					"B";
-		#block{ type = color, color = purple } ->				"P";
-		#block{ type = color, color = green } ->				"G";
-
-		#block{ type = chromatic_bomb, color = red } ->			"r";
-		#block{ type = chromatic_bomb, color = yellow } ->		"y";
-		#block{ type = chromatic_bomb, color = white } ->		"w";
-		#block{ type = chromatic_bomb, color = blue } ->		"b";
-		#block{ type = chromatic_bomb, color = purple } ->		"p";
-		#block{ type = chromatic_bomb, color = green } ->		"g";
-
-		#block{ type = bomb } ->								"@";
-		#block{ type = shapeshifter } ->						"?";
-		#block{ type = paint } ->								"\~";
-		#block{ type = tornado } ->								"&";
 		
-		#block{ type = garbage } ->								"+";
-		#block{ type = garbage_hard } ->						"#";
-		#block{ type = garbage_color } ->						"C"
+		empty ->												"  ";
+
+		#block{ type = color, color = red } ->					"-r";
+		#block{ type = color, color = yellow } ->				"-y";
+		#block{ type = color, color = white } ->				"-w";
+		#block{ type = color, color = blue } ->					"-b";
+		#block{ type = color, color = purple } ->				"-p";
+		#block{ type = color, color = green } ->				"-g";
+
+		#block{ type = chromatic_bomb, color = red } ->			"Cr";
+		#block{ type = chromatic_bomb, color = yellow } ->		"Cy";
+		#block{ type = chromatic_bomb, color = white } ->		"Cw";
+		#block{ type = chromatic_bomb, color = blue } ->		"Cb";
+		#block{ type = chromatic_bomb, color = purple } ->		"Cp";
+		#block{ type = chromatic_bomb, color = green } ->		"Cg";
+
+		#block{ type = bomb, color = red } ->					"Br";
+		#block{ type = bomb, color = yellow } ->				"By";
+		#block{ type = bomb, color = white } ->					"Bw";
+		#block{ type = bomb, color = blue } ->					"Bb";
+		#block{ type = bomb, color = purple } ->				"Bp";
+		#block{ type = bomb, color = green } ->					"Bg";
+
+
+		#block{ type = reinforcements, color = red } ->			"Rr";
+		#block{ type = reinforcements, color = yellow } ->		"Ry";
+		#block{ type = reinforcements, color = white } ->		"Rw";
+		#block{ type = reinforcements, color = blue } ->		"Rb";
+		#block{ type = reinforcements, color = purple } ->		"Rp";
+		#block{ type = reinforcements, color = green } ->		"Rg";
+
+		#block{ type = shapeshifter, color = red } ->			"?r";
+		#block{ type = shapeshifter, color = yellow } ->		"?y";
+		#block{ type = shapeshifter, color = white } ->			"?w";
+		#block{ type = shapeshifter, color = blue } ->			"?b";
+		#block{ type = shapeshifter, color = purple } ->		"?p";
+		#block{ type = shapeshifter, color = green } ->			"?g";
+		#block{ type = shapeshifter, color = undefined } ->		"?u";
+
+		#block{ type = paint, color = red } ->					"Pr";
+		#block{ type = paint, color = yellow } ->				"Py";
+		#block{ type = paint, color = white } ->				"Pw";
+		#block{ type = paint, color = blue } ->					"Pb";
+		#block{ type = paint, color = purple } ->				"Pp";
+		#block{ type = paint, color = green } ->				"Pg";
+
+		#block{ type = tornado, color = red } ->				"Tr";
+		#block{ type = tornado, color = yellow } ->				"Ty";
+		#block{ type = tornado, color = white } ->				"Tw";
+		#block{ type = tornado, color = blue } ->				"Tb";
+		#block{ type = tornado, color = purple } ->				"Tp";
+		#block{ type = tornado, color = green } ->				"Tg";
+
+		#block{ type = cloner, color = red } ->					"Cr";
+		#block{ type = cloner, color = yellow } ->				"Cy";
+		#block{ type = cloner, color = white } ->				"Cw";
+		#block{ type = cloner, color = blue } ->				"Cb";
+		#block{ type = cloner, color = purple } ->				"Cp";
+		#block{ type = cloner, color = green } ->				"Cg";
+		
+		#block{ type = garbage } ->								"##";
+		
+		#block{ type = garbage_hard, hardness = 1 } ->			"#1";
+		#block{ type = garbage_hard, hardness = 2 } ->			"#2";
+
+		#block{ type = garbage_color, color = red } ->			"#r";
+		#block{ type = garbage_color, color = yellow } ->		"#y";
+		#block{ type = garbage_color, color = white } ->		"#w";
+		#block{ type = garbage_color, color = blue } ->			"#b";
+		#block{ type = garbage_color, color = purple } ->		"#p";
+		#block{ type = garbage_color, color = green } ->		"#g"
 
 	end.
 

@@ -206,7 +206,7 @@ reset_board( Board = #board{} ) ->
 
 release_reinforcements( Board = #board{} ) ->
 
-	X_list = lists:seq(0, Board#board.width - 1),
+	X_list = lists:seq(0, Board#board.width - 1 ),
 
 	Fun_foreach_reinforcement = fun( Color, { Y, Result_Board }) ->
 		
@@ -214,12 +214,11 @@ release_reinforcements( Board = #board{} ) ->
 			case board:get_block( X, Y, Inner_result_Board) of
 				empty ->
 					board:set_block( #block{ type = color, color = Color }, X, Y, Inner_result_Board);
-				Block ->
+				_block ->
 					throw(out_of_bounds)
-			end		
+			end
 		end,
 		{ Y - 1, lists:foldl( Fun, Result_Board, X_list )}
-
 	end,
 
 	{_,Final_board} = lists:foldl( Fun_foreach_reinforcement, { Board#board.height -1, Board},  Board#board.reinforcements ),
@@ -231,7 +230,7 @@ place_piece( Piece = #piece{}, X, Y, up, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
 	case Real_y == Y - 1 of 
 		true ->
-			 board:set_block( Piece#piece.block1, X , Y, 
+			 board:set_block( Piece#piece.block1, X, Y, 
 			 					board:set_block( Piece#piece.block2, X , Y - 1, Board ) );
 		false ->
 			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y - 1]),
@@ -329,38 +328,40 @@ pop_combos( Board = #board{}, Combo_list ) ->
 			lists:append( All_combo_blocks, sets:to_list(Combo) ) }
 	end,
 	{ Blocks_by_proximity, All_blocks_in_combos } = lists:foldl( Fun, {[],[]} , Combo_list),
-	Board_after_remove_combos_proximity = activate_blocks( Blocks_by_proximity, Board),
+	Board_after_remove_combos_proximity = activate_blocks_by_combo_proximity( Blocks_by_proximity, Board),
 	activate_blocks( order_activated_block_list(All_blocks_in_combos), Board_after_remove_combos_proximity).
 
 
 
 
 
-
-
-
-
-
-get_afected_by_combo_proximity( Combo , Board = #board{} ) ->
+get_afected_by_combo_proximity( Combo , Board = #board{}) ->
 	Fun = fun ( Block, Set) ->
-		add_garbages_around_to_set( Block#block.x, Block#block.y, Board, Set)
+		add_affected_blocks_around_to_set( Block#block.x, Block#block.y, Board, Combo, Set )
 	end,
 	sets:to_list( lists:foldl(Fun , sets:new(), sets:to_list(Combo) ) ).
 
-add_garbages_around_to_set( X, Y, Board = #board{}, Set) ->
-	add_garbage_to_set( X + 1, Y, Board,
-		add_garbage_to_set( X, Y + 1, Board,
-			add_garbage_to_set( X - 1, Y, Board,
-				add_garbage_to_set( X, Y - 1, Board, Set )))).
+add_affected_blocks_around_to_set( X, Y, Board = #board{}, Combo, Set) ->
+	add_affected_block_around_to_set( X + 1, Y, Board, Combo,
+		add_affected_block_around_to_set( X, Y + 1, Board, Combo,
+			add_affected_block_around_to_set( X - 1, Y, Board, Combo,
+				add_affected_block_around_to_set( X, Y - 1, Board, Combo, Set )))).
 
-add_garbage_to_set( X, Y, Board = #board{}, Set ) ->
+add_affected_block_around_to_set( X, Y, Board = #board{}, Combo, Set ) ->
+	
 	case board:get_block( X, Y, Board ) of
 		empty ->	
 			Set;
 		Block when	Block#block.type == garbage_hard orelse 
 						Block#block.type == garbage_color orelse 
-							Block#block.type == garbage ->
-			sets:add_element(Block, Set);
+							Block#block.type == garbage orelse 
+								Block#block.type == cloner ->
+			case sets:is_element( Block, Combo ) of
+				true ->
+					Set;
+				false ->
+					sets:add_element(Block, Set)
+			end;
 		_other ->
 			Set
 	end.
@@ -404,22 +405,76 @@ order_activated_block_list( Block_list ) ->
 
 
 
+activate_blocks_by_combo_proximity( [], Board = #board{}) ->
+	Board;
+activate_blocks_by_combo_proximity( [ Block | Rest], Board = #board{}) ->
+	case Block of
+		
+		Cloner_block when Cloner_block#block.type == cloner ->
+			New_board = pop_cloner( Cloner_block, Board),
+			activate_blocks_by_combo_proximity( Rest, New_board);
+
+		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness > 1 ->
+			New_board = board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, 
+								Block#block.x, Block#block.y, board:remove_block( Block#block.x, Block#block.y , Board)),
+			activate_blocks_by_combo_proximity( Rest, New_board);
+
+		Garbage_block when Garbage_block#block.type == garbage_color ->
+			New_board = board:set_block( #block{ type = color , color = Garbage_block#block.color }, 
+								Block#block.x, Block#block.y, 
+									board:remove_block( Block#block.x, Block#block.y, Board) ),
+			activate_blocks_by_combo_proximity( Rest, New_board);
+
+		Garbage_block when Garbage_block#block.type == garbage ->
+			New_board = board:remove_block( Block#block.x, Block#block.y, Board),
+			activate_blocks_by_combo_proximity( Rest, New_board);
+
+		_other ->
+			Board
+	end.
+
+
+
 
 
 activate_blocks( [], Board = #board{} ) ->
 	Board;
 activate_blocks( Block_list, Board = #board{} ) ->
-	Fun = fun( Block, Result_Board = #board{} ) ->
+	
+	Remove_fun =  fun( Block, Result_Board = #board{} ) ->
+		remove_block( Block, Result_Board )
+	end,
+
+	Activate_fun = fun( Block, Result_Board = #board{} ) ->
 		activate_block( Block, Result_Board )
 	end,
-	New_board = lists:foldl( Fun , Board, Block_list ),
-	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board) ),
-	activate_blocks( New_activated_list, New_board).
+
+	Board_after_removed = lists:foldl( Remove_fun , Board, Block_list ),
+	Board_after_activate = lists:foldl( Activate_fun , Board_after_removed, Block_list ),
+	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board_after_removed) ),
+	activate_blocks( New_activated_list, Board_after_activate).
 
 
 
-activate_block( Block = #block{}, Board = #board{} ) ->
-	pop_block( Block#block.x, Block#block.y, Board ).
+
+remove_block(Paint_block = #block{}, Board = #board{} ) when Paint_block#block.type == paint ->
+	Board;
+remove_block( Block = #block{}, Board = #board{} )->
+	board:remove_block( Block#block.x, Block#block.y, Board ).
+
+
+
+activate_block( Paint_block = #block{}, Board = #board{} ) when Paint_block#block.type == paint ->
+	pop_paint( Paint_block, Board );
+
+activate_block( Reinforcement_block = #block{}, Board = #board{} ) when Reinforcement_block#block.type == reinforcements ->
+	pop_reinforcement( Reinforcement_block, Board );
+
+activate_block( Ghost_block = #block{}, Board = #board{} ) when Ghost_block#block.type == ghost ->
+	pop_ghost( Ghost_block, Board);
+
+ activate_block( _ , Board = #board{} ) ->
+	Board.
 
 
 
@@ -464,40 +519,14 @@ add_block_to_list( X, Y, Board = #board{}, List) ->
 
 
 
-pop_block(  X, Y, Board = #board{} ) ->
-	case board:get_block( X, Y , Board) of
-		empty ->
-			Board;
-
-		Paint_block when Paint_block#block.type == paint ->
-			pop_paint( X, Y, Board );
-
-		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness > 1 ->
-			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y, board:remove_block( X, Y , Board));
-
-		Garbage_block when Garbage_block#block.type == garbage_color ->
-			board:set_block( #block{ type = color , color = Garbage_block#block.color }, X, Y, board:remove_block( X, Y , Board) );
-
-		Reinforcement_block when Reinforcement_block#block.type == reinforcements ->
-			pop_reinforcement( X, Y, Board );
-
-		_all_other ->
-			board:remove_block( X, Y, Board)
-	end.
-
-
-
-
-
 
 get_tornado_activated_blocks( X, Y, Board = #board{}) ->
-	io:format("getting tornado blocks in ~p,~p \n",[X, Y]),
 
 	First_ring = [ {1,0}, {-1,1}, {-1,-1}, {-1,0}, {1,-1}, {0,1}, {0,-1} ],
 	Second_ring = [ {0,2}, {-2,-2}, {2,-2}, {2,2}, {0,-2}, {-2,2}, {2,0}, {-1,2}, {-1,-2}, {2,1}, {-2,0}, {2,-1}, {1,-2}, {-2,1}, {1,2}, {-2,-1} ],
 
-	First_ring_pieces = get_tornado_pieces_at( 3, First_ring, X, Y, Board ),
-	Second_ring_pieces = get_tornado_pieces_at( 5, Second_ring, X, Y, Board ),
+	First_ring_pieces = get_tornado_pieces_at( 5, First_ring, X, Y, Board ),
+	Second_ring_pieces = get_tornado_pieces_at( 3, Second_ring, X, Y, Board ),
 	lists:append( First_ring_pieces, Second_ring_pieces).
 
 
@@ -523,6 +552,8 @@ change_block_color( X, Y, New_color, Board = #board{} ) ->
 	case board:get_block( X, Y , Board) of
 		empty ->
 			Board;
+		Block when Block#block.type == shapeshifter->
+			Board;
 		Block when Block#block.type == garbage_color->
 			Board;
 		Block ->
@@ -533,14 +564,17 @@ change_block_color( X, Y, New_color, Board = #board{} ) ->
 				Color when Color == New_color ->
 					board:set_block( Block#block{ color = New_color }, X, Y, board:remove_block( X, Y, Board));
 				_color  ->
-					board:set_block( Block#block{ type = shapeshifter }, X, Y, board:remove_block( X, Y, Board))
+					board:set_block( Block#block{ type = shapeshifter, color = undefined }, X, Y, board:remove_block( X, Y, Board))
 			end
 	end.
 
-pop_paint( X, Y, Board = #board{}) ->
-	io:format("poping paint in ~p,~p \n",[X, Y]),
+
+
+pop_paint( Block, Board = #board{}) ->
 	
-	Block = board:get_block( X, Y , Board),
+	X = Block#block.x,
+	Y = Block#block.y,
+
 	New_color = Block#block.color,
 	Board_without_paint = board:remove_block( X, Y , Board),
 
@@ -556,15 +590,38 @@ pop_paint( X, Y, Board = #board{}) ->
 
 
 
-pop_reinforcement( X, Y, Board= #board{}) ->
-	Block = board:get_block( X, Y , Board),
+pop_reinforcement( Block, Board = #board{}) ->
 	New_color = Block#block.color,
-	Board_without_paint = board:remove_block( X, Y , Board),
+	Board_without_paint = board:remove_block( Block#block.x, Block#block.y , Board),
 	Board_without_paint#board{ reinforcements = [ New_color | Board_without_paint#board.reinforcements] }.
 
 
 
-	
+pop_cloner( Cloner_block, Board = #board{}) ->
+
+	X = Cloner_block#block.x,
+	Y = Cloner_block#block.y,
+
+	io:format("poping cloner in ~p,~p\n",[X,Y]),
+
+	Fun_shift_pieces = fun( Piece_y, Shift_result_board ) ->
+		case board:get_block( X, Piece_y, Board) of
+			empty ->
+				Shift_result_board;
+			Block ->
+				board:set_block( Block, X, Piece_y + 1, board:remove_block(X, Piece_y, Shift_result_board))
+		end
+	end,
+	Shifted_board = lists:foldl( Fun_shift_pieces, Board, lists:seq(Board#board.height, Y + 1, -1)),
+	board:set_block( #block{ type = color, color = Cloner_block#block.color }, X, Y + 1, Shifted_board ).
+
+
+
+pop_ghost( Block = #block{}, Board = #board{} ) ->
+	Board_without_paint = board:remove_block( Block#block.x, Block#block.y , Board),
+	Board_without_paint#board{ spawns_ghost = true }.
+
+
 
 
 get_all_same_color( Color, Board = #board{} ) ->
@@ -910,58 +967,69 @@ create_board( Block_list, X_offset ) ->
 		X = proplists:get_value(<<"x">>, Block_properties) - 1 - X_offset,
 		Y = ?BOARD_HEIGHT - proplists:get_value(<<"y">>, Block_properties) + 1,
 
-		{Real_block_type, Color} = 
+		{Real_block_type, Color, Hardness} = 
 		case Value of
-			<<"w">> -> {color,white};
-			<<"p">> -> {color,purple};
-			<<"b">> -> {color,blue};
-			<<"r">> -> {color,red};
-			<<"g">> -> {color,green};
-			<<"y">> -> {color,yellow};
+			<<"w">> -> 	{color,white, 2};
+			<<"p">> -> 	{color,purple, 2};
+			<<"b">> -> 	{color,blue, 2};
+			<<"r">> -> 	{color,red, 2};
+			<<"g">> -> 	{color,green, 2};
+			<<"y">> -> 	{color,yellow, 2};
 
-			<<"@">> -> {garbage,red};
-			<<"#">> -> {garbage_hard,red};
+			<<"@">> -> 	{garbage,red, 2};
 
-			<<"#w">> -> {garbage_color,white};
-			<<"#p">> -> {garbage_color,purple};
-			<<"#b">> -> {garbage_color,blue};
-			<<"#r">> -> {garbage_color,red};
-			<<"#g">> -> {garbage_color,green};
-			<<"#y">> -> {garbage_color,yellow};
+			<<"#1">> -> {garbage_hard,red, 1};
+			<<"#2">> -> {garbage_hard,red, 2};
+			<<"#">> -> 	{garbage_hard,red, 2};
+
+			<<"#w">> -> {garbage_color,white, 2};
+			<<"#p">> -> {garbage_color,purple, 2};
+			<<"#b">> -> {garbage_color,blue, 2};
+			<<"#r">> -> {garbage_color,red, 2};
+			<<"#g">> -> {garbage_color,green, 2};
+			<<"#y">> -> {garbage_color,yellow, 2};
 			
-			<<"?">> -> {shapeshifter,undefined};
+			<<"?">> -> 	{shapeshifter,undefined, 2};
 
-			<<"Tw">> -> {tornado,white};
-			<<"Tp">> -> {tornado,purple};
-			<<"Tg">> -> {tornado,green};
-			<<"Tr">> -> {tornado,red};
-			<<"Ty">> -> {tornado,yellow};
-			<<"Tb">> -> {tornado,blue};
+			<<"Tw">> -> {tornado,white, 2};
+			<<"Tp">> -> {tornado,purple, 2};
+			<<"Tg">> -> {tornado,green, 2};
+			<<"Tr">> -> {tornado,red, 2};
+			<<"Ty">> -> {tornado,yellow, 2};
+			<<"Tb">> -> {tornado,blue, 2};
 
-			<<"Pw">> -> {paint,white};
-			<<"Pp">> -> {paint,purple};
-			<<"Pg">> -> {paint,green};
-			<<"Pr">> -> {paint,red};
-			<<"Py">> -> {paint,yellow};
-			<<"Pb">> -> {paint,blue};
+			<<"Pw">> -> {paint,white, 2};
+			<<"Pp">> -> {paint,purple, 2};
+			<<"Pg">> -> {paint,green, 2};
+			<<"Pr">> -> {paint,red, 2};
+			<<"Py">> -> {paint,yellow, 2};
+			<<"Pb">> -> {paint,blue, 2};
 
-			<<"Bw">> -> {bomb,white};
-			<<"Bp">> -> {bomb,purple};
-			<<"Bb">> -> {bomb,blue};
-			<<"Bg">> -> {bomb,green};
-			<<"Br">> -> {bomb,red};
-			<<"By">> -> {bomb,yellow};
+			<<"Bw">> -> {bomb,white, 2};
+			<<"Bp">> -> {bomb,purple, 2};
+			<<"Bb">> -> {bomb,blue, 2};
+			<<"Bg">> -> {bomb,green, 2};
+			<<"Br">> -> {bomb,red, 2};
+			<<"By">> -> {bomb,yellow, 2};
 
-			<<"Rw">> -> {reinforcements,white};
-			<<"Rp">> -> {reinforcements,purple};
-			<<"Rb">> -> {reinforcements,blue};
-			<<"Rg">> -> {reinforcements,green};
-			<<"Rr">> -> {reinforcements,red};
-			<<"Ry">> -> {reinforcements,yellow}
+			<<"Cw">> -> {cloner,white, 2};
+			<<"Cp">> -> {cloner,purple, 2};
+			<<"Cb">> -> {cloner,blue, 2};
+			<<"Cg">> -> {cloner,green, 2};
+			<<"Cr">> -> {cloner,red, 2};
+			<<"Cy">> -> {cloner,yellow, 2};
+
+
+			<<"Rw">> -> {reinforcements,white, 2};
+			<<"Rp">> -> {reinforcements,purple, 2};
+			<<"Rb">> -> {reinforcements,blue, 2};
+			<<"Rg">> -> {reinforcements,green, 2};
+			<<"Rr">> -> {reinforcements,red, 2};
+			<<"Ry">> -> {reinforcements,yellow, 2}
 
 		end,
 
-		board:set_block( #block{ type = Real_block_type, color = Color}, X, Y, Result)
+		board:set_block( #block{ type = Real_block_type, color = Color, hardness = Hardness}, X, Y, Result)
 	end,
 
 
@@ -1081,7 +1149,7 @@ normal_tests_(Game_rules) ->
 full_game_logic_test_() ->
 
 		setup_tests(),
-		Game_rules = game_rules:get_offline_current_rules(<<"Easy">>),
+		Game_rules = game_rules:get_offline_current_rules(<<"Normal">>),
 
 		Google_test_list = google_docs_tests(Game_rules),
 		Normal_test_list = normal_tests_(Game_rules),

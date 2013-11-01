@@ -26,12 +26,14 @@
 	width :: integer(),
 	height :: integer(),
 
+	%for ability calculation not keepinh the state
 	reinforcements = [] :: [color_type()],
-	painted = []
+	painted = [],
+	spawns_ghost = false
 }).
 
 -type garbage_type() :: garbage_hard | garbage_color | garbage.
--type ability_type() :: bomb | chromatic_bomb | paint | shapeshifter | tornado | reinforcements.
+-type ability_type() :: bomb | chromatic_bomb | paint | shapeshifter | tornado | reinforcements | cloner | ghost.
 -type block_type() :: color | ability_type() | garbage_type().
 
 -type color_type() :: red | yellow | blue | green | purple | white.
