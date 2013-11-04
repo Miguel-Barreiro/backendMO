@@ -539,7 +539,11 @@ get_tornado_pieces_at( _, [], _, _, _ ) ->
 get_tornado_pieces_at( Amount, [ {Dx,Dy} | Rest], X, Y, Board = #board{} ) ->
 	case board:get_block( X + Dx , Y + Dy, Board) of
 		empty ->
-			get_tornado_pieces_at( Amount, Rest, X, Y, Board); 
+			get_tornado_pieces_at( Amount, Rest, X, Y, Board);
+		Block when Block#block.type == garbage orelse 
+					Block#block.type == garbage_hard orelse 
+						Block#block.type == garbage_color ->
+			get_tornado_pieces_at( Amount, Rest, X, Y, Board);
 		Block ->
 			[ Block | get_tornado_pieces_at( Amount - 1, Rest, X, Y, Board) ]
 	end.
@@ -619,8 +623,23 @@ pop_cloner( Cloner_block, Board = #board{}) ->
 
 pop_ghost( Block = #block{}, Board = #board{} ) ->
 	Board_without_paint = board:remove_block( Block#block.x, Block#block.y , Board),
-	Board_without_paint#board{ spawns_ghost = true }.
+	
+	Garbage_only_filter = fun( Current_Block = #block{} ) ->
+		Current_Block#block.type == garbage orelse 
+			Current_Block#block.type == garbage_hard orelse 
+				Current_Block#block.type == garbage_color
+	end,
 
+	case lists:filter( Garbage_only_filter , board:get_all_blocks( Board_without_paint ) ) of
+		[] ->
+			Board;
+		Garbage_list ->
+			{ New_random_state, Random } = get_next_random( Board#board.abilities_random_state ),
+			Garbage = lists:nth( Random rem length(Garbage_list) + 1, Garbage_list),
+			New_board = board:set_block( #block{ type = shapeshifter }, Garbage#block.x, Garbage#block.y, 
+											board:remove_block( Garbage#block.x, Garbage#block.y, Board_without_paint ) ),
+			New_board#board{ abilities_random_state = New_random_state }
+	end.
 
 
 
@@ -633,10 +652,7 @@ get_all_same_color( Color, Board = #board{} ) ->
 				Result_list
 		end
 	end,
-	lists:foldl( Fun, [], board:get_all_blocks(Board)).
-
-
-
+	lists:foldl( Fun, [], board:get_all_blocks(Board) ).
 
 
 
@@ -1073,8 +1089,6 @@ google_docs_tests(Game_rules) ->
 
 				Start_board = create_board( Start, 0 ),
 				Final_board = create_board( Final, 9 ),
-
-
 
 
 				{ Combos , Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),

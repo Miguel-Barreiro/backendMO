@@ -9,7 +9,10 @@
 
 
 new_empty( Width, Height ) ->
-	#board{ height = Height, width = Width }.
+	{A1,A2,A3} = now(),
+	random:seed(A1, A2, A3),
+	Seed = random:uniform(2147483646),
+	#board{ height = Height, width = Width, abilities_random_state = Seed }.
 
 
 

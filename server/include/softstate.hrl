@@ -26,10 +26,11 @@
 	width :: integer(),
 	height :: integer(),
 
+	abilities_random_state = 0,
+
 	%for ability calculation not keepinh the state
 	reinforcements = [] :: [color_type()],
-	painted = [],
-	spawns_ghost = false
+	painted = []
 }).
 
 -type garbage_type() :: garbage_hard | garbage_color | garbage.

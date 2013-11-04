@@ -99,9 +99,6 @@ handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, st
 
 
 
-
-
-
 handle_cast( { user_ready, User_pid} , State = #game_state{ state = Game_State, user2 = User2, user1 = User1 } ) 
 				when Game_State == waiting_players ->
 

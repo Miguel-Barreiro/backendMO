@@ -810,6 +810,149 @@
     {
         "final": [
             {
+                "block": "r",
+                "x": 11,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "#g",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "spawnsBomb?": false
+        },
+        "name": "TornadoGarbage",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "#g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "Tp",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
                 "block": "w",
                 "x": 13,
                 "y": 13
@@ -1495,6 +1638,11 @@
                 "y": 13
             },
             {
+                "block": "#2",
+                "x": 5,
+                "y": 13
+            },
+            {
                 "block": "r",
                 "x": 2,
                 "y": 14
@@ -1510,7 +1658,7 @@
                 "y": 14
             },
             {
-                "block": "y",
+                "block": "#2",
                 "x": 5,
                 "y": 14
             }
@@ -2172,16 +2320,53 @@
         ]
     },
     {
-        "final": [],
+        "final": [
+            {
+                "block": "g",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "Tg",
+                "x": 13,
+                "y": 14
+            }
+        ],
         "garbage": {
             "colorGarbage": 0,
-            "ghost1x": 4,
-            "ghost1y": 14,
-            "ghost2x": 3,
-            "ghost2y": 14,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 0,
+            "spawnsBomb?": false
         },
         "name": "SimpleGhost",
         "origin": [
