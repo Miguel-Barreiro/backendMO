@@ -68,7 +68,13 @@ get_block_type_from_json( Type ) ->
 
 get_power_from_json( Power )->
 	case Power of
-		<<"BlockTypeBomb">> ->			generate_bomb
+		<<"BlockTypeBomb">> ->					bomb;
+		<<"BlockTypePaint">> ->					paint;
+		<<"BlockTypeShapeshifter">> ->			shapeshifter;
+		<<"BlockTypeTornado">> ->				tornado;
+		<<"BlockTypeClone">> ->					cloner;
+		<<"BlockTypeGhost">> ->					ghost;
+		<<"BlockTypeReinforcements">> ->		reinforcements
 	end.
 
 
@@ -76,7 +82,7 @@ get_abilities_generation_rules_from_json( List ) ->
 	Fun = fun( {[ {<<"blockColor">>,Type}, {<<"comboSizeMin">>, Combo_size}, { <<"powerType">>, Power} ]}, Rest_list ) ->
 		[ {{Combo_size,get_block_type_from_json(Type)}, get_power_from_json( Power ) } | Rest_list]
 	end,
-	lists:foldl( Fun, [], List ).
+	lists:reverse(lists:foldl( Fun, [], List )).
 	
 
 

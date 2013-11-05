@@ -26,7 +26,7 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 											current_piece = Piece,
 												random_state = New_random_state },
 
-	Game_rules = game_rules:get_current_rules(<<"Easy">>),
+	Game_rules = game_rules:get_current_rules(<<"Normal">>),
 
 	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed, game_rules = Game_rules }.
 
@@ -47,10 +47,10 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (
 																					Game#game.user2_gamestate,
 																						Game#game.game_rules ),
 
-	io:format("-------------------------------- ",[]),
-	io:format(" USER 1 ~p PLACE A PIECE ",[User_pid]),
+	io:format("\n-------------------------------- \n",[]),
+	io:format("\n USER 1 ~p PLACE A PIECE \n",[User_pid]),
 	board:print_board( New_gamestate#user_gamestate.board ),
-	io:format("-------------------------------- ",[]),
+	io:format("\n-------------------------------- \n",[]),
 
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
 
@@ -65,10 +65,10 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 																					Game#game.user1_gamestate,
 																						Game#game.game_rules ),
 
-	io:format("-------------------------------- ",[]),
-	io:format(" USER 2 ~p PLACE A PIECE ",[User_pid]),
+	io:format("\n--------------------------------\n",[]),
+	io:format("\n USER 2 ~p PLACE A PIECE \n",[User_pid]),
 	board:print_board( New_gamestate#user_gamestate.board ),
-	io:format("-------------------------------- ",[]),
+	io:format("\n--------------------------------\n",[]),
 
 	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
 
@@ -294,9 +294,11 @@ calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 	Blocks = board:get_all_blocks(Board),
 
 	Fun = fun( Block = #block{} , Combos ) ->
-		%lets ignore blocks already in combos
-		case lists:any( fun( Combo ) -> sets:is_element( Block, Combo ) end , Combos) of
+		%lets ignore blocks already in combos (except shapeshifter)
+		case lists:any( fun( Combo ) -> sets:is_element( Block, Combo ) andalso Block#block.type =/= shapeshifter end , Combos) of
 			true ->
+				Combos;
+			false when Block#block.type == shapeshifter ->
 				Combos;
 			false ->
 				{New_combo, _ } = calculate_combo_for_piece( Block, Block#block.x, Block#block.y, Board),

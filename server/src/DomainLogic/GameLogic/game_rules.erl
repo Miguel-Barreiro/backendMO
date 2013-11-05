@@ -161,20 +161,15 @@ get_type_from_rule( [] , Combos) ->
 get_type_from_rule( [{{ Combo_size, Rule_color }, Power } | Rest] , Combos) ->
 	
 	Combo_fits_rule = 
-	fun( Combo = [ Block | _Rest_blocks ] ) -> 
-		length( Combo) == Combo_size andalso ( Rule_color == any orelse Rule_color == Block#block.color )
+	fun( Combo ) -> 
+		Combo_list = sets:to_list(Combo),
+		[ Block | _Rest_blocks ] = Combo_list,
+		length(Combo_list) >= Combo_size andalso ( Rule_color == any orelse Rule_color == Block#block.color )
 	end,
 
-	case lists:any( fun( Combo_sequence )-> lists:any( Combo_fits_rule, Combo_sequence) end, Combos ) of
+	case lists:any( fun( Combo_sequence )-> lists:any( Combo_fits_rule, Combo_sequence ) end, Combos ) of
 		false ->
 				get_type_from_rule( Rest, Combos);
 		true ->
-				get_type_from_power( Power )
+				Power
 	end.
-
-
-
-get_type_from_power( generate_bomb ) ->
-	bomb;
-get_type_from_power( _other ) ->
-	bomb.

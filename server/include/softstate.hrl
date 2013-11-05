@@ -39,8 +39,6 @@
 
 -type color_type() :: red | yellow | blue | green | purple | white.
 
--type power_type() :: generate_bomb.
-
 
 
 -record( block, {
@@ -87,7 +85,7 @@
 -record( game_logic_rules,{
 	version :: string(),
 
-	abilities_rule = undefined :: [ { {integer(), color_type() | any}, power_type() } ],
+	abilities_rule = undefined :: [ { {integer(), color_type() | any}, ability_type() } ],
 	
 	garbage_combo_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
 	garbage_chain_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
@@ -119,7 +117,7 @@
 	board_width,
 	board_height,
 
-	abilities_generation_rules :: [ { {integer(), color_type() | any}, power_type() } ] ,
+	abilities_generation_rules :: [ { {integer(), color_type() | any}, ability_type() } ] ,
 
 	garbage_combo_rules :: [ { integer(), {garbage_type(),integer()}  } ],
 	garbage_chain_rules :: { integer(), [ garbage_type() ]},

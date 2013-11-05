@@ -95,7 +95,7 @@ get_min_combo_size( _Tier ) ->
 	%gen_server:call(whereis(?MODULE), {get_min_combo_size, Tier}).
 
 % returns { {min_size,color}, power} 
--spec get_abilities_generation_rules( Tier :: string() ) -> [ { {integer(), color_type() | any}, power_type() } ].
+-spec get_abilities_generation_rules( Tier :: string() ) -> [ { {integer(), color_type() | any}, ability_type() } ].
 get_abilities_generation_rules( Tier ) ->
 	gen_server:call(whereis(?MODULE), {get_abilities_generation_rules, Tier}).
 
@@ -135,8 +135,7 @@ handle_info( poll_configuration , State = #configurations_state{} ) ->
 	Lines = string:tokens( download(?CONFIGURATION_VERSION_URL), "\n"),
 	[ Latest_version | _ ] = Lines,
 
-	%lager:debug("latest version is ~p",[Latest_version]),
-
+	lager:debug("latest version is ~p",[Latest_version]),
 
 	New_state = case Latest_version == State#configurations_state.latest_version of 
 		true ->			State;
