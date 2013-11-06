@@ -16,7 +16,7 @@
 
 -export([create_fail_buy_product_response_message/0, create_success_buy_product_response_message/2]).
 
--export([create_time_sync_message/2]).
+-export([create_time_sync_message/2, create_debug_board/12]).
 
 
 
@@ -301,6 +301,64 @@ create_rematch_timeout_message() ->
 create_insufficient_lifes_message() ->
 	Req = #request{ type = message_not_enough_lifes },
 	protocol_pb:encode_request(Req).
+
+
+create_debug_board(Player_current_random_step, Player_current_piece_x, Player_current_piece_y, 
+						Player_current_piece_angle, Player_block_list, Player_garbage_list,
+							Opponent_current_random_step, Opponent_current_piece_x, Opponent_current_piece_y, 
+							Opponent_current_piece_angle, Opponent_block_list, Opponent_garbage_list )  ->
+
+
+
+
+	Fun = fun( Block = #block{}, Result_block_list ) -> 
+		New_block_position = #block_position{ 	x = Block#block.x, 
+													y = Block#block.y, 
+														color = get_protocol_color_from_block(Block), 
+															type = get_protocol_type_from_block(Block) },
+		[ New_block_position | Result_block_list]
+	end,
+
+	Opponent_block_position_list = lists:foldl(Fun, [], Opponent_block_list),
+	Player_block_position_list = lists:foldl(Fun, [], Player_block_list),
+
+%	lager:debug("Opponent_block_position_list ~p",[Opponent_block_position_list]),
+%	lager:debug("Player_block_position_list ~p",[Player_block_position_list]),
+
+	Opponent_garbage_message_list =  lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Player_garbage_list),
+	Player_garbage_message_list = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Opponent_garbage_list),
+
+%	lager:debug("Player_garbage_message_list ~p",[Player_garbage_message_list]),
+%	lager:debug("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),
+
+	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
+										current_piece_x = Opponent_current_piece_x,
+											current_piece_y = Opponent_current_piece_y,
+												current_piece_angle = Opponent_current_piece_angle,
+													blocks = Opponent_block_position_list,
+														garbage_message_list = Opponent_garbage_message_list  },
+
+	Player_game_state = #game_state{ current_random = Player_current_random_step, 
+										current_piece_x = Player_current_piece_x,
+											current_piece_y = Player_current_piece_y,
+												current_piece_angle = Player_current_piece_angle,
+													blocks = Player_block_position_list,
+														garbage_message_list = Player_garbage_message_list },
+
+
+
+	Req = #request{ type = message_debug_board, 
+						debug_game_state_content =  #message_debug_board{
+
+							opponent_state = Opponent_game_state,
+							player_state = Player_game_state
+						}
+					},
+	protocol_pb:encode_request(Req).
+
+
+
+
 
 
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

@@ -38,6 +38,10 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 %throws out_of_bounds (in case the user has lost)
 %throws invalid_move (in case of an invalid move)
 handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
+	
+	io:format("\n-------------------------------- \n",[]),
+	io:format("\n USER 1 ~p PLACE A PIECE \n",[User_pid]),
+
 	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
 	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
 																	Opponent_pid,
@@ -47,14 +51,17 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (
 																					Game#game.user2_gamestate,
 																						Game#game.game_rules ),
 
-	io:format("\n-------------------------------- \n",[]),
-	io:format("\n USER 1 ~p PLACE A PIECE \n",[User_pid]),
+
 	board:print_board( New_gamestate#user_gamestate.board ),
 	io:format("\n-------------------------------- \n",[]),
 
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
 
 handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
+
+
+	io:format("\n--------------------------------\n",[]),
+	io:format("\n USER 2 (~p) PLACE A PIECE \n",[User_pid]),
 
 	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
 	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
@@ -65,10 +72,17 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 																					Game#game.user1_gamestate,
 																						Game#game.game_rules ),
 
-	io:format("\n--------------------------------\n",[]),
-	io:format("\n USER 2 ~p PLACE A PIECE \n",[User_pid]),
+
 	board:print_board( New_gamestate#user_gamestate.board ),
 	io:format("\n--------------------------------\n",[]),
+
+	%Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
+	%												0, 0, up, 
+	%												Player_block_list, 
+	%												Player_garbage_list,
+	%													New_opponent_gamestate#user_gamestate.random_state, 
+	%													0, 0, up, 
+	%													Opponent_block_list, Opponent_garbage_list ),
 
 	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
 
@@ -80,7 +94,8 @@ handle_place_piece( User_pid, Opponent_pid,
 							Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}, 
 								Game_rules = #game_logic_rules{} ) ->
 
-	lager:debug("placed the piece in ~p,~p",[X,Y]),
+	io:format("\nplaced the piece [~p ~p] with angle ~p in ~p,~p\n",
+					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y]),
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
 			lager:debug("invalid piece place: wrong piece",[]),
@@ -325,13 +340,24 @@ calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 
 
 pop_combos( Board = #board{}, Combo_list ) ->
-	Fun = fun( Combo, { List , All_combo_blocks} )->
-		{ lists:append( List, get_afected_by_combo_proximity(Combo , Board)),
-			lists:append( All_combo_blocks, sets:to_list(Combo) ) }
-	end,
-	{ Blocks_by_proximity, All_blocks_in_combos } = lists:foldl( Fun, {[],[]} , Combo_list),
-	Board_after_remove_combos_proximity = activate_blocks_by_combo_proximity( Blocks_by_proximity, Board),
-	activate_blocks( order_activated_block_list(All_blocks_in_combos), Board_after_remove_combos_proximity).
+
+	Combo_blocks  = lists:foldl( fun( Combo, All_combo_blocks )->
+									lists:append( All_combo_blocks, sets:to_list(Combo) )
+								 end, [], Combo_list),
+
+
+	Board_without_combos = lists:foldl( fun( Block = #block{}, Board_without_combos ) ->
+											board:remove_block( Block#block.x, Block#block.y, Board_without_combos)
+										end, Board, Combo_blocks),
+
+
+
+	Blocks_by_proximity = lists:foldl( fun( Combo, List )->
+										lists:append( List, get_afected_by_combo_proximity(Combo , Board_without_combos))
+										end, [], Combo_list), 
+	
+	Board_after_remove_combos_proximity = activate_blocks_by_combo_proximity( Blocks_by_proximity, Board_without_combos),
+	activate_blocks( order_activated_block_list(Combo_blocks), Board_after_remove_combos_proximity).
 
 
 
@@ -453,7 +479,8 @@ activate_blocks( Block_list, Board = #board{} ) ->
 
 	Board_after_removed = lists:foldl( Remove_fun , Board, Block_list ),
 	Board_after_activate = lists:foldl( Activate_fun , Board_after_removed, Block_list ),
-	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board_after_removed) ),
+
+	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board_after_activate) ),
 	activate_blocks( New_activated_list, Board_after_activate).
 
 
@@ -462,6 +489,7 @@ activate_blocks( Block_list, Board = #board{} ) ->
 remove_block(Paint_block = #block{}, Board = #board{} ) when Paint_block#block.type == paint ->
 	Board;
 remove_block( Block = #block{}, Board = #board{} )->
+	%io:format("\n removing ~p",[Block]),
 	board:remove_block( Block#block.x, Block#block.y, Board ).
 
 
@@ -487,6 +515,7 @@ activate_block( Ghost_block = #block{}, Board = #board{} ) when Ghost_block#bloc
 get_activated_by_block_abilities( Block = #block{}, Board = #board{} ) ->
 	X = Block#block.x,
 	Y = Block#block.y,
+
 	case Block#block.type of
 		bomb ->
 			add_block_to_list( X + 1, Y + 1, Board,
@@ -503,8 +532,8 @@ get_activated_by_block_abilities( Block = #block{}, Board = #board{} ) ->
 			get_all_same_color( Block#block.color, Board );
 
 		tornado ->
-			get_tornado_activated_blocks( X, Y, Board );
-
+			List = get_tornado_activated_blocks( X, Y, Board ),
+			List;
 		_other ->
 			[]
 	end.
@@ -524,7 +553,7 @@ add_block_to_list( X, Y, Board = #board{}, List) ->
 
 get_tornado_activated_blocks( X, Y, Board = #board{}) ->
 
-	First_ring = [ {1,0}, {-1,1}, {-1,-1}, {-1,0}, {1,-1}, {0,1}, {0,-1} ],
+	First_ring = [ {1,0}, {-1,1}, {-1,-1}, {1,1}, {-1,0}, {1,-1}, {0,1}, {0,-1} ],
 	Second_ring = [ {0,2}, {-2,-2}, {2,-2}, {2,2}, {0,-2}, {-2,2}, {2,0}, {-1,2}, {-1,-2}, {2,1}, {-2,0}, {2,-1}, {1,-2}, {-2,1}, {1,2}, {-2,-1} ],
 
 	First_ring_pieces = get_tornado_pieces_at( 5, First_ring, X, Y, Board ),
@@ -539,7 +568,7 @@ get_tornado_pieces_at( _, [], _, _, _ ) ->
 	[];
 
 get_tornado_pieces_at( Amount, [ {Dx,Dy} | Rest], X, Y, Board = #board{} ) ->
-	case board:get_block( X + Dx , Y + Dy, Board) of
+	case Block = board:get_block( X + Dx , Y + Dy, Board) of
 		empty ->
 			get_tornado_pieces_at( Amount, Rest, X, Y, Board);
 		Block when Block#block.type == garbage orelse 
@@ -607,8 +636,6 @@ pop_cloner( Cloner_block, Board = #board{}) ->
 
 	X = Cloner_block#block.x,
 	Y = Cloner_block#block.y,
-
-	io:format("poping cloner in ~p,~p\n",[X,Y]),
 
 	Fun_shift_pieces = fun( Piece_y, Shift_result_board ) ->
 		case board:get_block( X, Piece_y, Board) of

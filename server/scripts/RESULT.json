@@ -2,6 +2,69 @@
     {
         "final": [
             {
+                "block": "y",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "spawnsBomb?": true
+        },
+        "name": "Mix1",
+        "origin": [
+            {
+                "block": "y",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "Cp",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "Bg",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
                 "block": "r",
                 "x": 12,
                 "y": 12
@@ -216,6 +279,64 @@
             {
                 "block": "y",
                 "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 11,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "spawnsBomb?": true
+        },
+        "name": "Mix",
+        "origin": [
+            {
+                "block": "y",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "Cp",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "Bg",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
                 "y": 14
             }
         ]
@@ -1273,6 +1394,94 @@
             {
                 "block": "r",
                 "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 3,
+            "spawnsBomb?": true
+        },
+        "name": "PopCloneNearCombo",
+        "origin": [
+            {
+                "block": "p",
+                "x": 5,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
                 "y": 14
             }
         ]
@@ -2375,94 +2584,6 @@
     {
         "final": [
             {
-                "block": "w",
-                "x": 12,
-                "y": 14
-            }
-        ],
-        "garbage": {
-            "colorGarbage": 0,
-            "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
-        },
-        "name": "tornadoBombChain",
-        "origin": [
-            {
-                "block": "w",
-                "x": 3,
-                "y": 11
-            },
-            {
-                "block": "b",
-                "x": 4,
-                "y": 11
-            },
-            {
-                "block": "y",
-                "x": 1,
-                "y": 12
-            },
-            {
-                "block": "g",
-                "x": 3,
-                "y": 12
-            },
-            {
-                "block": "b",
-                "x": 4,
-                "y": 12
-            },
-            {
-                "block": "w",
-                "x": 1,
-                "y": 13
-            },
-            {
-                "block": "y",
-                "x": 2,
-                "y": 13
-            },
-            {
-                "block": "b",
-                "x": 3,
-                "y": 13
-            },
-            {
-                "block": "Bb",
-                "x": 4,
-                "y": 13
-            },
-            {
-                "block": "y",
-                "x": 1,
-                "y": 14
-            },
-            {
-                "block": "Cr",
-                "x": 2,
-                "y": 14
-            },
-            {
-                "block": "Tr",
-                "x": 3,
-                "y": 14
-            },
-            {
-                "block": "r",
-                "x": 4,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 5,
-                "y": 14
-            }
-        ]
-    },
-    {
-        "final": [
-            {
                 "block": "r",
                 "x": 11,
                 "y": 13
@@ -2702,6 +2823,86 @@
             {
                 "block": "Tg",
                 "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "g",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "spawnsBomb?": true
+        },
+        "name": "TornadoClone1",
+        "origin": [
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "spawnsBomb?": true
+        },
+        "name": "TornadoClone",
+        "origin": [
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
                 "y": 14
             }
         ]
@@ -2983,6 +3184,94 @@
             {
                 "block": "b",
                 "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 12,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "spawnsBomb?": true
+        },
+        "name": "TornadoBombChain",
+        "origin": [
+            {
+                "block": "w",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 1,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "Bb",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "Cr",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 5,
                 "y": 14
             }
         ]

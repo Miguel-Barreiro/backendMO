@@ -2,7 +2,7 @@
 
 -export([ new_empty/2 , get_all_blocks/1 ]).
 -export([ get_block/3, set_block/4, remove_block/3, is_valid_position/3 ]).
--export([ print_board/1, are_boards_equal/2 ]).
+-export([ print_board/1, are_boards_equal/2, get_block_representation/1 ]).
 
 
 -include("include/softstate.hrl").
@@ -113,8 +113,8 @@ get_column_chars( X, Y, Board = #board{}) ->
 
 
 
-get_board_position( Board = #board{}, X, Y ) ->
-	case board:get_block( X , Y , Board) of
+get_block_representation( Block ) ->
+	case Block of
 		
 		empty ->												"  ";
 
@@ -190,7 +190,8 @@ get_board_position( Board = #board{}, X, Y ) ->
 
 	end.
 
-	
+get_board_position( Board = #board{}, X, Y ) ->
+	get_block_representation( board:get_block( X , Y , Board) ).	
 
 
 get_print_string( 0 ) ->

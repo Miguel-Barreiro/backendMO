@@ -82,8 +82,8 @@ handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, st
 				when Game_State == init ->
 	{A1,A2,A3} = now(),
 	random:seed(A1, A2, A3),
-	Seed = random:uniform(2147483646),
-
+	%Seed = random:uniform(2147483646),
+	Seed = 1,
 	lager:debug("enter game was sent!"),
 
 	Starting_game_logic_state = game_logic:create_new_game( User1#game_user.pid, User2#game_user.pid, Seed ),
