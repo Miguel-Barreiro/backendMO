@@ -659,7 +659,14 @@ pop_ghost( Block = #block{}, Board = #board{} ) ->
 				Current_Block#block.type == garbage_color
 	end,
 
-	case lists:filter( Garbage_only_filter , board:get_all_blocks( Board_without_paint ) ) of
+	Fun_order_garbages = fun( Garbage_block = #block{}, Garbage_block2 = #block{}) ->
+		case Garbage_block#block.x == Garbage_block2#block.x of
+			true ->			Garbage_block#block.y < Garbage_block2#block.y;
+			false ->		Garbage_block#block.x < Garbage_block2#block.x
+		end
+	end,
+
+	case lists:sort( Fun_order_garbages, lists:filter( Garbage_only_filter , board:get_all_blocks( Board_without_paint ) ) ) of
 		[] ->
 			Board;
 		Garbage_list ->
