@@ -7,10 +7,11 @@
 -export([ get_total_color_number/1, get_min_combo_size/1, get_abilities_generation_rules/1 ]).
 -export([ get_garbage_combo_generation_rules/1, get_garbage_chain_generation_rules/1, get_garbage_simultaneous_combo_generation_rules/1 ]).
 
-
 -define(CONFIGURATION_VERSION_URL,"http://s3-us-west-2.amazonaws.com/miniorbs-temp/latest.txt").
 -define(CONFIGURATION_BUCKET_URL,"http://s3-us-west-2.amazonaws.com/miniorbs-temp/").
 
+
+-export([ get_offline_configuration/1]).
 
 
 -include("include/softstate.hrl").
@@ -23,14 +24,40 @@
 -record(configurations_state, {
 	latest_version = undefined,
 	url = undefined,
-	values = gb_trees:empty() :: gb_tree()
+	values = gb_trees:empty() :: gb_tree(),
+	products = gb_trees:empty() :: gb_tree(),
+	tiers = gb_trees:empty() :: gb_tree()
 }).
+
+
+
+
+
+get_offline_configuration( Tier_name ) ->
+	Lines = string:tokens( download(?CONFIGURATION_VERSION_URL), "\n"),
+	[ Latest_version | _ ] = Lines,
+
+	State = get_configuration( Latest_version ),
+
+	Tier = gb_trees:get(Tier_name, State#configurations_state.tiers ),
+
+	{ State#configurations_state.values, 
+		State#configurations_state.products,
+			Tier#configuration_tier.abilities_generation_rules,
+				Tier#configuration_tier.garbage_combo_rules, 
+					Tier#configuration_tier.garbage_chain_rules, 
+						Tier#configuration_tier.garbage_simultaneous_rules, 6, 4 }.
+
+
+
+
+
 
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-init([]) ->	
-	gen_server:cast(self(), start),
+init([]) ->
+	gen_server:cast( self(), start),
 	{ok, #configurations_state{}}.
 
 
@@ -57,86 +84,35 @@ get_value( Name ) ->
 %% GAMEPLAY VALUES BY TIER
 
 -spec get_total_color_number( Tier :: string()) -> integer().
-get_total_color_number( Tier ) ->
+get_total_color_number( _Tier ) ->
 	6.
 	%gen_server:call(whereis(?MODULE), {get_total_color_number, Tier}).
 
 
 -spec get_min_combo_size( Tier :: string()) -> integer().
-get_min_combo_size( Tier ) ->
+get_min_combo_size( _Tier ) ->
 	4.
 	%gen_server:call(whereis(?MODULE), {get_min_combo_size, Tier}).
 
 % returns { {min_size,color}, power} 
--spec get_abilities_generation_rules( Tier :: string() ) -> [ { {integer(), color_type() | any}, power_type() } ].
+-spec get_abilities_generation_rules( Tier :: string() ) -> [ { {integer(), color_type() | any}, ability_type() } ].
 get_abilities_generation_rules( Tier ) ->
-	[
-		{{8,any}, spawn_bomb },
-
-			{{7,yellow}, spawn_bomb },
-			{{7,green}, spawn_bomb },
-			{{7,purple}, spawn_bomb },
-			{{7,white}, spawn_bomb },
-			{{7,blue}, spawn_bomb },
-			{{7,red}, spawn_bomb },
-
-				{{6,yellow}, spawn_bomb },
-				{{6,green}, spawn_bomb },
-				{{6,purple}, spawn_bomb },
-				{{6,white}, spawn_bomb },
-				{{6,blue}, spawn_bomb },
-				{{6,red}, spawn_bomb },
-
-					{{5,yellow}, spawn_bomb },
-					{{5,green}, spawn_bomb },
-					{{5,purple}, spawn_bomb },
-					{{5,white}, spawn_bomb },
-					{{5,blue}, spawn_bomb },
-					{{5,red}, spawn_bomb },
-
-						{{4,yellow}, spawn_bomb },
-						{{4,green}, spawn_bomb },
-						{{4,purple}, spawn_bomb },
-						{{4,white}, spawn_bomb },
-						{{4,blue}, spawn_bomb },
-						{{4,red}, spawn_bomb }							 
-	].
-	%gen_server:call(whereis(?MODULE), {get_abilities_generation_rules, Tier}).
+	gen_server:call(whereis(?MODULE), {get_abilities_generation_rules, Tier}).
 
 
 -spec get_garbage_combo_generation_rules( Tier :: string() ) -> [ { integer(), {garbage_type(),integer()}  } ].
 get_garbage_combo_generation_rules( Tier ) ->
-	[	
-		{4, {garbage,1} },
-		{5, {garbage,2} },
-		{6, {garbage,3} },
-		{7, {garbage,4} },
-		{8, {garbage,5} },
-		{9, {garbage,5} },
-		{10, {garbage,5} },
-		{11, {garbage,5} },
-		{12, {garbage,5} },
-		{13, {garbage,5} },
-		{14, {garbage,5} }
-	].
-
-
-	%gen_server:call(whereis(?MODULE), {get_garbage_combo_generation_rules, Tier}).
+	gen_server:call(whereis(?MODULE), {get_garbage_combo_generation_rules, Tier}).
 
 
 -spec get_garbage_chain_generation_rules( Tier :: string() ) -> { integer(), [ garbage_type() ]}.
 get_garbage_chain_generation_rules( Tier ) ->
-	{2, [garbage_color] }.
-	%gen_server:call(whereis(?MODULE), {get_garbage_chain_generation_rules, Tier}).
+	gen_server:call(whereis(?MODULE), {get_garbage_chain_generation_rules, Tier}).
 
 
 -spec get_garbage_simultaneous_combo_generation_rules( Tier :: string() ) -> { integer(), [ garbage_type() ]}.
 get_garbage_simultaneous_combo_generation_rules( Tier ) ->
-	{2, [garbage_hard] }.
-	%gen_server:call(whereis(?MODULE), {get_garbage_simultaneous_combo_generation_rules, Tier}).
-
-
-
+	gen_server:call(whereis(?MODULE), {get_garbage_simultaneous_combo_generation_rules, Tier}).
 
 
 
@@ -159,16 +135,16 @@ handle_info( poll_configuration , State = #configurations_state{} ) ->
 	Lines = string:tokens( download(?CONFIGURATION_VERSION_URL), "\n"),
 	[ Latest_version | _ ] = Lines,
 
-	%lager:debug("latest version is ~p",[Latest_version]),
+	lager:debug("latest version is ~p",[Latest_version]),
 
 	New_state = case Latest_version == State#configurations_state.latest_version of 
 		true ->			State;
-		false ->		swiss:notify( configuration, { new_configuration, 
+		false ->		
+						swiss:notify( configuration, { new_configuration, 
 														Latest_version, 
 															get_configuration_url_from_version(Latest_version) } ),
-						State#configurations_state{  latest_version = Latest_version, 
-														values = get_gb_tree_from_json( Latest_version ),
-															url = ?CONFIGURATION_BUCKET_URL ++ Latest_version }
+
+						get_configuration( Latest_version )
 	end,
 	erlang:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
 	{ noreply, New_state };
@@ -192,6 +168,32 @@ handle_call( get_url, _From, State ) ->
 
 
 
+handle_call( {get_abilities_generation_rules, Tier}, _From, State ) ->
+	Result = gb_trees:get(Tier, State#configurations_state.tiers ),
+	{reply, Result#configuration_tier.abilities_generation_rules , State};
+
+
+
+handle_call( {get_garbage_combo_generation_rules, Tier}, _From, State ) ->
+	Result = gb_trees:get(Tier, State#configurations_state.tiers ),
+	{reply, Result#configuration_tier.garbage_combo_rules , State};
+
+
+handle_call( {get_garbage_chain_generation_rules, Tier}, _From, State ) ->
+	Result = gb_trees:get(Tier, State#configurations_state.tiers ),
+	{reply, Result#configuration_tier.garbage_chain_rules , State};
+
+
+handle_call( {get_garbage_simultaneous_combo_generation_rules, Tier}, _From, State ) ->
+	Result = gb_trees:get(Tier, State#configurations_state.tiers ),
+	{reply, Result#configuration_tier.garbage_simultaneous_rules , State};
+
+
+
+
+
+
+
 handle_call(_E, _From, State) ->
 	{noreply, State}.
 
@@ -209,21 +211,25 @@ get_configuration_url_from_version( Version ) ->
 
 
 
+get_configuration( Latest_version ) ->
 
+	%lager:debug("latest version is ~p",[Latest_version]),
 
-get_gb_tree_from_json( Version ) ->
-	Json = download( get_configuration_url_from_version(Version) ),
+	Json = download( get_configuration_url_from_version(Latest_version) ),
 	{Proplist} = ejson:decode(Json),
-	{All_values} = proplists:get_value(<<"values">>,Proplist),
-	Fun = fun( { Key, Value} , Tree ) ->  
-		lager:debug("configuration value ~p -> ~p",[ binary_to_list(Key),Value]),
-		gb_trees:insert(Key, Value, Tree) 
-	end,
-	lists:foldl( Fun, gb_trees:empty(), All_values ).
 
+
+	#configurations_state{  latest_version = Latest_version,
+								values = parse_json_file:get_values_from_json( Proplist ),
+									url = ?CONFIGURATION_BUCKET_URL ++ Latest_version,
+										tiers = parse_json_file:get_tiers_from_json( Proplist ) }.
 
 
 download(Url) ->
 	%lager:debug("downloading ~p",[Url]),
 	{ok, {{_Version, 200, _Reason}, _Headers, Body}} = httpc:request(Url),
 	Body.
+
+
+
+

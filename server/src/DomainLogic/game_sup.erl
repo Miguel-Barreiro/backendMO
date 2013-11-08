@@ -13,5 +13,5 @@ init([]) ->
     ]}}.
 
 start_new_game_process( Game_data_list )->
-	lager:debug("game_sup: start new game with ~p",Game_data_list),
+	lager:debug("game_sup: start new game with ~p",[Game_data_list]),
 	supervisor:start_child(game_sup, Game_data_list ).

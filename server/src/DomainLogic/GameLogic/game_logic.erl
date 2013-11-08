@@ -26,7 +26,7 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 											current_piece = Piece,
 												random_state = New_random_state },
 
-	Game_rules = game_rules:get_current_rules("easy"),
+	Game_rules = game_rules:get_current_rules(<<"Normal">>),
 
 	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed, game_rules = Game_rules }.
 
@@ -38,6 +38,10 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 %throws out_of_bounds (in case the user has lost)
 %throws invalid_move (in case of an invalid move)
 handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
+	
+	io:format("\n-------------------------------- \n",[]),
+	io:format("\n USER 1 ~p PLACE A PIECE \n",[User_pid]),
+
 	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
 	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
 																	Opponent_pid,
@@ -47,14 +51,28 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (
 																					Game#game.user2_gamestate,
 																						Game#game.game_rules ),
 
-	io:format("-------------------------------- ",[]),
-	io:format(" USER 1 ~p PLACE A PIECE ",[User_pid]),
+
 	board:print_board( New_gamestate#user_gamestate.board ),
-	io:format("-------------------------------- ",[]),
+	io:format("\n-------------------------------- \n",[]),
+
+
+	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
+													0, 0, up,
+													board:get_all_blocks( New_gamestate#user_gamestate.board), 
+													[],
+														New_opponent_gamestate#user_gamestate.random_state, 
+														0, 0, up, 
+														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
+	%gen_server:cast( User_pid , { send_message, Msg} ),	
+
 
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
 
 handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
+
+
+	io:format("\n--------------------------------\n",[]),
+	io:format("\n USER 2 (~p) PLACE A PIECE \n",[User_pid]),
 
 	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
 	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
@@ -65,10 +83,18 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 																					Game#game.user1_gamestate,
 																						Game#game.game_rules ),
 
-	io:format("-------------------------------- ",[]),
-	io:format(" USER 2 ~p PLACE A PIECE ",[User_pid]),
+
 	board:print_board( New_gamestate#user_gamestate.board ),
-	io:format("-------------------------------- ",[]),
+	io:format("\n--------------------------------\n",[]),
+
+	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
+													0, 0, up,
+													board:get_all_blocks( New_gamestate#user_gamestate.board), 
+													[],
+														New_opponent_gamestate#user_gamestate.random_state, 
+														0, 0, up, 
+														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
+	%gen_server:cast( User_pid , { send_message, Msg} ),
 
 	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
 
@@ -80,20 +106,20 @@ handle_place_piece( User_pid, Opponent_pid,
 							Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}, 
 								Game_rules = #game_logic_rules{} ) ->
 
-	lager:debug("placed the piece in ~p,~p",[X,Y]),
+	io:format("\nplaced the piece [~p ~p] with angle ~p in ~p,~p\n",
+					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y]),
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
 			lager:debug("invalid piece place: wrong piece",[]),
 			throw( invalid_move );
 		true ->
-			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Gamestate#user_gamestate.board),
+
+			Board_after_reset_reinforcements = (Gamestate#user_gamestate.board)#board{ reinforcements = [] },
+			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Board_after_reset_reinforcements),
 
 			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece, Game_rules ),
-			
 			Board_after_release_garbage = release_garbage_list( Result_loop_board, Gamestate#user_gamestate.garbage_position_list ),
-
 			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate , Combos, Game_rules ),
-
 			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
 
 			case length(Generated_garbage_position_list) of
@@ -110,7 +136,7 @@ handle_place_piece( User_pid, Opponent_pid,
 												current_piece_angle = down,
 												current_piece_x = ?STARTING_PIECE_X,
 												current_piece_y = Board_after_release_garbage#board.height - 1,
-													piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
+												piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
 
 			New_opponent_garbage_list = lists:append( Opponent_gamestate#user_gamestate.garbage_position_list, Generated_garbage_position_list ),
 			New_opponent_gamestate = Opponent_gamestate#user_gamestate{ garbage_position_list = New_opponent_garbage_list },
@@ -188,13 +214,42 @@ apply_gravity_combo_loop( Board = #board{} , Game_rules = #game_logic_rules{} ) 
 		_other ->
 			Board_after_pop_combos = pop_combos( Board_after_gravity, Combos ),
 			lager:debug("poped combos"),
-			{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_pop_combos, Game_rules ),
+
+			Board_with_reinforcements = release_reinforcements( Board_after_pop_combos ),
+
+			Board_after_ability_chain = reset_board( Board_with_reinforcements ),
+
+			{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_ability_chain, Game_rules ),
 			{ [ Combos | New_Combos ] , New_board}
 	end.
 
 
 
 
+reset_board( Board = #board{} ) ->
+	Board#board{ painted = [], reinforcements = [] }.
+
+
+
+release_reinforcements( Board = #board{} ) ->
+
+	X_list = lists:seq(0, Board#board.width - 1 ),
+
+	Fun_foreach_reinforcement = fun( Color, { Y, Result_Board }) ->
+		
+		Fun = fun( X , Inner_result_Board) ->
+			case board:get_block( X, Y, Inner_result_Board) of
+				empty ->
+					board:set_block( #block{ type = color, color = Color }, X, Y, Inner_result_Board);
+				_block ->
+					throw(out_of_bounds)
+			end
+		end,
+		{ Y - 1, lists:foldl( Fun, Result_Board, X_list )}
+	end,
+
+	{_,Final_board} = lists:foldl( Fun_foreach_reinforcement, { Board#board.height -1, Board},  Board#board.reinforcements ),
+	Final_board.
 
 
 
@@ -202,13 +257,14 @@ place_piece( Piece = #piece{}, X, Y, up, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
 	case Real_y == Y - 1 of 
 		true ->
-			 board:set_block( Piece#piece.block1, X , Y, 
+			 board:set_block( Piece#piece.block1, X, Y, 
 			 					board:set_block( Piece#piece.block2, X , Y - 1, Board ) );
 		false ->
 			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y - 1]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
+
 
 place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
@@ -221,6 +277,7 @@ place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
+
 
 place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
 	Real_y = get_column_height( X, Board),
@@ -264,9 +321,11 @@ calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 	Blocks = board:get_all_blocks(Board),
 
 	Fun = fun( Block = #block{} , Combos ) ->
-		%lets ignore blocks already in combos
-		case lists:any( fun( Combo ) -> sets:is_element( Block, Combo ) end , Combos) of
+		%lets ignore blocks already in combos (except shapeshifter)
+		case lists:any( fun( Combo ) -> sets:is_element( Block, Combo ) andalso Block#block.type =/= shapeshifter end , Combos) of
 			true ->
+				Combos;
+			false when Block#block.type == shapeshifter ->
 				Combos;
 			false ->
 				{New_combo, _ } = calculate_combo_for_piece( Block, Block#block.x, Block#block.y, Board),
@@ -288,51 +347,129 @@ calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 
 
 
+
+
+
+
 pop_combos( Board = #board{}, Combo_list ) ->
-	Fun = fun( Combo, New_board )->
-		pop_combo( New_board, Combo )
+
+	Combo_blocks  = lists:foldl( fun( Combo, All_combo_blocks )->
+									lists:append( All_combo_blocks, sets:to_list(Combo) )
+								 end, [], Combo_list),
+
+
+	Board_without_combos = lists:foldl( fun( Block = #block{}, Board_without_combos ) ->
+											board:remove_block( Block#block.x, Block#block.y, Board_without_combos)
+										end, Board, Combo_blocks),
+
+
+
+	Blocks_by_proximity = lists:foldl( fun( Combo, List )->
+										lists:append( List, get_afected_by_combo_proximity(Combo , Board_without_combos))
+										end, [], Combo_list), 
+	
+	Board_after_remove_combos_proximity = activate_blocks_by_combo_proximity( Blocks_by_proximity, Board_without_combos),
+	activate_blocks( order_activated_block_list(Combo_blocks), Board_after_remove_combos_proximity).
+
+
+
+
+
+get_afected_by_combo_proximity( Combo , Board = #board{}) ->
+	Fun = fun ( Block, Set) ->
+		add_affected_blocks_around_to_set( Block#block.x, Block#block.y, Board, Combo, Set )
 	end,
-	lists:foldl( Fun, Board, Combo_list ).
+	sets:to_list( lists:foldl(Fun , sets:new(), sets:to_list(Combo) ) ).
+
+add_affected_blocks_around_to_set( X, Y, Board = #board{}, Combo, Set) ->
+	add_affected_block_around_to_set( X + 1, Y, Board, Combo,
+		add_affected_block_around_to_set( X, Y + 1, Board, Combo,
+			add_affected_block_around_to_set( X - 1, Y, Board, Combo,
+				add_affected_block_around_to_set( X, Y - 1, Board, Combo, Set )))).
+
+add_affected_block_around_to_set( X, Y, Board = #board{}, Combo, Set ) ->
+	
+	case board:get_block( X, Y, Board ) of
+		empty ->	
+			Set;
+		Block when	Block#block.type == garbage_hard orelse 
+						Block#block.type == garbage_color orelse 
+							Block#block.type == garbage orelse 
+								Block#block.type == cloner ->
+			case sets:is_element( Block, Combo ) of
+				true ->
+					Set;
+				false ->
+					sets:add_element(Block, Set)
+			end;
+		_other ->
+			Set
+	end.
+	
 
 
-pop_combo( Board = #board{}, Combo ) ->
-	Fun = fun( Block = #block{}, New_board )->
-		pop_combo_block(  Block#block.x, Block#block.y, New_board )
+
+
+
+
+
+
+get_activated_by_blocks_abilities( Block_list , Board = #board{} ) ->
+	Fun = fun( Block, List ) ->
+		lists:append( get_activated_by_block_abilities( Block, Board ) , List)
 	end,
-	lists:foldl( Fun, Board, sets:to_list(Combo)).
-
-
-
-pop_combo_block(  X, Y, Board = #board{} ) ->
-	New_board_witout_block = pop_block(  X, Y, Board ),
-	pop_garbages_around( New_board_witout_block, X, Y ).
+	lists:foldl( Fun, [], Block_list ).
 
 
 
 
+get_color_order( Color )->
+	case Color of
+		red ->			1;
+		yellow ->		2;
+		blue ->			3;
+		green ->		4;
+		purple ->		5;
+		white ->		6;
+		undefined ->	7
+	end.
 
-pop_garbages_around( Board = #board{}, X, Y) ->
-	pop_garbage_in( X + 1, Y, pop_garbage_in( X - 1, Y, pop_garbage_in( X, Y + 1, pop_garbage_in( X, Y - 1, Board)))).
 
-pop_garbage_in( X, Y, Board = #board{}) ->
-	case board:get_block( X, Y , Board) of
+
+order_activated_block_list( Block_list ) ->
+	Fun = fun( Block = #block{} , Block2 = #block{} ) ->
+		get_color_order(Block#block.color) > get_color_order(Block2#block.color)
+	end,
+	lists:sort( Fun , Block_list ).
+
+
+
+
+activate_blocks_by_combo_proximity( [], Board = #board{}) ->
+	Board;
+activate_blocks_by_combo_proximity( [ Block | Rest], Board = #board{}) ->
+	case Block of
 		
-		empty ->
-			Board;
+		Cloner_block when Cloner_block#block.type == cloner ->
+			New_board = pop_cloner( Cloner_block, Board),
+			activate_blocks_by_combo_proximity( Rest, New_board);
 
-		Garbage_block when Garbage_block#block.type == garbage ->
-			board:remove_block( X, Y, Board);
-
-		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness == 1 ->
-			board:remove_block( X, Y, Board);
-
-		Garbage_block when Garbage_block#block.type == garbage_hard ->
-			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y,board:remove_block( X, Y, Board));
+		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness > 1 ->
+			New_board = board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, 
+								Block#block.x, Block#block.y, board:remove_block( Block#block.x, Block#block.y , Board)),
+			activate_blocks_by_combo_proximity( Rest, New_board);
 
 		Garbage_block when Garbage_block#block.type == garbage_color ->
-			board:set_block( #block{ type = color , color = Garbage_block#block.color }, X, Y, board:remove_block( X, Y , Board) );
+			New_board = board:set_block( #block{ type = color , color = Garbage_block#block.color }, 
+								Block#block.x, Block#block.y, 
+									board:remove_block( Block#block.x, Block#block.y, Board) ),
+			activate_blocks_by_combo_proximity( Rest, New_board);
 
-		_other_blocks ->
+		Garbage_block when Garbage_block#block.type == garbage ->
+			New_board = board:remove_block( Block#block.x, Block#block.y, Board),
+			activate_blocks_by_combo_proximity( Rest, New_board);
+
+		_other ->
 			Board
 	end.
 
@@ -340,71 +477,230 @@ pop_garbage_in( X, Y, Board = #board{}) ->
 
 
 
-pop_block(  X, Y, Board = #board{} ) ->
-	case board:get_block( X, Y , Board) of
-		empty ->
-			Board;
+activate_blocks( [], Board = #board{} ) ->
+	Board;
+activate_blocks( Block_list, Board = #board{} ) ->
+	
+	Remove_fun =  fun( Block, Result_Board = #board{} ) ->
+		remove_block( Block, Result_Board )
+	end,
 
-		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness == 1 ->
-			board:remove_block( X, Y , Board);			
+	Activate_fun = fun( Block, Result_Board = #board{} ) ->
+		activate_block( Block, Result_Board )
+	end,
 
-		Garbage_block when Garbage_block#block.type == garbage_hard ->
-			board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, X, Y,
-							 	board:remove_block( X, Y , Board));
+	Board_after_removed = lists:foldl( Remove_fun , Board, Block_list ),
+	Board_after_activate = lists:foldl( Activate_fun , Board_after_removed, Block_list ),
 
-		Garbage_block when Garbage_block#block.type == garbage ->
-			board:remove_block( X, Y , Board);
+	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board_after_activate) ),
+	activate_blocks( New_activated_list, Board_after_activate).
 
-		Garbage_block when Garbage_block#block.type == garbage_color ->
-			board:set_block( #block{ type = color , color = Garbage_block#block.color }, X, Y, board:remove_block( X, Y , Board) );
 
-		Bomb_block when Bomb_block#block.type == bomb ->
-			pop_bomb( X, Y, Board);
 
-		Chromatic_block when Chromatic_block#block.type == chromatic_bomb ->
-			pop_chromatic_bomb(X, Y, Chromatic_block#block.color, Board);
 
-		Color_block when Color_block#block.type == color ->
-			board:remove_block( X, Y , Board)
+remove_block(Paint_block = #block{}, Board = #board{} ) when Paint_block#block.type == paint ->
+	Board;
+remove_block( Block = #block{}, Board = #board{} )->
+	%io:format("\n removing ~p",[Block]),
+	board:remove_block( Block#block.x, Block#block.y, Board ).
+
+
+
+activate_block( Paint_block = #block{}, Board = #board{} ) when Paint_block#block.type == paint ->
+	pop_paint( Paint_block, Board );
+
+activate_block( Reinforcement_block = #block{}, Board = #board{} ) when Reinforcement_block#block.type == reinforcements ->
+	pop_reinforcement( Reinforcement_block, Board );
+
+activate_block( Ghost_block = #block{}, Board = #board{} ) when Ghost_block#block.type == ghost ->
+	pop_ghost( Ghost_block, Board);
+
+ activate_block( _ , Board = #board{} ) ->
+	Board.
+
+
+
+
+
+
+
+get_activated_by_block_abilities( Block = #block{}, Board = #board{} ) ->
+	X = Block#block.x,
+	Y = Block#block.y,
+
+	case Block#block.type of
+		bomb ->
+			add_block_to_list( X + 1, Y + 1, Board,
+				add_block_to_list( X + 1, Y, Board,
+					add_block_to_list( X + 1, Y - 1, Board,
+
+						add_block_to_list( X, Y + 1, Board,
+							add_block_to_list( X, Y - 1, Board,
+
+								add_block_to_list( X - 1, Y + 1, Board,
+									add_block_to_list( X - 1, Y, Board,
+										add_block_to_list( X - 1, Y - 1, Board, [] ))))))));
+		chromatic_bomb ->
+			get_all_same_color( Block#block.color, Board );
+
+		tornado ->
+			List = get_tornado_activated_blocks( X, Y, Board ),
+			List;
+		_other ->
+			[]
+	end.
+
+
+add_block_to_list( X, Y, Board = #board{}, List) ->
+	case board:get_block( X, Y, Board) of
+		empty ->			List;
+		Block ->			[Block | List]
 	end.
 
 
 
 
-pop_bomb( X, Y, Board = #board{}) ->
-	io:format("poping bomb in ~p,~p \n",[X, Y]),
-	pop_block( X + 1, Y,
-		pop_block( X - 1, Y ,
-			pop_block( X, Y + 1,
-				pop_block( X, Y - 1,
-					pop_block( X + 1, Y + 1,
-						pop_block( X - 1, Y + 1,
-							pop_block( X + 1, Y - 1,
-								pop_block( X - 1, Y - 1,
-									board:remove_block( X, Y , Board))))))))).
+
+
+
+get_tornado_activated_blocks( X, Y, Board = #board{}) ->
+
+	First_ring = [ {1,0}, {-1,1}, {-1,-1}, {1,1}, {-1,0}, {1,-1}, {0,1}, {0,-1} ],
+	Second_ring = [ {0,2}, {-2,-2}, {2,-2}, {2,2}, {0,-2}, {-2,2}, {2,0}, {-1,2}, {-1,-2}, {2,1}, {-2,0}, {2,-1}, {1,-2}, {-2,1}, {1,2}, {-2,-1} ],
+
+	First_ring_pieces = get_tornado_pieces_at( 5, First_ring, X, Y, Board ),
+	Second_ring_pieces = get_tornado_pieces_at( 3, Second_ring, X, Y, Board ),
+	lists:append( First_ring_pieces, Second_ring_pieces).
+
+
+get_tornado_pieces_at( 0 , _, _, _, _ ) ->
+	[];
+
+get_tornado_pieces_at( _, [], _, _, _ ) ->
+	[];
+
+get_tornado_pieces_at( Amount, [ {Dx,Dy} | Rest], X, Y, Board = #board{} ) ->
+	case Block = board:get_block( X + Dx , Y + Dy, Board) of
+		empty ->
+			get_tornado_pieces_at( Amount, Rest, X, Y, Board);
+		Block when Block#block.type == garbage orelse 
+					Block#block.type == garbage_hard orelse 
+						Block#block.type == garbage_color ->
+			get_tornado_pieces_at( Amount, Rest, X, Y, Board);
+		Block ->
+			[ Block | get_tornado_pieces_at( Amount - 1, Rest, X, Y, Board) ]
+	end.
 
 
 
 
-remove_all_same_color( Color, Board = #board{} ) ->	
-	Fun = fun( Block = #block{}, New_board = #board{} )->
-		case Block#block.type of
-			color when Block#block.color == Color ->
-				io:format("\nremoving same color ~p block in ~p,~p",[Color,Block#block.x, Block#block.y]),
-				board:remove_block( Block#block.x, Block#block.y , New_board);
-			_other ->
-				New_board
+
+change_block_color( X, Y, New_color, Board = #board{} ) ->
+	case board:get_block( X, Y , Board) of
+		empty ->
+			Board;
+		Block when Block#block.type == shapeshifter->
+			Board;
+		Block when Block#block.type == garbage_color->
+			Board;
+		Block ->
+			case proplists:get_value( {X,Y}, Board#board.painted ) of
+				undefined ->
+					New_board = board:set_block( Block#block{ color = New_color }, X, Y, board:remove_block( X, Y, Board)),
+					New_board#board{ painted = [ {{X,Y}, New_color} | New_board#board.painted ] };
+				Color when Color == New_color ->
+					board:set_block( Block#block{ color = New_color }, X, Y, board:remove_block( X, Y, Board));
+				_color  ->
+					board:set_block( Block#block{ type = shapeshifter, color = undefined }, X, Y, board:remove_block( X, Y, Board))
+			end
+	end.
+
+
+
+pop_paint( Block, Board = #board{}) ->
+	
+	X = Block#block.x,
+	Y = Block#block.y,
+
+	New_color = Block#block.color,
+	Board_without_paint = board:remove_block( X, Y , Board),
+
+	change_block_color( X + 1, Y, New_color, 
+		change_block_color( X, Y + 1, New_color, 
+			change_block_color( X - 1, Y, New_color, 
+				change_block_color( X, Y -1, New_color, 
+					change_block_color( X + 1, Y + 1, New_color, 
+						change_block_color( X - 1, Y + 1, New_color,
+							change_block_color( X + 1, Y - 1, New_color,
+								change_block_color( X - 1, Y - 1, New_color, Board_without_paint)))))))).
+
+
+
+
+pop_reinforcement( Block, Board = #board{}) ->
+	New_color = Block#block.color,
+	Board_without_paint = board:remove_block( Block#block.x, Block#block.y , Board),
+	Board_without_paint#board{ reinforcements = [ New_color | Board_without_paint#board.reinforcements] }.
+
+
+
+pop_cloner( Cloner_block, Board = #board{}) ->
+
+	X = Cloner_block#block.x,
+	Y = Cloner_block#block.y,
+
+	Fun_shift_pieces = fun( Piece_y, Shift_result_board ) ->
+		case board:get_block( X, Piece_y, Board) of
+			empty ->
+				Shift_result_board;
+			Block ->
+				board:set_block( Block, X, Piece_y + 1, board:remove_block(X, Piece_y, Shift_result_board))
 		end
 	end,
-	lists:foldl( Fun, Board, board:get_all_blocks(Board)).
+	Shifted_board = lists:foldl( Fun_shift_pieces, Board, lists:seq(Board#board.height, Y + 1, -1)),
+	board:set_block( #block{ type = color, color = Cloner_block#block.color }, X, Y + 1, Shifted_board ).
 
 
-pop_chromatic_bomb( X, Y, Color, Board = #board{}) ->
-	io:format("poping ~p chromatic in ~p,~p \n",[Color,X,Y]),
-	New_board = remove_all_same_color( Color, Board),
-	board:remove_block( X, Y, New_board).
+
+pop_ghost( Block = #block{}, Board = #board{} ) ->
+	Board_without_paint = board:remove_block( Block#block.x, Block#block.y , Board),
+	
+	Garbage_only_filter = fun( Current_Block = #block{} ) ->
+		Current_Block#block.type == garbage orelse 
+			Current_Block#block.type == garbage_hard orelse 
+				Current_Block#block.type == garbage_color
+	end,
+
+	Fun_order_garbages = fun( Garbage_block = #block{}, Garbage_block2 = #block{}) ->
+		case Garbage_block#block.x == Garbage_block2#block.x of
+			true ->			Garbage_block#block.y < Garbage_block2#block.y;
+			false ->		Garbage_block#block.x < Garbage_block2#block.x
+		end
+	end,
+
+	case lists:sort( Fun_order_garbages, lists:filter( Garbage_only_filter , board:get_all_blocks( Board_without_paint ) ) ) of
+		[] ->
+			Board;
+		Garbage_list ->
+			{ New_random_state, Random } = get_next_random( Board#board.abilities_random_state ),
+			Garbage = lists:nth( Random rem length(Garbage_list) + 1, Garbage_list),
+			New_board = board:set_block( #block{ type = shapeshifter }, Garbage#block.x, Garbage#block.y, 
+											board:remove_block( Garbage#block.x, Garbage#block.y, Board_without_paint ) ),
+			New_board#board{ abilities_random_state = New_random_state }
+	end.
 
 
+
+get_all_same_color( Color, Board = #board{} ) ->
+	Fun = fun( Block = #block{}, Result_list )->
+		case Block#block.type of
+			color when Block#block.color == Color ->
+				[ Block | Result_list];
+			_other ->
+				Result_list
+		end
+	end,
+	lists:foldl( Fun, [], board:get_all_blocks(Board) ).
 
 
 
@@ -474,6 +770,10 @@ calculate_next_piece( Initial_random_state ) ->
 	{  New_random_state2,
 		#piece{ block1 = #block{ type = Type, color = Color }, 
 				block2 = #block{ type = Type2, color = Color2 } }}.
+
+
+
+
 
 
 
@@ -682,9 +982,11 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 				empty ->
 					{ Combo, New_visited };
 
-				Current_block when Current_block#block.type =/= garbage,
-										Current_block#block.type =/= garbage_hard,
-											Current_block#block.type =/= garbage_color, Current_block#block.color == Block#block.color ->
+				Current_block when (Current_block#block.type =/= garbage andalso
+										Current_block#block.type =/= garbage_hard andalso
+											Current_block#block.type =/= garbage_color andalso
+												Current_block#block.color == Block#block.color) orelse
+													Current_block#block.type == shapeshifter ->
 
 					New_combo = sets:add_element( Current_block, Combo ),
 
@@ -720,116 +1022,230 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 %% --------------------         GOOGLE DOCS             ------------------------------------------
 
 
+get_power_type_from_test_type( Test_type ) ->
+	case Test_type of
+
+		<<"none">> ->				color;
+		
+		<<"tornado">> ->			tornado;
+		<<"paint">> ->				paint;
+		<<"reinforcements">> ->		reinforcements;
+		<<"chromatic">> ->			chromatic_bomb;
+		<<"shapeshifter">> ->		shapeshifter;
+		<<"cloner">> ->				cloner;
+		<<"bomb">> ->				bomb;
+		<<"ghost">>	->				ghost
+	end.
 
 
 create_board( Block_list, X_offset ) ->
 	Fun = fun(  {Block_properties}, Result) ->
 
 		Value = proplists:get_value(<<"block">>, Block_properties),
-		X = ?BOARD_WIDTH - proplists:get_value(<<"x">>, Block_properties) + 1 + X_offset,
+		X = proplists:get_value(<<"x">>, Block_properties) - 1 - X_offset,
 		Y = ?BOARD_HEIGHT - proplists:get_value(<<"y">>, Block_properties) + 1,
 
-		{Real_block_type, Color} = 
+		{Real_block_type, Color, Hardness} = 
 		case Value of
-			<<"w">> -> {color,white};
-			<<"p">> -> {color,purple};
-			<<"b">> -> {color,blue};
-			<<"r">> -> {color,red};
-			<<"g">> -> {color,green};
-			<<"y">> -> {color,yellow};
+			<<"w">> -> 	{color,white, 2};
+			<<"p">> -> 	{color,purple, 2};
+			<<"b">> -> 	{color,blue, 2};
+			<<"r">> -> 	{color,red, 2};
+			<<"g">> -> 	{color,green, 2};
+			<<"y">> -> 	{color,yellow, 2};
 
-			<<"+">> -> {garbage,red};
-			<<"#">> -> {garbage_hard,red};
+			<<"@">> -> 	{garbage,red, 2};
 
-			<<"#w">> -> {garbage_color,white};
-			<<"#p">> -> {garbage_color,purple};
-			<<"#b">> -> {garbage_color,blue};
-			<<"#r">> -> {garbage_color,red};
-			<<"#g">> -> {garbage_color,green};
-			<<"#y">> -> {garbage_color,yellow};
+			<<"#1">> -> {garbage_hard,red, 1};
+			<<"#2">> -> {garbage_hard,red, 2};
+			<<"#">> -> 	{garbage_hard,red, 2};
+
+			<<"#w">> -> {garbage_color,white, 2};
+			<<"#p">> -> {garbage_color,purple, 2};
+			<<"#b">> -> {garbage_color,blue, 2};
+			<<"#r">> -> {garbage_color,red, 2};
+			<<"#g">> -> {garbage_color,green, 2};
+			<<"#y">> -> {garbage_color,yellow, 2};
 			
-			<<"W">> -> {bomb,white};
-			<<"P">> -> {bomb,purple};
-			<<"B">> -> {bomb,blue};
-			<<"G">> -> {bomb,green};
-			<<"R">> -> {bomb,red};
-			<<"Y">> -> {bomb,yellow}
+			<<"?">> -> 	{shapeshifter,undefined, 2};
+
+			<<"Tw">> -> {tornado,white, 2};
+			<<"Tp">> -> {tornado,purple, 2};
+			<<"Tg">> -> {tornado,green, 2};
+			<<"Tr">> -> {tornado,red, 2};
+			<<"Ty">> -> {tornado,yellow, 2};
+			<<"Tb">> -> {tornado,blue, 2};
+
+			<<"Pw">> -> {paint,white, 2};
+			<<"Pp">> -> {paint,purple, 2};
+			<<"Pg">> -> {paint,green, 2};
+			<<"Pr">> -> {paint,red, 2};
+			<<"Py">> -> {paint,yellow, 2};
+			<<"Pb">> -> {paint,blue, 2};
+
+			<<"Bw">> -> {bomb,white, 2};
+			<<"Bp">> -> {bomb,purple, 2};
+			<<"Bb">> -> {bomb,blue, 2};
+			<<"Bg">> -> {bomb,green, 2};
+			<<"Br">> -> {bomb,red, 2};
+			<<"By">> -> {bomb,yellow, 2};
+
+			<<"Cw">> -> {cloner,white, 2};
+			<<"Cp">> -> {cloner,purple, 2};
+			<<"Cb">> -> {cloner,blue, 2};
+			<<"Cg">> -> {cloner,green, 2};
+			<<"Cr">> -> {cloner,red, 2};
+			<<"Cy">> -> {cloner,yellow, 2};
+
+
+			<<"Rw">> -> {reinforcements,white, 2};
+			<<"Rp">> -> {reinforcements,purple, 2};
+			<<"Rb">> -> {reinforcements,blue, 2};
+			<<"Rg">> -> {reinforcements,green, 2};
+			<<"Rr">> -> {reinforcements,red, 2};
+			<<"Ry">> -> {reinforcements,yellow, 2}
+
 		end,
 
-		board:set_block( #block{ type = Real_block_type, color = Color}, X, Y, Result)
+		board:set_block( #block{ type = Real_block_type, color = Color, hardness = Hardness}, X, Y, Result)
 	end,
+
+
+
 
 	lists:foldl( Fun , board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT), Block_list ).
 
 
 
-google_docs_test_() ->
-
-		{ok, Dir} = file:get_cwd(),
-		io:format("filename is ~p",[Dir ++ "/../scripts/RESULT.json"]),
-		{ok, Binary} = file:read_file(Dir ++ "/../scripts/RESULT.json"),
-		
-		Fun = fun( {Test_data}, Result) ->
-
-			Final = proplists:get_value(<<"final">>,Test_data),
-			Start = proplists:get_value(<<"origin">>,Test_data),
-			Test_name = proplists:get_value(<<"name">>,Test_data),
-			{Generated_garbage} = proplists:get_value(<<"garbage">>,Test_data),
-
-			Color_garbage = proplists:get_value(<<"colorGarbage">>,Generated_garbage),
-			Hard_garbage = proplists:get_value(<<"hardGarbage">>,Generated_garbage),
-			Normal_garbage = proplists:get_value(<<"normalGarbage">>,Generated_garbage),
-			%Spawns_bomb = proplists:get_value(<<"spawnsBomb">>,Generated_garbage),
-
-			Start_board = create_board( Start, 0 ),
-			Final_board = create_board( Final, 9 ),
-
-		%	io:format("----------\n ~p  \n-----",[Start]),
+setup_tests() ->
+	application:start(inets),
+	application:start(httpc),
+	ok.
 
 
-			Game_rules = game_rules:get_current_rules("easy"),
-
-			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),
-			Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
-
-		%	io:format("\nanswer is ~p\n",[Result_loop_board]),
-		%	io:format("final is ~p",[Final_board]),
-		%	io:format("\ncomparison is ~p\n",[board:are_boards_equal(Result_loop_board,Final_board)])
-		%io:format("garbage list is ~p",[Garbage_position_list]),
-
-			[ {binary_to_list(Test_name),
-				fun () ->  			
-					?assertMatch( true , board:are_boards_equal(Result_loop_board,Final_board) ),
-
-					Calculated_number_color_garbages = length( lists:filter( fun( {Garbage,_} )-> 
-																	case Garbage of 
-																		{garbage_color, _color} -> 	true;
-																		_other ->					false 
-																	end
-																end, Garbage_position_list)),
-
-					Calculated_number_hard_garbages = length( lists:filter( fun( {Garbage,_} )-> 
-																				Garbage == garbage_hard 
-																			end, Garbage_position_list)),
-
-					Calculated_number_normal_garbages = length( lists:filter( fun( {Garbage,_} )-> 
-																				Garbage == garbage 
-																			end, Garbage_position_list)),
-					io:format("garbage ~p , garbage_hard ~p,  garbage_color ~p",[Calculated_number_normal_garbages,
-																					Calculated_number_hard_garbages,	
-										 												Calculated_number_color_garbages ] ),
-
-					?assertMatch( Normal_garbage, Calculated_number_normal_garbages ),
-					?assertMatch( Hard_garbage, Calculated_number_hard_garbages ),
-					?assertMatch( Color_garbage, Calculated_number_color_garbages ),
-					?assert( test_garbage_position( Garbage_position_list, Final_board ))
-				end } | Result]
-
-		end,
-		lists:foldl( Fun,[], ejson:decode(Binary)).
+tear_down_tests( _ ) ->
+	ok.
 
 
+google_docs_tests(Game_rules) ->
 
+	{ok, Dir} = file:get_cwd(),
+	{ok, Binary} = file:read_file(Dir ++ "/../scripts/RESULT.json"),
+	
+	Fun = fun( {Test_data}, Result) ->
+
+		Test_name = proplists:get_value(<<"name">>,Test_data),
+
+		[ {binary_to_list(Test_name),
+			fun () ->
+
+				Final = proplists:get_value(<<"final">>,Test_data),
+				Start = proplists:get_value(<<"origin">>,Test_data),
+				
+				{Generated_garbage} = proplists:get_value(<<"garbage">>,Test_data),
+
+				Color_garbage = proplists:get_value(<<"colorGarbage">>,Generated_garbage),
+				Hard_garbage = proplists:get_value(<<"hardGarbage">>,Generated_garbage),
+				Normal_garbage = proplists:get_value(<<"normalGarbage">>,Generated_garbage),
+				%Spawns_bomb = proplists:get_value(<<"spawnsBomb">>,Generated_garbage),
+
+				Power_generated = proplists:get_value(<<"PowerGenerated">>,Generated_garbage),
+				Power_type = get_power_type_from_test_type( Power_generated ),
+
+				Start_board = create_board( Start, 0 ),
+				Final_board = create_board( Final, 9 ),
+
+				{ Combos, Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),
+				Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
+				{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( #user_gamestate{ random_state = 1 } , Combos, Game_rules ),
+
+				io:format("\n expected result\n"),
+				board:print_board(Final_board),
+				io:format("\n actual result \n"),
+				board:print_board(Result_loop_board),
+				io:format("\n"),
+
+				?assertMatch( true , board:are_boards_equal(Result_loop_board,Final_board) ),
+
+				Calculated_number_color_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+																case Garbage of 
+																	{garbage_color, _color} -> 	true;
+																	_other ->					false 
+																end
+															end, Garbage_position_list)),
+
+				Calculated_number_hard_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+																			Garbage == garbage_hard 
+																		end, Garbage_position_list)),
+
+				Calculated_number_normal_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+																			Garbage == garbage 
+																		end, Garbage_position_list)),
+
+				Next_block = Next_piece#piece.block1,
+				Calculated_block_type = Next_block#block.type,
+
+				io:format("calculated power ~p garbage ~p , garbage_hard ~p,  garbage_color ~p",[	Calculated_block_type,
+																									Calculated_number_normal_garbages,
+																									Calculated_number_hard_garbages,	
+									 																Calculated_number_color_garbages ] ),
+
+				?assertMatch( Calculated_number_normal_garbages, Normal_garbage ),
+				?assertMatch( Calculated_number_hard_garbages, Hard_garbage ),
+				?assertMatch( Calculated_number_color_garbages, Color_garbage ),
+				?assertMatch( Calculated_block_type, Power_type ),
+
+				ok
+				
+			end } | Result]
+
+	end,
+	lists:foldl( Fun,[], ejson:decode(Binary)).
+
+
+normal_tests_(Game_rules) ->
+	[
+		{"test_multiple_bombs",?_test(test_multiple_bombs(Game_rules))},
+		{"test_simple_chromatic_bomb",?_test(test_simple_chromatic_bomb(Game_rules))},
+		{"test_simple2_chromatic_bomb",?_test(test_simple2_chromatic_bomb(Game_rules))},
+		{"test_simple_bomb",?_test(test_simple_bomb(Game_rules))},
+		{"test_simple_double_bomb_chain",?_test(test_simple_double_bomb_chain(Game_rules))},
+		{"test_simple_double_bomb_chain2",?_test(test_simple_double_bomb_chain2(Game_rules))},
+		{"test_simple_bomb_chain_chromatic_bom",?_test(test_simple_bomb_chain_chromatic_bom(Game_rules))},
+		{"test_release_garbage_into_full_column",?_test(test_release_garbage_into_full_column(Game_rules))},
+		{"test_simple_gameplay_loop",?_test(test_simple_gameplay_loop(Game_rules))},
+		{"test_simple2_gameplay_loop",?_test(test_simple2_gameplay_loop(Game_rules))},
+		{"test_simple2_gravity",?_test(test_simple2_gravity(Game_rules))},
+		{"test_simple_gravity",?_test(test_simple_gravity(Game_rules))},
+		{"test_simple_combo",?_test(test_simple_combo(Game_rules))},
+		{"test_simple_combo_with_chromatic",?_test(test_simple_combo_with_chromatic(Game_rules))},
+		{"test_double_combo",?_test(test_double_combo(Game_rules))},
+		{"test_no_combos",?_test(test_no_combos(Game_rules))},
+		{"test_simple_garbage_poping_combos",?_test(test_simple_garbage_poping_combos(Game_rules))},
+		{"test_simple_poping_combos",?_test(test_simple_poping_combos(Game_rules))},
+		{"test_simple_poping_combos",?_test(test_simple_poping_combos(Game_rules))},
+		{"test_simple_down_place_piece",?_test(test_simple_down_place_piece(Game_rules))},
+		{"test_simple_right_piece",?_test(test_simple_right_piece(Game_rules))},
+		{"test_simple_left_place_piece",?_test(test_simple_left_place_piece(Game_rules))},
+		{"test_simple_invalid_place_piece",?_test(test_simple_invalid_place_piece(Game_rules))},
+		{"test_simple_up_place_piece",?_test(test_simple_up_place_piece(Game_rules))}		
+	].
+
+
+full_game_logic_test_() ->
+
+		setup_tests(),
+		Game_rules = game_rules:get_offline_current_rules(<<"Normal">>),
+
+		Google_test_list = google_docs_tests(Game_rules),
+		Normal_test_list = normal_tests_(Game_rules),
+		{spawn,
+			{setup,	
+				fun()-> ok end,
+				fun tear_down_tests/1,
+      			 lists:append( Google_test_list, Normal_test_list )
+			}
+		}.
 
 
 
@@ -840,7 +1256,7 @@ google_docs_test_() ->
 %% --------------------         POWERS             ------------------------------------------
 
 
-multiple_bombs_test() ->
+test_multiple_bombs(Game_rules) ->
 
 	BoardT = board:new_empty(5,12),
 	board:print_board( BoardT),
@@ -878,9 +1294,6 @@ multiple_bombs_test() ->
 							board:set_block( #block{ color = white }, 4 , 5,
 
 								board:new_empty(5,12))))))))))))))))))))))))))),
-
-
-	Game_rules = game_rules:get_current_rules("easy"),
 
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
@@ -926,7 +1339,10 @@ multiple_bombs_test() ->
 
 
 
-simple_chromatic_bomb_test() ->
+
+
+test_simple_chromatic_bomb(Game_rules) ->
+
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -943,8 +1359,6 @@ simple_chromatic_bomb_test() ->
 
 														board:set_block( #block{ color = red }, 3 , 0,
 															board:new_empty(5,12))))))))))))),
-
-	Game_rules = game_rules:get_current_rules("easy"),
 
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
@@ -969,7 +1383,9 @@ simple_chromatic_bomb_test() ->
 	ok.
 
 
-simple2_chromatic_bomb_test() ->
+
+
+test_simple2_chromatic_bomb(Game_rules) ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 			board:set_block( #block{ color = red }, 0 , 1, 
 			board:set_block( #block{ color = red }, 0 , 2, 
@@ -1000,7 +1416,6 @@ simple2_chromatic_bomb_test() ->
 								board:new_empty(5,12)))))))))))))))))))))))),
 
 	
-	Game_rules = game_rules:get_current_rules("easy"),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Board),
@@ -1039,7 +1454,10 @@ simple2_chromatic_bomb_test() ->
 	ok.
 
 
-simple_bomb_test() ->
+
+
+
+test_simple_bomb(Game_rules) ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -1057,7 +1475,6 @@ simple_bomb_test() ->
 														board:set_block( #block{ color = green }, 3 , 0,
 															board:new_empty(5,12))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1081,7 +1498,11 @@ simple_bomb_test() ->
 	ok.
 
 
-simple_double_bomb_chain_test() ->
+
+
+
+
+test_simple_double_bomb_chain(Game_rules) ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -1101,7 +1522,6 @@ simple_double_bomb_chain_test() ->
 																board:set_block( #block{ color = green }, 3 , 2,
 																	board:new_empty(5,12))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1127,7 +1547,10 @@ simple_double_bomb_chain_test() ->
 	ok.
 
 
-simple_double_bomb_chain2_test() ->
+
+
+
+test_simple_double_bomb_chain2(Game_rules) ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -1149,7 +1572,6 @@ simple_double_bomb_chain2_test() ->
 																		board:set_block( #block{ color = red }, 3 , 3,
 																			board:new_empty(5,12))))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1178,7 +1600,11 @@ simple_double_bomb_chain2_test() ->
 
 
 
-simple_bomb_chain_chromatic_bom_test() ->
+
+
+
+
+test_simple_bomb_chain_chromatic_bom(Game_rules) ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 				board:set_block( #block{ color = red }, 0 , 1, 
 					board:set_block( #block{ color = red }, 0 , 2, 
@@ -1200,7 +1626,6 @@ simple_bomb_chain_chromatic_bom_test() ->
 																		board:set_block( #block{ color = red }, 3 , 3,
 																			board:new_empty(5,12))))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1226,7 +1651,7 @@ simple_bomb_chain_chromatic_bom_test() ->
 	?assertMatch( empty, board:get_block( 3, 3, Result_loop_board ) ),
 
 
-	Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
+	_Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
 
 
 	ok.
@@ -1286,7 +1711,9 @@ test_garbage_position( Garbage_position_list, Board = #board{} ) ->
 
 
 
-release_garbage_into_full_column_test()->
+
+
+test_release_garbage_into_full_column( _Game_rules )->
 	
 	Board = board:set_block( #block{ color = red }, 1 , 11, 
 				board:set_block( #block{ color = yellow }, 1 , 10, 
@@ -1308,91 +1735,14 @@ release_garbage_into_full_column_test()->
 
 
 
-no_combo_garbage_test() ->
-	Board = board:new_empty(6,12),
-
-	Game_rules = game_rules:get_current_rules("easy"),
-	Garbage_position_list = calculate_garbage_from_combos( [], Board, Game_rules ),
-
-	?assertMatch( 0, length( Garbage_position_list ) ),
-	?assert( test_garbage_position( Garbage_position_list, Board )),
-
-	ok.
-
-
-five_combo_garbage_test() ->
-	Board = board:new_empty(6,12),
-	Combo = sets:add_element( #block{ color = red, x = 3, y = 0 } ,
-				sets:add_element( #block{ color = red, x = 3, y = 1 },
-					sets:add_element( #block{ color = red, x = 3, y = 2 },
-						sets:add_element( #block{ color = red, x = 3, y = 3 }, sets:new())))),
-
-	Game_rules = game_rules:get_current_rules("easy"),
-	Garbage_position_list = calculate_garbage_from_combos( [[Combo, Combo, Combo, Combo, Combo]], Board, Game_rules ),
-
-	io:format("garbage list is ~p",[Garbage_position_list]),
-
-	?assertMatch( 13, length( Garbage_position_list ) ),
-	?assertMatch( 8, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage_hard end, Garbage_position_list) ) ),
-	?assertMatch( 5, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage end, Garbage_position_list) ) ),
-	?assertMatch( 0, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage_color end, Garbage_position_list) ) ),
-
-	?assert( test_garbage_position( Garbage_position_list, Board )),
-
-	ok.
-
-
-single_combo_garbage_test() ->
-	Board = board:new_empty(6,12),
-	Combo = sets:add_element( #block{ color = red, x = 3, y = 0 } ,
-				sets:add_element( #block{ color = red, x = 3, y = 1 },
-					sets:add_element( #block{ color = red, x = 3, y = 2 },
-						sets:add_element( #block{ color = red, x = 3, y = 3 }, sets:new())))),
-
-	Game_rules = game_rules:get_current_rules("easy"),
-	Garbage_position_list = calculate_garbage_from_combos( [[Combo]], Board, Game_rules ),
-
-	?assertMatch( 1, length( Garbage_position_list ) ),
-	?assertMatch( 1, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage end, Garbage_position_list) ) ),
-	?assertMatch( 0, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage_hard end, Garbage_position_list) ) ),
-	?assertMatch( 0, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage_color end, Garbage_position_list) ) ),
-	?assert( test_garbage_position( Garbage_position_list, Board )),
-
-	ok.
-
-
-double_combo_garbage_test() ->
-
-	Board = board:new_empty(6,12),
-
-	Combo = sets:add_element( #block{ color = red, x = 3, y = 0 },
-				sets:add_element( #block{ color = red, x = 3, y = 1 },
-					sets:add_element( #block{ color = red, x = 3, y = 2 },
-						sets:add_element( #block{ color = red, x = 3, y = 3 }, sets:new())))),
-
-	Combo1 = sets:add_element( #block{ color = blue, x = 3, y = 0 },
-				sets:add_element( #block{ color = blue, x = 3, y = 1 },
-					sets:add_element( #block{ color = blue, x = 3, y = 2 },
-						sets:add_element( #block{ color = blue, x = 4, y = 2 }, 
-							sets:add_element( #block{ color = blue, x = 4, y = 0 }, 
-								sets:add_element( #block{ color = blue, x = 5, y = 0 }, sets:new())))))),
-
-	Game_rules = game_rules:get_current_rules("easy"),
-	Garbage_position_list = calculate_garbage_from_combos( [[Combo,Combo1]] , Board, Game_rules ),
-
-	?assertMatch( 6, length( Garbage_position_list ) ),
-	?assertMatch( 4, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage end, Garbage_position_list) ) ),
-	?assertMatch( 2, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage_hard end, Garbage_position_list) ) ),
-	?assertMatch( 0, length( lists:filter( fun( {Garbage,_} )-> Garbage == garbage_color end, Garbage_position_list) ) ),
-
-	ok.
-
-
 
 %% --------------------         GAMEPLAY LOOP              ------------------------------------------
 
 
-simple_gameplay_loop_test() ->
+
+
+
+test_simple_gameplay_loop(Game_rules) ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 			board:set_block( #block{ color = red }, 0 , 1, 
 			board:set_block( #block{ color = red }, 0 , 2, 
@@ -1416,7 +1766,6 @@ simple_gameplay_loop_test() ->
 										
 								board:new_empty(5,12))))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1446,7 +1795,10 @@ simple_gameplay_loop_test() ->
 
 
 
-simple2_gameplay_loop_test() ->
+
+
+
+test_simple2_gameplay_loop(Game_rules) ->
 	Board = board:set_block( #block{ color = red }, 0 , 0, 
 			board:set_block( #block{ color = red }, 0 , 1, 
 			board:set_block( #block{ color = red }, 0 , 2, 
@@ -1470,7 +1822,6 @@ simple2_gameplay_loop_test() ->
 										
 								board:new_empty(5,12))))))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	{ _Combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	board:print_board(Result_loop_board),
@@ -1503,7 +1854,10 @@ simple2_gameplay_loop_test() ->
 %% --------------------         GRAVITY              ------------------------------------------
 
 
-simple2_gravity_test() ->
+
+
+
+test_simple2_gravity(_Game_rules) ->
 
 	Board = board:set_block( #block{ color = green }, 5 , 5,
 				board:set_block( #block{ color = red }, 5 , 0,
@@ -1528,7 +1882,9 @@ simple2_gravity_test() ->
 
 
 
-simple_gravity_test() ->
+
+
+test_simple_gravity(_Game_rules) ->
 	
 	Board = board:set_block( #block{ color = green }, 1 , 1,
 				board:set_block( #block{ color = blue }, 2 , 0,
@@ -1547,9 +1903,12 @@ simple_gravity_test() ->
 
 
 
+
+
+
 %% --------------------         COBMOS              ------------------------------------------
 
-simple_combo_test() ->
+test_simple_combo(Game_rules) ->
 
 	Board = board:set_block( #block{ color = yellow }, 3 , 2,
 				board:set_block( #block{ color = green }, 2 , 2,
@@ -1561,7 +1920,6 @@ simple_combo_test() ->
 										board:set_block( #block{ color = red }, 3 , 0,
 											board:new_empty(5,12))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assertMatch( 1, length( Combos ) ),
@@ -1580,7 +1938,9 @@ simple_combo_test() ->
 
 
 
-simple_combo_with_chromatic_test() ->
+
+
+test_simple_combo_with_chromatic(Game_rules) ->
 
 	Board = board:set_block( #block{ color = yellow }, 1 , 2,
 			board:set_block( #block{ color = green }, 2 , 2,
@@ -1595,8 +1955,6 @@ simple_combo_with_chromatic_test() ->
 					board:set_block( #block{ color = red, type = chromatic_bomb }, 3 , 2,
 											board:new_empty(5,12)))))))))),
 
-				
-	Game_rules = game_rules:get_current_rules("easy"),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assertMatch( 1, length( Combos ) ),
@@ -1613,7 +1971,10 @@ simple_combo_with_chromatic_test() ->
 	ok.
 
 
-double_combo_test() ->
+
+
+
+test_double_combo(Game_rules) ->
 
 	Board = board:set_block( #block{ color = yellow }, 1 , 2,
 				board:set_block( #block{ color = red }, 5 , 1,
@@ -1630,9 +1991,8 @@ double_combo_test() ->
 													board:set_block( #block{ color = blue }, 3 , 0,
 														board:set_block( #block{ color = blue }, 2 , 0,
 															board:set_block( #block{ color = blue }, 1 , 0,
-																board:new_empty(5,12)))))))))))))),
+																board:new_empty(6,12)))))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	Combos = calculate_combos( Board, Game_rules ),
 
 %	Lists = lists:map( fun( Set ) ->  sets:to_list(Set) end, Combos),
@@ -1675,7 +2035,10 @@ double_combo_test() ->
 	ok.
 
 
-no_combos_test() ->
+
+
+
+test_no_combos(Game_rules) ->
 	
 	Board = board:set_block( #block{ color = yellow }, 1 , 2,
 				board:set_block( #block{ color = blue }, 1 , 1,
@@ -1685,7 +2048,6 @@ no_combos_test() ->
 								board:set_block( #block{ color = red }, 1 , 0,
 									board:new_empty(5,12))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assert( length( Combos ) == 0),
@@ -1693,7 +2055,10 @@ no_combos_test() ->
 
 
 
-simple_garbage_poping_combos_test() ->
+
+
+
+test_simple_garbage_poping_combos(Game_rules) ->
 	Board = board:set_block( #block{ color = yellow }, 3 , 2,
 				board:set_block( #block{ color = green }, 2 , 2,
 					board:set_block( #block{ color = yellow }, 2 , 0,
@@ -1708,7 +2073,6 @@ simple_garbage_poping_combos_test() ->
 												board:set_block( #block{ type = garbage }, 2 , 1,
 													board:new_empty(5,12))))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assertMatch( 1, length( Combos ) ),
@@ -1743,7 +2107,10 @@ simple_garbage_poping_combos_test() ->
 
 
 
-simple_poping_combos_test() ->
+
+
+
+test_simple_poping_combos(Game_rules) ->
 	Board = board:set_block( #block{ color = yellow }, 3 , 2,
 				board:set_block( #block{ color = green }, 2 , 2,
 					board:set_block( #block{ color = yellow }, 2 , 0,
@@ -1754,7 +2121,6 @@ simple_poping_combos_test() ->
 										board:set_block( #block{ color = red }, 3 , 0,
 											board:new_empty(5,12))))))))),
 
-	Game_rules = game_rules:get_current_rules("easy"),
 	Combos = calculate_combos( Board, Game_rules ),
 
 	?assertMatch( 1, length( Combos ) ),
@@ -1789,7 +2155,10 @@ simple_poping_combos_test() ->
 %% --------------------         PLACE PIECE              ------------------------------------------
 
 
-simple_up_place_piece_test() ->
+
+
+
+test_simple_up_place_piece(_Game_rules) ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
@@ -1802,7 +2171,9 @@ simple_up_place_piece_test() ->
 
 	ok.
 
-simple_down_place_piece_test() ->
+
+
+test_simple_down_place_piece(_Game_rules) ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
@@ -1816,7 +2187,9 @@ simple_down_place_piece_test() ->
 	ok.
 
 
-simple_right_piece_test() ->
+
+
+test_simple_right_piece(_Game_rules) ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
@@ -1830,7 +2203,9 @@ simple_right_piece_test() ->
 	ok.
 
 
-simple_left_place_piece_test() ->
+
+
+test_simple_left_place_piece(_Game_rules) ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 	Piece = #piece{ block1 = #block{ color = green }, block2 = #block{ color = blue } },
@@ -1845,7 +2220,9 @@ simple_left_place_piece_test() ->
 
 
 
-simple_invalid_place_piece_test() ->
+
+
+test_simple_invalid_place_piece(_Game_rules) ->
 
 	Board = board:set_block( #block{ color = red }, 1 , 0, board:new_empty(5,12) ),
 

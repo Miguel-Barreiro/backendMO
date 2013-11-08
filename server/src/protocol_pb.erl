@@ -31,6 +31,7 @@
   to_message_buy_product_response__response_type/1,from_message_buy_product_response__response_type/1,
   encode_message_buy_product_response/1,decode_message_buy_product_response/1,
   encode_message_time_sync/1,decode_message_time_sync/1,
+  encode_message_debug_board/1,decode_message_debug_board/1,
   to_request__request_type/1,from_request__request_type/1,
   encode_request/1,decode_request/1]).
 
@@ -68,6 +69,12 @@ to_type_block(3) -> garbage_color;
 to_type_block(4) -> basic_block;
 to_type_block(5) -> bomb;
 to_type_block(6) -> chromatic_bomb;
+to_type_block(7) -> tornado;
+to_type_block(8) -> reinforcements;
+to_type_block(9) -> cloner;
+to_type_block(10) -> shapeshifter;
+to_type_block(11) -> paint;
+to_type_block(12) -> ghost;
 to_type_block(undefined) -> undefined.
 
 from_type_block(garbage) -> 1;
@@ -76,6 +83,12 @@ from_type_block(garbage_color) -> 3;
 from_type_block(basic_block) -> 4;
 from_type_block(bomb) -> 5;
 from_type_block(chromatic_bomb) -> 6;
+from_type_block(tornado) -> 7;
+from_type_block(reinforcements) -> 8;
+from_type_block(cloner) -> 9;
+from_type_block(shapeshifter) -> 10;
+from_type_block(paint) -> 11;
+from_type_block(ghost) -> 12;
 from_type_block(undefined) -> undefined.
 
 decode_user_item(B) ->
@@ -602,6 +615,26 @@ encode_message_time_sync(R) when is_record(R,message_time_sync) ->
     protocol_buffers:encode(2,int64,R#message_time_sync.server_timestamp)
   ].
 
+decode_message_debug_board(B) ->
+  case decode_message_debug_board_impl(B) of
+    undefined -> #message_debug_board{};
+    Any -> Any
+  end.
+
+decode_message_debug_board_impl(<<>>) -> undefined;
+decode_message_debug_board_impl(Binary) ->
+  protocol_buffers:decode(Binary,#message_debug_board{},
+     fun(1,{length_encoded,Bin},Rec) -> Rec#message_debug_board{opponent_state = decode_game_state_impl(Bin)};
+        (2,{length_encoded,Bin},Rec) -> Rec#message_debug_board{player_state = decode_game_state_impl(Bin)}
+      end).
+
+encode_message_debug_board(undefined) -> undefined;
+encode_message_debug_board(R) when is_record(R,message_debug_board) ->
+  [
+    protocol_buffers:encode(1,length_encoded,encode_game_state(R#message_debug_board.opponent_state)),
+    protocol_buffers:encode(2,length_encoded,encode_game_state(R#message_debug_board.player_state))
+  ].
+
 to_request__request_type(1) -> message_login_code;
 to_request__request_type(2) -> message_place_piece_code;
 to_request__request_type(3) -> message_update_piece_code;
@@ -629,6 +662,7 @@ to_request__request_type(24) -> message_rematch;
 to_request__request_type(25) -> message_no_rematch;
 to_request__request_type(26) -> message_rematch_timeout;
 to_request__request_type(27) -> message_not_enough_lifes;
+to_request__request_type(28) -> message_debug_board;
 to_request__request_type(undefined) -> undefined.
 
 from_request__request_type(message_login_code) -> 1;
@@ -658,6 +692,7 @@ from_request__request_type(message_rematch) -> 24;
 from_request__request_type(message_no_rematch) -> 25;
 from_request__request_type(message_rematch_timeout) -> 26;
 from_request__request_type(message_not_enough_lifes) -> 27;
+from_request__request_type(message_debug_board) -> 28;
 from_request__request_type(undefined) -> undefined.
 
 decode_request(B) ->
@@ -687,7 +722,8 @@ decode_request_impl(Binary) ->
         (16,{length_encoded,Bin},Rec) -> Rec#request{new_configuration_content = decode_message_new_configuration_impl(Bin)};
         (17,{length_encoded,Bin},Rec) -> Rec#request{buy_product_content = decode_message_buy_product_impl(Bin)};
         (18,{length_encoded,Bin},Rec) -> Rec#request{buy_product_response_content = decode_message_buy_product_response_impl(Bin)};
-        (19,{length_encoded,Bin},Rec) -> Rec#request{message_sync_content = decode_message_time_sync_impl(Bin)}
+        (19,{length_encoded,Bin},Rec) -> Rec#request{message_sync_content = decode_message_time_sync_impl(Bin)};
+        (20,{length_encoded,Bin},Rec) -> Rec#request{debug_game_state_content = decode_message_debug_board_impl(Bin)}
       end).
 
 encode_request(undefined) -> undefined;
@@ -711,6 +747,7 @@ encode_request(R) when is_record(R,request) ->
     protocol_buffers:encode(16,length_encoded,encode_message_new_configuration(R#request.new_configuration_content)),
     protocol_buffers:encode(17,length_encoded,encode_message_buy_product(R#request.buy_product_content)),
     protocol_buffers:encode(18,length_encoded,encode_message_buy_product_response(R#request.buy_product_response_content)),
-    protocol_buffers:encode(19,length_encoded,encode_message_time_sync(R#request.message_sync_content))
+    protocol_buffers:encode(19,length_encoded,encode_message_time_sync(R#request.message_sync_content)),
+    protocol_buffers:encode(20,length_encoded,encode_message_debug_board(R#request.debug_game_state_content))
   ].
 

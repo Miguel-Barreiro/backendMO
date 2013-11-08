@@ -82,8 +82,8 @@ handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, st
 				when Game_State == init ->
 	{A1,A2,A3} = now(),
 	random:seed(A1, A2, A3),
-	Seed = random:uniform(2147483646),
-
+	%Seed = random:uniform(2147483646),
+	Seed = 1,
 	lager:debug("enter game was sent!"),
 
 	Starting_game_logic_state = game_logic:create_new_game( User1#game_user.pid, User2#game_user.pid, Seed ),
@@ -92,9 +92,6 @@ handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, st
 	gen_server:cast( User2#game_user.pid , { enter_game, User2#game_user.powers_equipped, self(), User1#game_user.user_id, Seed } ),
 
 	{ noreply, State#game_state{ game_logic_state = Starting_game_logic_state, state = waiting_players } };
-
-
-
 
 
 
@@ -426,7 +423,7 @@ handle_info( difficult_change , State = #game_state{ state = Game_State, user1 =
 %%
 %	called when the any user process stops
 %%
-handle_info({'DOWN', Reference, process, Pid, _Reason}, State = #game_state{ user1 = User1 , user2 = User2 }) ->
+handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #game_state{ user1 = User1 , user2 = User2 }) ->
 
 	Won_msg = message_processor:create_won_message(disconect),
 

@@ -24,14 +24,21 @@
 -record( board, {
 	blocks = gb_trees:empty() :: gb_tree(),
 	width :: integer(),
-	height :: integer()
+	height :: integer(),
+
+	abilities_random_state = 0,
+
+	%for ability calculation not keepinh the state
+	reinforcements = [] :: [color_type()],
+	painted = []
 }).
 
 -type garbage_type() :: garbage_hard | garbage_color | garbage.
--type color_type() :: red | yellow | blue | green | purple | white.
--type power_type() :: generate_bomb.
+-type ability_type() :: bomb | chromatic_bomb | paint | shapeshifter | tornado | reinforcements | cloner | ghost.
+-type block_type() :: color | ability_type() | garbage_type().
 
--type block_type() :: color | bomb | chromatic_bomb | garbage_type().
+-type color_type() :: red | yellow | blue | green | purple | white.
+
 
 
 -record( block, {
@@ -78,7 +85,7 @@
 -record( game_logic_rules,{
 	version :: string(),
 
-	abilities_rule = undefined :: [ { {integer(), color_type() | any}, power_type() } ],
+	abilities_rule = undefined :: [ { {integer(), color_type() | any}, ability_type() } ],
 	
 	garbage_combo_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
 	garbage_chain_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
@@ -87,6 +94,8 @@
 	total_color_number = 6 :: integer(),
 	min_combo_size = 4 :: integer()
 }).
+
+
 
 
 -record( game, {
@@ -100,4 +109,18 @@
 }).
 
 
+
+
+%% CONFIGURATION MODULE
+
+-record( configuration_tier,{
+	board_width,
+	board_height,
+
+	abilities_generation_rules :: [ { {integer(), color_type() | any}, ability_type() } ] ,
+
+	garbage_combo_rules :: [ { integer(), {garbage_type(),integer()}  } ],
+	garbage_chain_rules :: { integer(), [ garbage_type() ]},
+	garbage_simultaneous_rules :: { integer(), [ garbage_type() ]}
+}).
 

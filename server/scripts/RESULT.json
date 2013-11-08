@@ -1,5 +1,528 @@
 [
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "bomb",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSinglePurpleCombo",
+        "origin": [
+            {
+                "block": "p",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 14,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 4,
+            "hardGarbage": 0,
+            "normalGarbage": 5
+        },
+        "name": "ChainReinforce",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "Rr",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "Rr",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "g",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 4,
+            "hardGarbage": 0,
+            "normalGarbage": 4
+        },
+        "name": "PaintColorGarbage",
+        "origin": [
+            {
+                "block": "r",
+                "x": 6,
+                "y": 9
+            },
+            {
+                "block": "g",
+                "x": 6,
+                "y": 10
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "Pg",
+                "x": 5,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 6,
+                "y": 11
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "#y",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 6,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "Pr",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 5
+        },
+        "name": "PowerSingleRedCombo2",
+        "origin": [
+            {
+                "block": "r",
+                "x": 1,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleRedCombo1",
+        "origin": [
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 11,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "Mix",
+        "origin": [
+            {
+                "block": "y",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "Cp",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "Bg",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 2
+        },
+        "name": "SimpleShapeshifter",
+        "origin": [
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "?",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "g",
@@ -63,12 +586,12 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
-        "name": "single1Chain",
+        "name": "SingleChain",
         "origin": [
             {
                 "block": "b",
@@ -173,6 +696,1606 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleRedCombo",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 2,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "SimpleGarbage",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 2
+        },
+        "name": "SimultTornado",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "w",
+                "x": 5,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "Tp",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 6,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "Tg",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 11,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "#g",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "TornadoGarbage",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "#g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "Tp",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PopClone",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "#2",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "#1",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 14,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "PaintGarbage",
+        "origin": [
+            {
+                "block": "#2",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "#2",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "@",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Pr",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 2,
+            "hardGarbage": 0,
+            "normalGarbage": 4
+        },
+        "name": "SimpleReinforce",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "Rr",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "chromatic",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleBlueCombo",
+        "origin": [
+            {
+                "block": "b",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "SimpleBomb",
+        "origin": [
+            {
+                "block": "y",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Br",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 3
+        },
+        "name": "PopCloneNearCombo",
+        "origin": [
+            {
+                "block": "p",
+                "x": 5,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 2,
+            "hardGarbage": 0,
+            "normalGarbage": 4
+        },
+        "name": "ChainShapeshifter",
+        "origin": [
+            {
+                "block": "?",
+                "x": 3,
+                "y": 9
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "?",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "ShapeshiterPowerToSpawn",
+        "origin": [
+            {
+                "block": "?",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 12,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 12,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 10,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "SimpleShapeshifter1",
+        "origin": [
+            {
+                "block": "r",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "?",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 1,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "cloner",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleWhiteCombo",
+        "origin": [
+            {
+                "block": "w",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 13,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "Cp",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "SimpleClone",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Cp",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 10,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 10,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "SimpleShapeshifter2",
+        "origin": [
+            {
+                "block": "?",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 1,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "b",
+                "x": 10,
+                "y": 10
+            },
+            {
+                "block": "Cb",
+                "x": 10,
+                "y": 11
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 10,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 10,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "Cp",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 2,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "ChainClone",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 9
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "Cb",
+                "x": 1,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Cp",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "BombHardGarbage",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "#2",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "#2",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Bg",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "#2",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "w",
@@ -246,12 +2369,1059 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
-        "name": "single5Combo",
+        "name": "Single4Combo",
+        "origin": [
+            {
+                "block": "g",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "reinforcements",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleYellowCombo",
+        "origin": [
+            {
+                "block": "y",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleGreenCombo",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 13,
+                "y": 11
+            },
+            {
+                "block": "b",
+                "x": 10,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "Cb",
+                "x": 10,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "Cp",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "SimultClone",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "Cb",
+                "x": 1,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Cp",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 11,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "SimpleTornado",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "Tp",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "g",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 2,
+            "hardGarbage": 0,
+            "normalGarbage": 3
+        },
+        "name": "PaintBomb",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Pg",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Br",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 2,
+            "hardGarbage": 0,
+            "normalGarbage": 4
+        },
+        "name": "ChainPaint",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "Pg",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "Py",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "g",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "Tg",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 0
+        },
+        "name": "SimpleGhost",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Tg",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "y",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "CloneExecutingBeforeAbilites",
+        "origin": [
+            {
+                "block": "y",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "TornadoClone",
+        "origin": [
+            {
+                "block": "Cg",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 6
+        },
+        "name": "SimultShapeshifter",
+        "origin": [
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "?",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "?",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "ShapeshiterPowerToSpawn1",
+        "origin": [
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "?",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "Single5Combo",
         "origin": [
             {
                 "block": "g",
@@ -355,30 +3525,216 @@
             {
                 "block": "w",
                 "x": 12,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "TornadoBombChain",
+        "origin": [
+            {
+                "block": "w",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
                 "y": 12
             },
             {
                 "block": "b",
-                "x": 13,
+                "x": 4,
                 "y": 12
             },
             {
-                "block": "p",
-                "x": 14,
-                "y": 12
-            },
-            {
-                "block": "r",
-                "x": 11,
+                "block": "w",
+                "x": 1,
                 "y": 13
             },
             {
                 "block": "y",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "Bb",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "Cr",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "Tr",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 2,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "ChainTornado",
+        "origin": [
+            {
+                "block": "w",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "Tr",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "Tp",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "g",
                 "x": 12,
                 "y": 13
             },
             {
-                "block": "w",
+                "block": "g",
                 "x": 13,
                 "y": 13
             },
@@ -424,13 +3780,18 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": false
+            "normalGarbage": 2
         },
-        "name": "single4Combo",
+        "name": "SimplePaint",
         "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 10
+            },
             {
                 "block": "g",
                 "x": 3,
@@ -452,18 +3813,8 @@
                 "y": 12
             },
             {
-                "block": "w",
+                "block": "Pg",
                 "x": 3,
-                "y": 12
-            },
-            {
-                "block": "b",
-                "x": 4,
-                "y": 12
-            },
-            {
-                "block": "p",
-                "x": 5,
                 "y": 12
             },
             {
@@ -513,6 +3864,187 @@
             },
             {
                 "block": "p",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "?",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 3
+        },
+        "name": "SimultPaint",
+        "origin": [
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "Pg",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "Pr",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "r",
+                "x": 15,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 14,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 15,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 2,
+            "hardGarbage": 2,
+            "normalGarbage": 4
+        },
+        "name": "SimultReinforce",
+        "origin": [
+            {
+                "block": "Rr",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "Ry",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "y",
                 "x": 5,
                 "y": 14
             },

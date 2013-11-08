@@ -5,10 +5,30 @@
 -export([ get_current_rules/1, get_next_piece_type/2, get_garbage_number/2 ]).
 
 
+-export([ get_offline_current_rules/1]).
+
+
+-spec get_offline_current_rules( Tier::binary() ) -> #game_logic_rules{}.
+get_offline_current_rules( Tier ) ->
+
+	{ _Values , _Products, Ability_rules, 
+		Garbage_combo_rule, Garbage_chain_rule, Garbage_simultaneous_combo_rule, 
+			Total_color_number, Min_combo_size } = configurations_serv:get_offline_configuration(Tier),
+
+	#game_logic_rules{
+
+		abilities_rule = Ability_rules,
+		garbage_combo_rule = Garbage_combo_rule,
+		garbage_chain_rule = Garbage_chain_rule,
+		garbage_simultaneous_combo_rule = Garbage_simultaneous_combo_rule,
+
+		total_color_number = Total_color_number,
+		min_combo_size = Min_combo_size
+	}.
 
 
 
--spec get_current_rules( Tier::string()) -> #game_logic_rules{}.
+-spec get_current_rules( Tier::binary() ) -> #game_logic_rules{}.
 get_current_rules( Tier ) ->
 	#game_logic_rules{
 
@@ -141,20 +161,15 @@ get_type_from_rule( [] , Combos) ->
 get_type_from_rule( [{{ Combo_size, Rule_color }, Power } | Rest] , Combos) ->
 	
 	Combo_fits_rule = 
-	fun( Combo = [ Block | _Rest_blocks ] ) -> 
-		length( Combo) == Combo_size andalso ( Rule_color == any orelse Rule_color == Block#block.color )
+	fun( Combo ) -> 
+		Combo_list = sets:to_list(Combo),
+		[ Block | _Rest_blocks ] = Combo_list,
+		length(Combo_list) >= Combo_size andalso ( Rule_color == any orelse Rule_color == Block#block.color )
 	end,
 
-	case lists:any( fun( Combo_sequence )-> lists:any( Combo_fits_rule, Combo_sequence) end, Combos ) of
+	case lists:any( fun( Combo_sequence )-> lists:any( Combo_fits_rule, Combo_sequence ) end, Combos ) of
 		false ->
 				get_type_from_rule( Rest, Combos);
 		true ->
-				get_type_from_power( Power )
+				Power
 	end.
-
-
-
-get_type_from_power( generate_bomb ) ->
-	bomb;
-get_type_from_power( _other ) ->
-	bomb.
