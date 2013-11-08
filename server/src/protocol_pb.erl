@@ -69,6 +69,12 @@ to_type_block(3) -> garbage_color;
 to_type_block(4) -> basic_block;
 to_type_block(5) -> bomb;
 to_type_block(6) -> chromatic_bomb;
+to_type_block(7) -> tornado;
+to_type_block(8) -> reinforcements;
+to_type_block(9) -> cloner;
+to_type_block(10) -> shapeshifter;
+to_type_block(11) -> paint;
+to_type_block(12) -> ghost;
 to_type_block(undefined) -> undefined.
 
 from_type_block(garbage) -> 1;
@@ -77,6 +83,12 @@ from_type_block(garbage_color) -> 3;
 from_type_block(basic_block) -> 4;
 from_type_block(bomb) -> 5;
 from_type_block(chromatic_bomb) -> 6;
+from_type_block(tornado) -> 7;
+from_type_block(reinforcements) -> 8;
+from_type_block(cloner) -> 9;
+from_type_block(shapeshifter) -> 10;
+from_type_block(paint) -> 11;
+from_type_block(ghost) -> 12;
 from_type_block(undefined) -> undefined.
 
 decode_user_item(B) ->

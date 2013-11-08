@@ -4,8 +4,8 @@
 %% @type color_block() = red | yellow | blue | green | purple | white.
 -type color_block() :: red | yellow | blue | green | purple | white.
 
-%% @type type_block() = garbage | garbage_hard | garbage_color | basic_block | bomb | chromatic_bomb.
--type type_block() :: garbage | garbage_hard | garbage_color | basic_block | bomb | chromatic_bomb.
+%% @type type_block() = garbage | garbage_hard | garbage_color | basic_block | bomb | chromatic_bomb | tornado | reinforcements | cloner | shapeshifter | paint | ghost.
+-type type_block() :: garbage | garbage_hard | garbage_color | basic_block | bomb | chromatic_bomb | tornado | reinforcements | cloner | shapeshifter | paint | ghost.
 
 %% @type user_item_record() = #user_item_record{
 %%   name() = binary(),

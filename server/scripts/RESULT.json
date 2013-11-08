@@ -1,63 +1,37 @@
 [
     {
-        "final": [
-            {
-                "block": "y",
-                "x": 11,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 13,
-                "y": 14
-            }
-        ],
+        "final": [],
         "garbage": {
+            "PowerGenerated": "bomb",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
-        "name": "Mix1",
+        "name": "PowerSinglePurpleCombo",
         "origin": [
             {
-                "block": "y",
-                "x": 2,
-                "y": 11
-            },
-            {
-                "block": "Cp",
-                "x": 2,
-                "y": 12
-            },
-            {
-                "block": "Bg",
-                "x": 2,
-                "y": 13
-            },
-            {
-                "block": "Cg",
-                "x": 4,
-                "y": 13
-            },
-            {
-                "block": "r",
+                "block": "p",
                 "x": 2,
                 "y": 14
             },
             {
-                "block": "Tr",
+                "block": "p",
                 "x": 3,
                 "y": 14
             },
             {
-                "block": "r",
+                "block": "p",
                 "x": 4,
                 "y": 14
             },
             {
-                "block": "r",
+                "block": "p",
                 "x": 5,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 6,
                 "y": 14
             }
         ]
@@ -121,10 +95,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "paint",
             "colorGarbage": 4,
             "hardGarbage": 0,
-            "normalGarbage": 5,
-            "spawnsBomb?": true
+            "normalGarbage": 5
         },
         "name": "ChainReinforce",
         "origin": [
@@ -204,10 +178,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 4,
             "hardGarbage": 0,
-            "normalGarbage": 4,
-            "spawnsBomb?": true
+            "normalGarbage": 4
         },
         "name": "PaintColorGarbage",
         "origin": [
@@ -284,6 +258,105 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 5
+        },
+        "name": "PowerSingleRedCombo2",
+        "origin": [
+            {
+                "block": "r",
+                "x": 1,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleRedCombo1",
+        "origin": [
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "y",
@@ -292,10 +365,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
         "name": "Mix",
         "origin": [
@@ -375,10 +448,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 1,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
         "name": "SimpleShapeshifter",
         "origin": [
@@ -513,10 +586,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
         "name": "SingleChain",
         "origin": [
@@ -623,6 +696,43 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleRedCombo",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "w",
@@ -676,10 +786,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
         "name": "SimpleGarbage",
         "origin": [
@@ -809,10 +919,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 1,
-            "normalGarbage": 2,
-            "spawnsBomb?": false
+            "normalGarbage": 2
         },
         "name": "SimultTornado",
         "origin": [
@@ -972,10 +1082,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": false
+            "normalGarbage": 1
         },
         "name": "TornadoGarbage",
         "origin": [
@@ -1090,10 +1200,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
         "name": "PopClone",
         "origin": [
@@ -1158,10 +1268,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
         "name": "PaintGarbage",
         "origin": [
@@ -1261,10 +1371,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "paint",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 4,
-            "spawnsBomb?": true
+            "normalGarbage": 4
         },
         "name": "SimpleReinforce",
         "origin": [
@@ -1341,6 +1451,43 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "chromatic",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleBlueCombo",
+        "origin": [
+            {
+                "block": "b",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "y",
@@ -1349,10 +1496,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
         "name": "SimpleBomb",
         "origin": [
@@ -1417,10 +1564,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 1,
-            "normalGarbage": 3,
-            "spawnsBomb?": true
+            "normalGarbage": 3
         },
         "name": "PopCloneNearCombo",
         "origin": [
@@ -1510,10 +1657,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 4,
-            "spawnsBomb?": true
+            "normalGarbage": 4
         },
         "name": "ChainShapeshifter",
         "origin": [
@@ -1590,6 +1737,38 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "ShapeshiterPowerToSpawn",
+        "origin": [
+            {
+                "block": "?",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "r",
@@ -1633,10 +1812,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": false
+            "normalGarbage": 1
         },
         "name": "SimpleShapeshifter1",
         "origin": [
@@ -1703,6 +1882,43 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "cloner",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleWhiteCombo",
+        "origin": [
+            {
+                "block": "w",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "w",
@@ -1731,10 +1947,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
         "name": "SimpleClone",
         "origin": [
@@ -1814,10 +2030,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": false
+            "normalGarbage": 1
         },
         "name": "SimpleShapeshifter2",
         "origin": [
@@ -1922,10 +2138,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
         "name": "ChainClone",
         "origin": [
@@ -2020,10 +2236,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
         "name": "BombHardGarbage",
         "origin": [
@@ -2153,10 +2369,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": false
+            "normalGarbage": 1
         },
         "name": "Single4Combo",
         "origin": [
@@ -2253,6 +2469,80 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "reinforcements",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleYellowCombo",
+        "origin": [
+            {
+                "block": "y",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "PowerSingleGreenCombo",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "w",
@@ -2296,10 +2586,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
         "name": "SimultClone",
         "origin": [
@@ -2399,10 +2689,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": false
+            "normalGarbage": 1
         },
         "name": "SimpleTornado",
         "origin": [
@@ -2517,10 +2807,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 3,
-            "spawnsBomb?": true
+            "normalGarbage": 3
         },
         "name": "PaintBomb",
         "origin": [
@@ -2630,10 +2920,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 4,
-            "spawnsBomb?": true
+            "normalGarbage": 4
         },
         "name": "ChainPaint",
         "origin": [
@@ -2778,10 +3068,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 0,
-            "spawnsBomb?": false
+            "normalGarbage": 0
         },
         "name": "SimpleGhost",
         "origin": [
@@ -2830,19 +3120,24 @@
     {
         "final": [
             {
-                "block": "g",
+                "block": "y",
                 "x": 13,
                 "y": 14
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
-        "name": "TornadoClone1",
+        "name": "CloneExecutingBeforeAbilites",
         "origin": [
+            {
+                "block": "y",
+                "x": 4,
+                "y": 12
+            },
             {
                 "block": "Cg",
                 "x": 4,
@@ -2873,10 +3168,10 @@
     {
         "final": [],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
         "name": "TornadoClone",
         "origin": [
@@ -2931,10 +3226,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 1,
-            "normalGarbage": 6,
-            "spawnsBomb?": true
+            "normalGarbage": 6
         },
         "name": "SimultShapeshifter",
         "origin": [
@@ -3006,6 +3301,43 @@
             {
                 "block": "b",
                 "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2
+        },
+        "name": "ShapeshiterPowerToSpawn1",
+        "origin": [
+            {
+                "block": "g",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "?",
+                "x": 4,
                 "y": 14
             }
         ]
@@ -3084,10 +3416,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
         "name": "Single5Combo",
         "origin": [
@@ -3197,10 +3529,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
-            "spawnsBomb?": true
+            "normalGarbage": 1
         },
         "name": "TornadoBombChain",
         "origin": [
@@ -3285,10 +3617,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": false
+            "normalGarbage": 2
         },
         "name": "ChainTornado",
         "origin": [
@@ -3448,10 +3780,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 2,
-            "spawnsBomb?": true
+            "normalGarbage": 2
         },
         "name": "SimplePaint",
         "origin": [
@@ -3556,10 +3888,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 1,
-            "normalGarbage": 3,
-            "spawnsBomb?": true
+            "normalGarbage": 3
         },
         "name": "SimultPaint",
         "origin": [
@@ -3659,10 +3991,10 @@
             }
         ],
         "garbage": {
+            "PowerGenerated": "none",
             "colorGarbage": 2,
             "hardGarbage": 2,
-            "normalGarbage": 4,
-            "spawnsBomb?": true
+            "normalGarbage": 4
         },
         "name": "SimultReinforce",
         "origin": [

@@ -55,6 +55,17 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (
 	board:print_board( New_gamestate#user_gamestate.board ),
 	io:format("\n-------------------------------- \n",[]),
 
+
+	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
+													0, 0, up,
+													board:get_all_blocks( New_gamestate#user_gamestate.board), 
+													[],
+														New_opponent_gamestate#user_gamestate.random_state, 
+														0, 0, up, 
+														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
+	%gen_server:cast( User_pid , { send_message, Msg} ),	
+
+
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
 
 handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
@@ -76,13 +87,14 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 	board:print_board( New_gamestate#user_gamestate.board ),
 	io:format("\n--------------------------------\n",[]),
 
-	%Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
-	%												0, 0, up, 
-	%												Player_block_list, 
-	%												Player_garbage_list,
-	%													New_opponent_gamestate#user_gamestate.random_state, 
-	%													0, 0, up, 
-	%													Opponent_block_list, Opponent_garbage_list ),
+	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
+													0, 0, up,
+													board:get_all_blocks( New_gamestate#user_gamestate.board), 
+													[],
+														New_opponent_gamestate#user_gamestate.random_state, 
+														0, 0, up, 
+														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
+	%gen_server:cast( User_pid , { send_message, Msg} ),
 
 	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
 
@@ -1010,6 +1022,20 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 %% --------------------         GOOGLE DOCS             ------------------------------------------
 
 
+get_power_type_from_test_type( Test_type ) ->
+	case Test_type of
+
+		<<"none">> ->				color;
+		
+		<<"tornado">> ->			tornado;
+		<<"paint">> ->				paint;
+		<<"reinforcements">> ->		reinforcements;
+		<<"chromatic">> ->			chromatic_bomb;
+		<<"shapeshifter">> ->		shapeshifter;
+		<<"cloner">> ->				cloner;
+		<<"bomb">> ->				bomb;
+		<<"ghost">>	->				ghost
+	end.
 
 
 create_board( Block_list, X_offset ) ->
@@ -1123,12 +1149,15 @@ google_docs_tests(Game_rules) ->
 				Normal_garbage = proplists:get_value(<<"normalGarbage">>,Generated_garbage),
 				%Spawns_bomb = proplists:get_value(<<"spawnsBomb">>,Generated_garbage),
 
+				Power_generated = proplists:get_value(<<"PowerGenerated">>,Generated_garbage),
+				Power_type = get_power_type_from_test_type( Power_generated ),
+
 				Start_board = create_board( Start, 0 ),
 				Final_board = create_board( Final, 9 ),
 
-
-				{ Combos , Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),
+				{ Combos, Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),
 				Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
+				{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( #user_gamestate{ random_state = 1 } , Combos, Game_rules ),
 
 				io:format("\n expected result\n"),
 				board:print_board(Final_board),
@@ -1153,14 +1182,21 @@ google_docs_tests(Game_rules) ->
 																			Garbage == garbage 
 																		end, Garbage_position_list)),
 
-				io:format("calculated garbage ~p , garbage_hard ~p,  garbage_color ~p",[Calculated_number_normal_garbages,
-																						Calculated_number_hard_garbages,	
-									 													Calculated_number_color_garbages ] ),
+				Next_block = Next_piece#piece.block1,
+				Calculated_block_type = Next_block#block.type,
+
+				io:format("calculated power ~p garbage ~p , garbage_hard ~p,  garbage_color ~p",[	Calculated_block_type,
+																									Calculated_number_normal_garbages,
+																									Calculated_number_hard_garbages,	
+									 																Calculated_number_color_garbages ] ),
 
 				?assertMatch( Calculated_number_normal_garbages, Normal_garbage ),
 				?assertMatch( Calculated_number_hard_garbages, Hard_garbage ),
 				?assertMatch( Calculated_number_color_garbages, Color_garbage ),
-				?assert( test_garbage_position( Garbage_position_list, Final_board ) )
+				?assertMatch( Calculated_block_type, Power_type ),
+
+				ok
+				
 			end } | Result]
 
 	end,

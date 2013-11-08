@@ -74,7 +74,8 @@ get_power_from_json( Power )->
 		<<"BlockTypeTornado">> ->				tornado;
 		<<"BlockTypeClone">> ->					cloner;
 		<<"BlockTypeGhost">> ->					ghost;
-		<<"BlockTypeReinforcements">> ->		reinforcements
+		<<"BlockTypeReinforcements">> ->		reinforcements;
+		<<"BlockTypeChromatic">> ->				chromatic_bomb
 	end.
 
 
