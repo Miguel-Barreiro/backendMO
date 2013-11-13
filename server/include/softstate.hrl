@@ -28,7 +28,7 @@
 
 	abilities_random_state = 0,
 
-	%for ability calculation not keepinh the state
+	ghosts_to_trigger = 0 :: integer(),
 	reinforcements = [] :: [color_type()],
 	painted = []
 }).
