@@ -95,6 +95,10 @@ get_min_combo_size( _Tier ) ->
 	4.
 	%gen_server:call(whereis(?MODULE), {get_min_combo_size, Tier}).
 
+-spec get_max_combo_size( Tier :: string()) -> integer().
+get_max_combo_size( Tier ) ->
+	gen_server:call(whereis(?MODULE), {get_max_combo_size, Tier}).
+
 
 
 % returns { {min_size,color}, power} 
@@ -191,6 +195,10 @@ handle_call( {get_garbage_simultaneous_combo_generation_rules, Tier}, _From, Sta
 	Result = gb_trees:get(Tier, State#configurations_state.tiers ),
 	{reply, Result#configuration_tier.garbage_simultaneous_rules , State};
 
+
+handle_call( {get_max_combo_size, Tier}, _From, State ) ->
+	Result = gb_trees:get(Tier, State#configurations_state.tiers ),
+	{reply, Result#configuration_tier.garbage_combo_max , State};
 
 
 
