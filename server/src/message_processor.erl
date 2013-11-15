@@ -149,7 +149,7 @@ create_generated_garbage_message( Garbages_position_list) ->
 
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
-						garbage = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Garbages_position_list)
+						garbage = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(Garbages_position_list) )
 					}},
 	protocol_pb:encode_request(Req).
 
@@ -158,7 +158,7 @@ create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, 
 
 	lager:info("create_opponent_place_piece_message for ~p ",[Garbages_position_list]),
 
-	Garbage_list_part = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Garbages_position_list),
+	Garbage_list_part = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(Garbages_position_list) ),
 
 	Req = #request{ type = message_opponent_place_piece_code,
 					opponent_place_piece_content = #message_opponent_place_piece{ 

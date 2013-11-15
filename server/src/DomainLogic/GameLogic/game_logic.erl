@@ -753,8 +753,6 @@ release_garbage_list( Board = #board{}, [{garbage, Garbage_position} | Rest ] ) 
 
 
 
-
-
 calculate_garbage_from_combos( [], _, _ ) ->
 	[];
 
