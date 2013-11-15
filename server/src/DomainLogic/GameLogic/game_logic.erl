@@ -63,7 +63,7 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (
 														New_opponent_gamestate#user_gamestate.random_state, 
 														0, 0, up, 
 														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
-	%gen_server:cast( User_pid , { send_message, Msg} ),	
+	gen_server:cast( User_pid , { send_message, Msg} ),	
 
 
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
@@ -94,7 +94,7 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 														New_opponent_gamestate#user_gamestate.random_state, 
 														0, 0, up, 
 														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
-	%gen_server:cast( User_pid , { send_message, Msg} ),
+	gen_server:cast( User_pid , { send_message, Msg} ),
 
 	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
 
