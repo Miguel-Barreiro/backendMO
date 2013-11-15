@@ -144,6 +144,9 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 
 
 create_generated_garbage_message( Garbages_position_list) ->
+	
+	lager:info("create_generated_garbage_message for ~p ",[Garbages_position_list]),
+
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
 						garbage = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Garbages_position_list)
@@ -152,6 +155,8 @@ create_generated_garbage_message( Garbages_position_list) ->
 
 
 create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle ) ->
+
+	lager:info("create_opponent_place_piece_message for ~p ",[Garbages_position_list]),
 
 	Garbage_list_part = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Garbages_position_list),
 
@@ -325,8 +330,8 @@ create_debug_board(Player_current_random_step, Player_current_piece_x, Player_cu
 %	lager:debug("Opponent_block_position_list ~p",[Opponent_block_position_list]),
 %	lager:debug("Player_block_position_list ~p",[Player_block_position_list]),
 
-	Opponent_garbage_message_list =  lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Player_garbage_list),
-	Player_garbage_message_list = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Opponent_garbage_list),
+	Opponent_garbage_message_list =  lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Opponent_garbage_list),
+	Player_garbage_message_list = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Player_garbage_list),
 
 %	lager:debug("Player_garbage_message_list ~p",[Player_garbage_message_list]),
 %	lager:debug("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),

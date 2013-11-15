@@ -87,7 +87,7 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 	board:print_board( New_gamestate#user_gamestate.board ),
 	io:format("\n--------------------------------\n",[]),
 
-	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
+	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state,
 													0, 0, up,
 													board:get_all_blocks( New_gamestate#user_gamestate.board), 
 													[],

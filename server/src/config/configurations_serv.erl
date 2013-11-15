@@ -44,9 +44,10 @@ get_offline_configuration( Tier_name ) ->
 	{ State#configurations_state.values, 
 		State#configurations_state.products,
 			Tier#configuration_tier.abilities_generation_rules,
-				Tier#configuration_tier.garbage_combo_rules, 
+				Tier#configuration_tier.garbage_combo_rules,
 					Tier#configuration_tier.garbage_chain_rules, 
-						Tier#configuration_tier.garbage_simultaneous_rules, 6, 4 }.
+						Tier#configuration_tier.garbage_simultaneous_rules, 
+							Tier#configuration_tier.garbage_combo_max, 6, 4 }.
 
 
 
@@ -93,6 +94,8 @@ get_total_color_number( _Tier ) ->
 get_min_combo_size( _Tier ) ->
 	4.
 	%gen_server:call(whereis(?MODULE), {get_min_combo_size, Tier}).
+
+
 
 % returns { {min_size,color}, power} 
 -spec get_abilities_generation_rules( Tier :: string() ) -> [ { {integer(), color_type() | any}, ability_type() } ].
@@ -187,7 +190,6 @@ handle_call( {get_garbage_chain_generation_rules, Tier}, _From, State ) ->
 handle_call( {get_garbage_simultaneous_combo_generation_rules, Tier}, _From, State ) ->
 	Result = gb_trees:get(Tier, State#configurations_state.tiers ),
 	{reply, Result#configuration_tier.garbage_simultaneous_rules , State};
-
 
 
 

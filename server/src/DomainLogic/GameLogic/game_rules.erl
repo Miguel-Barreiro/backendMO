@@ -13,7 +13,7 @@ get_offline_current_rules( Tier ) ->
 
 	{ _Values , _Products, Ability_rules, 
 		Garbage_combo_rule, Garbage_chain_rule, Garbage_simultaneous_combo_rule, 
-			Total_color_number, Min_combo_size } = configurations_serv:get_offline_configuration(Tier),
+			Combo_max, Total_color_number, Min_combo_size } = configurations_serv:get_offline_configuration(Tier),
 
 	#game_logic_rules{
 
@@ -23,7 +23,9 @@ get_offline_current_rules( Tier ) ->
 		garbage_simultaneous_combo_rule = Garbage_simultaneous_combo_rule,
 
 		total_color_number = Total_color_number,
-		min_combo_size = Min_combo_size
+		min_combo_size = Min_combo_size,
+
+		garbage_combo_max = Combo_max
 	}.
 
 
@@ -40,7 +42,9 @@ get_current_rules( Tier ) ->
 		garbage_simultaneous_combo_rule = configurations_serv:get_garbage_simultaneous_combo_generation_rules( Tier ),
 
 		total_color_number = configurations_serv:get_total_color_number( Tier ),
-		min_combo_size = configurations_serv:get_min_combo_size( Tier )
+		min_combo_size = configurations_serv:get_min_combo_size( Tier ),
+
+		garbage_combo_max = configurations_serv:get_max_combo_size( Tier )
 	}.
 	
 
@@ -78,8 +82,13 @@ get_random_garbage_from_types( Number, Types ) ->
 
 
 
-get_garbage_from_single_combo( Combo , Game_rules = #game_logic_rules{} ) ->
-	case proplists:get_value( sets:size(Combo), Game_rules#game_logic_rules.garbage_combo_rule ) of
+get_garbage_from_single_combo( Combo_size , Game_rules = #game_logic_rules{} ) ->
+
+	case proplists:get_value( Combo_size, Game_rules#game_logic_rules.garbage_combo_rule ) of
+	
+		undefined when Combo_size > Game_rules#game_logic_rules.garbage_combo_max ->
+				get_garbage_from_single_combo( Game_rules#game_logic_rules.garbage_combo_max , Game_rules );
+
 		undefined ->					{ 0,0,0 };
 		{garbage, Value} ->				{ Value,0,0 };
 		{garbage_color, Value} ->		{ 0,Value,0 };
@@ -93,7 +102,7 @@ get_garbage_from_combo_sequence( Combo_sequence, Game_rules = #game_logic_rules{
 
 	Combo_sum = fun( Combo, { Normal_garbage_number, Color_garbage_number, Hard_garbage_number } ) -> 
 			
-			{ New_normal_garbage_number, New_color_garbage_number, New_hard_garbage_number } = get_garbage_from_single_combo( Combo, Game_rules ),
+			{ New_normal_garbage_number, New_color_garbage_number, New_hard_garbage_number } = get_garbage_from_single_combo( sets:size(Combo), Game_rules ),
 			
 			{Normal_garbage_number + New_normal_garbage_number,
 				Color_garbage_number + New_color_garbage_number, 

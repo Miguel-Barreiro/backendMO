@@ -34,10 +34,11 @@ get_real_garbage_type_from_json( Json_garbage_type ) ->
 
 
 get_combo_rules_from_json( List ) ->
-	Fun = fun( {[{ <<"blockColor">>,Type}, { <<"comboSize">>, Combo_size}, { <<"quantityGenerated">>, Quantity} ]}, Result ) ->
-		[ {Combo_size, {get_real_garbage_type_from_json(Type), Quantity} } | Result]
+	Fun = fun( {[{ <<"blockColor">>,Type}, { <<"comboSize">>, Combo_size}, { <<"quantityGenerated">>, Quantity} ]}, {Result,Max} ) ->
+		Next_max = case Max > Combo_size of true -> Max; false -> Combo_size end,
+		{ [{Combo_size, {get_real_garbage_type_from_json(Type), Quantity}} | Result], Next_max}
 	end,
-	lists:foldl( Fun, [], List ).
+	lists:foldl( Fun, { [], 0 }, List ).
 
 
 get_simultaneous_rules_from_json( List ) ->
@@ -98,15 +99,21 @@ get_tier_from_json( Tier_properties ) ->
 
 	Abilities_generation_rules = proplists:get_value( <<"powersGeneration">>, Tier_properties),
 
+	{Garbages_combo, Max_combo} = get_combo_rules_from_json( Garbage_combo_rules ),
+	Garbages_chain = get_chain_rules_from_json( Garbage_chain_rules ),
+	Garbages_simultaneous = get_simultaneous_rules_from_json( Garbage_simultaneous_rules ),
+
 	#configuration_tier{
 		board_width = proplists:get_value( <<"boardSizeX">>, Tier_properties),
 		board_height = proplists:get_value( <<"boardSizeY">>, Tier_properties),
 
 		abilities_generation_rules = get_abilities_generation_rules_from_json(Abilities_generation_rules),
 
-		garbage_combo_rules = get_combo_rules_from_json( Garbage_combo_rules ),
-		garbage_chain_rules = get_chain_rules_from_json( Garbage_chain_rules ),
-		garbage_simultaneous_rules = get_simultaneous_rules_from_json( Garbage_simultaneous_rules ) 
+		garbage_combo_rules = Garbages_combo,
+		garbage_chain_rules = Garbages_chain,
+		garbage_simultaneous_rules = Garbages_simultaneous,
+
+		garbage_combo_max = Max_combo
 	}.
 
 

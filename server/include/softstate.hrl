@@ -91,6 +91,8 @@
 	garbage_chain_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
 	garbage_simultaneous_combo_rule = undefined :: [ { {integer()}, {garbage_type(),integer()}  } ],
 
+	garbage_combo_max = 0 :: integer(),
+
 	total_color_number = 6 :: integer(),
 	min_combo_size = 4 :: integer()
 }).
@@ -121,6 +123,10 @@
 
 	garbage_combo_rules :: [ { integer(), {garbage_type(),integer()}  } ],
 	garbage_chain_rules :: { integer(), [ garbage_type() ]},
-	garbage_simultaneous_rules :: { integer(), [ garbage_type() ]}
+	garbage_simultaneous_rules :: { integer(), [ garbage_type() ]},
+
+
+	garbage_combo_max = 0 :: integer()
+
 }).
 
