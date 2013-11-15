@@ -5,7 +5,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/0]).
 
 -export([ get_total_color_number/1, get_min_combo_size/1, get_abilities_generation_rules/1 ]).
--export([ get_garbage_combo_generation_rules/1, get_garbage_chain_generation_rules/1, get_garbage_simultaneous_combo_generation_rules/1 ]).
+-export([ get_garbage_combo_generation_rules/1, get_garbage_chain_generation_rules/1, get_garbage_simultaneous_combo_generation_rules/1, get_max_combo_size/1 ]).
 
 -define(CONFIGURATION_VERSION_URL,"http://s3-us-west-2.amazonaws.com/miniorbs-temp/latest.txt").
 -define(CONFIGURATION_BUCKET_URL,"http://s3-us-west-2.amazonaws.com/miniorbs-temp/").
