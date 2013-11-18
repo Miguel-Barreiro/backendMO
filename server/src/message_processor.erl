@@ -27,6 +27,7 @@
 -define( GAME_END_OPPONNENT_WON , 2).
 -define( GAME_END_OPPONNENT_DISCONECT , 3).
 
+
 process_pre_login_message(Msg) ->
 	Request = protocol_pb:decode_request(Msg),
 
@@ -453,10 +454,11 @@ process_message( message_update_piece_code, User_process_pid, #request{ update_p
 
 
 
-process_message( message_generic_power, User_process_pid, _Message_decoded, Message_encoded )
+process_message( message_generic_power, User_process_pid, #request{ power_content = Message }, Message_encoded )
 			when User_process_pid =/= no_user_process ->
 	lager:debug("generic power received ~p",[self()]),
-	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+
+	gen_server:cast( User_process_pid, { use_power, Message#message_generic_power.type }),
 	{no_reply};
 
 

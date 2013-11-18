@@ -69,7 +69,13 @@
 
 	garbage_position_list = [],
 	piece_generation_step = 0,
-	random_state = undefined
+	random_state = undefined,
+
+
+	frenzy_turns = 0 :: integer(),
+	thrash_turns = 0 :: integer(),
+	red_button_pressed = false
+
 }).
 
 
