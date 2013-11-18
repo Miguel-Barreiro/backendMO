@@ -111,7 +111,7 @@ get_tier_from_json( Tier_properties ) ->
 
 		garbage_combo_rules = Garbages_combo,
 		garbage_chain_rules = Garbages_chain,
-		garbage_simultaneous_rules = Garbages_simultaneous,
+		garbage_simultaneous_rules = Garbages_simultaneous	,
 
 		garbage_combo_max = Max_combo
 	}.

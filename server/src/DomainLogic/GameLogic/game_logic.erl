@@ -453,9 +453,14 @@ activate_blocks_by_combo_proximity( [ Block | Rest], Board = #board{}) ->
 			activate_blocks_by_combo_proximity( Rest, New_board);
 
 		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness > 1 ->
-			New_board = board:set_block( #block{ type = garbage_hard , hardness = Garbage_block#block.hardness - 1 }, 
+			New_board = board:set_block( Garbage_block#block{ hardness = Garbage_block#block.hardness - 1 }, 
 								Block#block.x, Block#block.y, board:remove_block( Block#block.x, Block#block.y , Board)),
 			activate_blocks_by_combo_proximity( Rest, New_board);
+
+		Garbage_block when Garbage_block#block.type == garbage_hard ->
+			New_board = board:remove_block( Block#block.x, Block#block.y , Board),
+			activate_blocks_by_combo_proximity( Rest, New_board);
+
 
 		Garbage_block when Garbage_block#block.type == garbage_color ->
 			New_board = board:set_block( #block{ type = color , color = Garbage_block#block.color }, 
