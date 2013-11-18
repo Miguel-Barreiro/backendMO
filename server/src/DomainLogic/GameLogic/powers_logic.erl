@@ -2,7 +2,7 @@
 -include("include/softstate.hrl").
 
 
--export([ handle_use_power/3, handle_turn_passed/2 ]).
+-export([ handle_use_power/3, handle_turn_passed/2, handle_turn_begin/2 ]).
 
 
 -define( FRENZY_POWER, 1).
@@ -10,11 +10,23 @@
 -define( RED_BUTTON_POWER, 3).
 
 
+-spec handle_turn_begin(User_gamestate::#user_gamestate{}, Opponent_gamestate::#user_gamestate{}) -> {#user_gamestate{},#user_gamestate{}}.
+handle_turn_begin( User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) -> 
+	{ User_gamestate, Opponent_gamestate }.
+
 
 -spec handle_turn_passed(User_gamestate::#user_gamestate{}, Opponent_gamestate::#user_gamestate{}) -> {#user_gamestate{},#user_gamestate{}}.
 handle_turn_passed( User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) -> 
-	New_user_gamestate = User_gamestate#user_gamestate{ thrash_turns = decrease_turn( User_gamestate#user_gamestate.thrash_turns ), 
-															frenzy_turns = decrease_turn( User_gamestate#user_gamestate.frenzy_turns )
+
+	Gamestate_after_red_button = case User_gamestate#user_gamestate.red_button_pressed of
+		true ->				execute_red_button(User_gamestate);
+		false ->			User_gamestate
+	end,
+
+
+
+	New_user_gamestate = Gamestate_after_red_button#user_gamestate{ thrash_turns = decrease_turn( User_gamestate#user_gamestate.thrash_turns ), 
+																		frenzy_turns = decrease_turn( User_gamestate#user_gamestate.frenzy_turns )
 														},
 	{ New_user_gamestate, Opponent_gamestate }.
 
@@ -33,6 +45,32 @@ handle_use_power( ?FRENZY_POWER, User_gamestate = #user_gamestate{}, Opponent_ga
 handle_use_power( Power, User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}) ->
 	{User_gamestate, Opponent_gamestate}.
 
+
+
+
+
+
+execute_red_button( User_gamestate = #user_gamestate{} ) ->
+	User_gamestate.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%--------------------------------------
+%		 PRIVATE UTIL FUNCTIONS
+%--------------------------------------
 
 decrease_turn( Turn ) ->
 	case Turn > 1 of
