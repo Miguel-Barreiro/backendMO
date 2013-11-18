@@ -25,13 +25,15 @@
 %%   x() = integer(),
 %%   y() = integer(),
 %%   type() = type_block(),
-%%   color() = 'undefined' | color_block()
+%%   color() = 'undefined' | color_block(),
+%%   exploding_times_left() = integer()
 %% }.
 -record(block_position,{
   x :: integer(),
   y :: integer(),
   type :: type_block(),
-  color :: 'undefined' | color_block()}).
+  color :: 'undefined' | color_block(),
+  exploding_times_left :: integer()}).
 
 %% @type garbage_position_record() = #garbage_position_record{
 %%   type() = type_block(),
@@ -168,12 +170,15 @@
   opponent :: binary(),
   start_timestamp :: integer()}).
 
+%% @type message_generic_power__power_type() = frenzy | trash | redbutton.
+-type message_generic_power__power_type() :: frenzy | trash | redbutton.
+
 %% @type message_generic_power_record() = #message_generic_power_record{
-%%   type() = integer(),
+%%   type() = message_generic_power__power_type(),
 %%   power_data() = 'undefined' | binary()
 %% }.
 -record(message_generic_power,{
-  type :: integer(),
+  type :: message_generic_power__power_type(),
   power_data :: 'undefined' | binary()}).
 
 %% @type message_enter_queue_record() = #message_enter_queue_record{

@@ -746,8 +746,8 @@ release_garbage_list( Board = #board{}, [{{garbage_color, Color}, Garbage_positi
 	New_board = board:set_block( #block{ type = garbage_color, color = Color }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
 	release_garbage_list( New_board, Rest );
 	
-release_garbage_list( Board = #board{}, [{garbage_hard, Garbage_position} | Rest ] ) ->
-	New_board = board:set_block( #block{ type = garbage_hard }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
+release_garbage_list( Board = #board{}, [{{garbage_hard, Hardness}, Garbage_position} | Rest ] ) ->
+	New_board = board:set_block( #block{ type = garbage_hard, hardness = Hardness }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
 	release_garbage_list( New_board, Rest );
 
 release_garbage_list( Board = #board{}, [{garbage, Garbage_position} | Rest ] ) ->
@@ -887,7 +887,7 @@ generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_ga
 	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
 	New_column_list = lists:append( List1 , List2 ),
 
-	[ {garbage_hard , Position} | 
+	[ {{garbage_hard, 2}, Position} | 
 		generate_garbage_positions( Hard_garbage_number -1, Color_garbage_number, Normal_garbage_number, Board, New_column_list )].
 
 

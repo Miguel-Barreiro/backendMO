@@ -962,6 +962,130 @@
     {
         "final": [
             {
+                "block": "b",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "Cr",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "triggerPower": "redbutton"
+        },
+        "name": "PowerFrenzy",
+        "origin": [
+            {
+                "block": "y",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "Cy",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "Cr",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "Pr",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 6,
+                "y": 13
+            },
+            {
+                "block": "Ry",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "@",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
                 "block": "y",
                 "x": 13,
                 "y": 13
