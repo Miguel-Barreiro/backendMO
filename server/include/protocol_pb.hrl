@@ -125,30 +125,36 @@
 %% @type message_place_piece_record() = #message_place_piece_record{
 %%   x() = integer(),
 %%   y() = integer(),
-%%   state() = piece_rotation()
+%%   state() = piece_rotation(),
+%%   placed_garbage_id() = integer()
 %% }.
 -record(message_place_piece,{
   x :: integer(),
   y :: integer(),
-  state :: piece_rotation()}).
+  state :: piece_rotation(),
+  placed_garbage_id :: integer()}).
 
 %% @type message_opponent_place_piece_record() = #message_opponent_place_piece_record{
 %%   x() = integer(),
 %%   y() = integer(),
 %%   state() = piece_rotation(),
-%%   garbage() = [#garbage_position{}]
+%%   garbage() = [#garbage_position{}],
+%%   garbage_id() = integer()
 %% }.
 -record(message_opponent_place_piece,{
   x :: integer(),
   y :: integer(),
   state :: piece_rotation(),
-  garbage = [] :: [#garbage_position{}]}).
+  garbage = [] :: [#garbage_position{}],
+  garbage_id :: integer()}).
 
 %% @type message_generated_garbage_record() = #message_generated_garbage_record{
-%%   garbage() = [#garbage_position{}]
+%%   garbage() = [#garbage_position{}],
+%%   garbage_id() = integer()
 %% }.
 -record(message_generated_garbage,{
-  garbage = [] :: [#garbage_position{}]}).
+  garbage = [] :: [#garbage_position{}],
+  garbage_id :: integer()}).
 
 %% @type message_difficult_change_record() = #message_difficult_change_record{
 %%   level() = integer()

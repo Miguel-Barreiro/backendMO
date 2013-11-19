@@ -9,7 +9,7 @@
 -export([create_login_success/4, create_login_success/18]).
 -export([create_match_created_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/2, create_user_reconected_message/0]).
--export([create_opponent_place_piece_message/5, create_generated_garbage_message/1 ]).
+-export([create_opponent_place_piece_message/6, create_generated_garbage_message/2 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
 -export([create_rematch_message/0, create_no_rematch_message/0, create_rematch_timeout_message/0]).
 -export([create_insufficient_lifes_message/0 ]).
@@ -146,18 +146,19 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 
 
 
-create_generated_garbage_message( Garbages_position_list) ->
+create_generated_garbage_message( Garbages_position_list, Garbage_id) ->
 	
 	lager:info("create_generated_garbage_message for ~p ",[Garbages_position_list]),
 
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
-						garbage = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(Garbages_position_list) )
+						garbage = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(Garbages_position_list) ),
+						garbage_id = Garbage_id
 					}},
 	protocol_pb:encode_request(Req).
 
 
-create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle ) ->
+create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle, Client_garbage_id ) ->
 
 	lager:info("create_opponent_place_piece_message for ~p ",[Garbages_position_list]),
 
@@ -168,7 +169,8 @@ create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, 
 						garbage = Garbage_list_part,
 						x = X,
 						y = Y,
-						state = Angle
+						state = Angle,
+						garbage_id = Client_garbage_id
 					}},
 	protocol_pb:encode_request(Req).
 
@@ -443,7 +445,8 @@ process_message( message_place_piece_code,
 	gen_server:cast( User_process_pid, { place_piece, 
 											Message#message_place_piece.x, 
 												Message#message_place_piece.y, 
-													Message#message_place_piece.state } ),
+													Message#message_place_piece.state,
+														Message#message_place_piece.placed_garbage_id } ),
 	{no_reply};
 
 

@@ -173,9 +173,9 @@ handle_cast( { update_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) 
 
 
 
-handle_cast( { place_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) ->
+handle_cast( { place_piece, X, Y, Angle, User_pid, Client_garbage_id } , State = #game_state{}  ) ->
 	try 
-		New_game_state = game_logic:handle_place_piece( User_pid, X, Y, Angle,  State#game_state.game_logic_state),
+		New_game_state = game_logic:handle_place_piece( User_pid, X, Y, Angle, State#game_state.game_logic_state, Client_garbage_id),
 		{ noreply, State#game_state{ game_logic_state = New_game_state } }
 	catch
 		throw:out_of_bounds ->
@@ -188,10 +188,6 @@ handle_cast( { place_piece, X, Y, Angle, User_pid } , State = #game_state{}  ) -
 			gen_server:cast( self(), { user_lost_game, User_pid } ),
 			{ noreply, State }
 	end;
-
-
-
-
 
 
 

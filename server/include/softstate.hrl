@@ -67,10 +67,11 @@
 	current_piece_x = 0 :: integer(),
 	current_piece_y = 0 :: integer(),
 
+	current_garbage_id = 1 :: integer(),
 	garbage_position_list = [],
+
 	piece_generation_step = 0,
 	random_state = undefined,
-
 
 	frenzy_turns = 0 :: integer(),
 	thrash_turns = 0 :: integer(),
@@ -110,6 +111,7 @@
 
 	user1_gamestate = #user_gamestate{},
 	user2_gamestate = #user_gamestate{},
+
 	initial_seed = undefined,
 	difficult_level = 0,
 

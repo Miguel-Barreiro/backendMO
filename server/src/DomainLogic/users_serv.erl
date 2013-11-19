@@ -104,8 +104,8 @@ handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_p
 
 
 
-handle_cast( { place_piece , X, Y, Angle } , State = #user_process_state{ game_pid = Game_pid } ) ->
-	gen_server:cast( Game_pid, { place_piece, X, Y, Angle, self() } ),
+handle_cast( { place_piece , X, Y, Angle, Client_garbage_id } , State = #user_process_state{ game_pid = Game_pid } ) ->
+	gen_server:cast( Game_pid, { place_piece, X, Y, Angle, self(), Client_garbage_id } ),
 	{noreply, State};
 
 

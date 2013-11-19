@@ -2,7 +2,7 @@
 
 -include("include/softstate.hrl").
 
--export([ handle_place_piece/5, handle_update_piece/5, create_new_game/3 ]).
+-export([ handle_place_piece/6, handle_update_piece/5, create_new_game/3 ]).
 
 -define( BOARD_WIDTH , 6).
 -define( BOARD_HEIGHT , 13).
@@ -37,14 +37,14 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 
 %throws out_of_bounds (in case the user has lost)
 %throws invalid_move (in case of an invalid move)
-handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
+handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}, Client_garbage_id ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
 	
 	io:format("\n-------------------------------- \n",[]),
 	io:format("\n USER 1 ~p PLACE A PIECE \n",[User_pid]),
 
 	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
 	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
-																	Opponent_pid,
+																	Opponent_pid, Client_garbage_id,
 																		(Game#game.user1_gamestate)#user_gamestate.current_piece, 
 																			X, Y, Angle, 
 																				Game#game.user1_gamestate, 
@@ -68,15 +68,16 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (
 
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
 
-handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
 
+
+handle_place_piece( User_pid, X, Y, Angle, Game = #game{}, Client_garbage_id ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
 
 	io:format("\n--------------------------------\n",[]),
 	io:format("\n USER 2 (~p) PLACE A PIECE \n",[User_pid]),
 
 	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
 	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
-																	Opponent_pid,  
+																	Opponent_pid, Client_garbage_id,
 																		(Game#game.user2_gamestate)#user_gamestate.current_piece, 
 																			X, Y, Angle, 
 																				Game#game.user2_gamestate, 
@@ -101,13 +102,18 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Ga
 
 
 
-handle_place_piece( User_pid, Opponent_pid, 
+handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 						Piece = #piece{}, X, Y, 
-							Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}, 
+							Angle, Begin_gamestate = #user_gamestate{}, Begin_opponent_gamestate = #user_gamestate{}, 
 								Game_rules = #game_logic_rules{} ) ->
 
 	io:format("\nplaced the piece [~p ~p] with angle ~p in ~p,~p\n",
 					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y]),
+
+
+	{ Gamestate, Opponent_gamestate } = powers_logic:handle_turn_begin(Begin_gamestate, Begin_opponent_gamestate),
+
+
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
 			lager:debug("invalid piece place: wrong piece",[]),
@@ -118,32 +124,65 @@ handle_place_piece( User_pid, Opponent_pid,
 			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Board_after_reset_reinforcements),
 
 			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece, Game_rules ),
-			Board_after_release_garbage = release_garbage_list( Result_loop_board, Gamestate#user_gamestate.garbage_position_list ),
 			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate , Combos, Game_rules ),
+			
+			{Garbage_to_release_list, New_gamestate} = get_garbage_to_release(Client_garbage_id,New_gamestate_after_piece),
+			Board_after_release_garbage = release_garbage_list( Result_loop_board, Garbage_to_release_list ),
+
+
 			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
+			New_opponent_gamestate = add_garbage_to_stack( Generated_garbage_position_list, Opponent_gamestate ),
+
 
 			case length(Generated_garbage_position_list) of
 				0 ->
 					do_nothing;
 				_other ->
-					gen_server:cast( User_pid , { send_message, message_processor:create_generated_garbage_message( Generated_garbage_position_list ) } )
+					Msg_generated = message_processor:create_generated_garbage_message( Generated_garbage_position_list, 
+																						New_opponent_gamestate#user_gamestate.current_garbage_id ),
+					gen_server:cast( User_pid , { send_message, Msg_generated } )
 			end,
-			gen_server:cast( Opponent_pid , { send_message, message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, X, Y, Angle ) } ),
 
-			New_gamestate = New_gamestate_after_piece#user_gamestate{ board = Board_after_release_garbage,
-											garbage_position_list = [],
+			Msg = message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, 
+																			X, Y, Angle, 
+																				New_opponent_gamestate#user_gamestate.current_garbage_id ),
+			gen_server:cast( Opponent_pid , { send_message, Msg } ),
+
+			New_gamestate = New_gamestate_after_piece#user_gamestate{ 
+												board = Board_after_release_garbage,
+												garbage_position_list = [],
 												current_piece = Next_piece,
 												current_piece_angle = down,
 												current_piece_x = ?STARTING_PIECE_X,
 												current_piece_y = Board_after_release_garbage#board.height - 1,
 												piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
 
-			New_opponent_garbage_list = lists:append( Opponent_gamestate#user_gamestate.garbage_position_list, Generated_garbage_position_list ),
-			New_opponent_gamestate = Opponent_gamestate#user_gamestate{ garbage_position_list = New_opponent_garbage_list },
+			
+			{ Result_gamestate, Result_opponent_gamestate } = powers_logic:handle_turn_passed(New_gamestate, New_opponent_gamestate),
 
-
-			{ New_gamestate, New_opponent_gamestate }
+			{ Result_gamestate, Result_opponent_gamestate }
 	end.
+
+
+
+get_garbage_to_release( Client_garbage_id, Player_state = #user_gamestate{} ) ->
+	
+	Fun = fun( { Garbage_id , Garbage_list}, {Result_list, Unrelease_garbage} ) ->
+		case Garbage_id =< Client_garbage_id of
+			true ->			{ lists:append( Garbage_list , Result_list ) , Unrelease_garbage};
+			false ->		{ Result_list, [ { Garbage_id , Garbage_list} | Unrelease_garbage ] }
+		end
+	end,
+	{Result_list, Unrelease_garbage} = lists:foldl( Fun, {[],[]}, Player_state#user_gamestate.garbage_position_list ),
+	{Result_list,Player_state#user_gamestate{ garbage_position_list = Unrelease_garbage } }.
+
+
+
+add_garbage_to_stack( Garbage_list, Player_state = #user_gamestate{} ) ->
+	New_opponent_garbage_list = [ {Player_state#user_gamestate.current_garbage_id, Garbage_list} | Player_state#user_gamestate.garbage_position_list ],
+	Player_state#user_gamestate{ garbage_position_list = New_opponent_garbage_list, 
+									current_garbage_id = Player_state#user_gamestate.current_garbage_id + 1 }.
+
 
 
 
