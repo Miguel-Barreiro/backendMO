@@ -94,7 +94,9 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 		New_block_position = #block_position{ 	x = Block#block.x, 
 													y = Block#block.y, 
 														color = get_protocol_color_from_block(Block), 
-															type = get_protocol_type_from_block(Block) },
+															type = get_protocol_type_from_block(Block),
+																exploding_times_left = Block#block.hardness
+											},
 		[ New_block_position | Result_block_list]
 	end,
 
@@ -321,7 +323,9 @@ create_debug_board(Player_current_random_step, Player_current_piece_x, Player_cu
 		New_block_position = #block_position{ 	x = Block#block.x, 
 													y = Block#block.y, 
 														color = get_protocol_color_from_block(Block), 
-															type = get_protocol_type_from_block(Block) },
+															type = get_protocol_type_from_block(Block),
+																exploding_times_left = Block#block.hardness
+											},
 		[ New_block_position | Result_block_list]
 	end,
 
@@ -534,11 +538,11 @@ convert_wallet_to_protocol( { Item_name, Amount } , Rest_items ) ->
 
 
 
-convert_garbage_to_protocol_garbage( { Type , X} , Result ) ->
+convert_garbage_to_protocol_garbage( { Type , X } , Result ) ->
 	Garbage_result = case Type of
-		garbage ->					#garbage_position{ x = X, type = garbage, color = undefined };
-		{garbage_color, Color } ->	#garbage_position{ x = X, type = garbage_color, color = Color };
-		garbage_hard ->				#garbage_position{ x = X, type = garbage_hard, color = undefined }
+		garbage ->						#garbage_position{ x = X, type = garbage, color = undefined};
+		{garbage_color, Color } ->		#garbage_position{ x = X, type = garbage_color, color = Color};
+		{garbage_hard, Hardness} ->		#garbage_position{ x = X, type = garbage_hard, color = undefined }
 	end,
 	[ Garbage_result | Result].
 

@@ -148,10 +148,6 @@ handle_place_piece( User_pid, Opponent_pid,
 
 
 
-
-
-
-
 %throws out_of_bounds (in case the user has lost)
 %throws invalid_move (in case of an invalid move)
 handle_update_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
@@ -746,8 +742,8 @@ release_garbage_list( Board = #board{}, [{{garbage_color, Color}, Garbage_positi
 	New_board = board:set_block( #block{ type = garbage_color, color = Color }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
 	release_garbage_list( New_board, Rest );
 	
-release_garbage_list( Board = #board{}, [{garbage_hard, Garbage_position} | Rest ] ) ->
-	New_board = board:set_block( #block{ type = garbage_hard }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
+release_garbage_list( Board = #board{}, [{{garbage_hard, Hardness}, Garbage_position} | Rest ] ) ->
+	New_board = board:set_block( #block{ type = garbage_hard, hardness = Hardness }, Garbage_position , get_column_height( Garbage_position, Board ), Board ),
 	release_garbage_list( New_board, Rest );
 
 release_garbage_list( Board = #board{}, [{garbage, Garbage_position} | Rest ] ) ->
@@ -887,7 +883,7 @@ generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_ga
 	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
 	New_column_list = lists:append( List1 , List2 ),
 
-	[ {garbage_hard , Position} | 
+	[ {{garbage_hard, 2}, Position} | 
 		generate_garbage_positions( Hard_garbage_number -1, Color_garbage_number, Normal_garbage_number, Board, New_column_list )].
 
 
@@ -1195,11 +1191,15 @@ google_docs_tests(Game_rules) ->
 				Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
 				{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( #user_gamestate{ random_state = 1 } , Combos, Game_rules ),
 
-				io:format("\n expected result\n"),
-				board:print_board(Final_board),
-				io:format("\n actual result \n"),
-				board:print_board(Result_loop_board),
-				io:format("\n"),
+				case board:are_boards_equal(Result_loop_board,Final_board) of
+					true ->			do_nothing;
+					false ->
+									io:format("\n expected result\n"),
+									board:print_board(Final_board),
+									io:format("\n actual result \n"),
+									board:print_board(Result_loop_board),
+									io:format("\n")
+				end,
 
 				?assertMatch( true , board:are_boards_equal(Result_loop_board,Final_board) ),
 
@@ -1211,7 +1211,10 @@ google_docs_tests(Game_rules) ->
 															end, Garbage_position_list)),
 
 				Calculated_number_hard_garbages = length( lists:filter( fun( {Garbage,_} )-> 
-																			Garbage == garbage_hard 
+																			case Garbage of 
+																				{garbage_hard , _ } -> 		true;
+																				_ -> 						false
+																			end
 																		end, Garbage_position_list)),
 
 				Calculated_number_normal_garbages = length( lists:filter( fun( {Garbage,_} )-> 

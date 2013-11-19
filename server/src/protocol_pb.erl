@@ -23,6 +23,7 @@
   encode_message_difficult_change/1,decode_message_difficult_change/1,
   encode_message_user_disconected/1,decode_message_user_disconected/1,
   encode_message_restart_game/1,decode_message_restart_game/1,
+  to_message_generic_power__power_type/1,from_message_generic_power__power_type/1,
   encode_message_generic_power/1,decode_message_generic_power/1,
   encode_message_enter_queue/1,decode_message_enter_queue/1,
   encode_message_match_created/1,decode_message_match_created/1,
@@ -142,7 +143,8 @@ decode_block_position_impl(Binary) ->
      fun(1,Val,Rec) -> Rec#block_position{x = protocol_buffers:cast(int32,Val)};
         (2,Val,Rec) -> Rec#block_position{y = protocol_buffers:cast(int32,Val)};
         (3,{varint,Enum},Rec) -> Rec#block_position{type=to_type_block(Enum)};
-        (4,{varint,Enum},Rec) -> Rec#block_position{color=to_color_block(Enum)}
+        (4,{varint,Enum},Rec) -> Rec#block_position{color=to_color_block(Enum)};
+        (5,Val,Rec) -> Rec#block_position{exploding_times_left = protocol_buffers:cast(int32,Val)}
       end).
 
 encode_block_position(undefined) -> undefined;
@@ -151,7 +153,8 @@ encode_block_position(R) when is_record(R,block_position) ->
     protocol_buffers:encode(1,int32,R#block_position.x),
     protocol_buffers:encode(2,int32,R#block_position.y),
     protocol_buffers:encode(3,int32,from_type_block(R#block_position.type)),
-    protocol_buffers:encode(4,int32,from_color_block(R#block_position.color))
+    protocol_buffers:encode(4,int32,from_color_block(R#block_position.color)),
+    protocol_buffers:encode(5,int32,R#block_position.exploding_times_left)
   ].
 
 decode_garbage_position(B) ->
@@ -466,6 +469,16 @@ encode_message_restart_game(R) when is_record(R,message_restart_game) ->
     protocol_buffers:encode(2,int64,R#message_restart_game.start_timestamp)
   ].
 
+to_message_generic_power__power_type(1) -> frenzy;
+to_message_generic_power__power_type(2) -> trash;
+to_message_generic_power__power_type(3) -> redbutton;
+to_message_generic_power__power_type(undefined) -> undefined.
+
+from_message_generic_power__power_type(frenzy) -> 1;
+from_message_generic_power__power_type(trash) -> 2;
+from_message_generic_power__power_type(redbutton) -> 3;
+from_message_generic_power__power_type(undefined) -> undefined.
+
 decode_message_generic_power(B) ->
   case decode_message_generic_power_impl(B) of
     undefined -> #message_generic_power{};
@@ -475,14 +488,14 @@ decode_message_generic_power(B) ->
 decode_message_generic_power_impl(<<>>) -> undefined;
 decode_message_generic_power_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_generic_power{},
-     fun(1,Val,Rec) -> Rec#message_generic_power{type = protocol_buffers:cast(int32,Val)};
+     fun(1,{varint,Enum},Rec) -> Rec#message_generic_power{type=to_message_generic_power__power_type(Enum)};
         (2,Val,Rec) -> Rec#message_generic_power{power_data = protocol_buffers:cast(string,Val)}
       end).
 
 encode_message_generic_power(undefined) -> undefined;
 encode_message_generic_power(R) when is_record(R,message_generic_power) ->
   [
-    protocol_buffers:encode(1,int32,R#message_generic_power.type),
+    protocol_buffers:encode(1,int32,from_message_generic_power__power_type(R#message_generic_power.type)),
     protocol_buffers:encode(2,length_encoded,R#message_generic_power.power_data)
   ].
 
