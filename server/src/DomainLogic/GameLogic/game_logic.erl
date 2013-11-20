@@ -4,6 +4,8 @@
 
 -export([ handle_place_piece/6, handle_update_piece/5, create_new_game/3 ]).
 
+-export([ activate_ability_blocks/1]).
+
 -define( BOARD_WIDTH , 6).
 -define( BOARD_HEIGHT , 13).
 -define( STARTING_PIECE_X , 3).
@@ -30,6 +32,28 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 
 	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed, game_rules = Game_rules }.
 
+
+
+
+
+
+activate_ability_blocks( Board = #board{} ) ->
+
+	Blocks = board:get_all_blocks(Board),
+
+	Filter_fun = fun( Block = #block{} ) ->
+		case Block#block.type of
+			bomb -> 				true;
+			chromatic_bomb -> 		true;
+			paint -> 				true;
+			tornado -> 				true;
+			reinforcements -> 		true;
+			ghost ->				true;
+			_other -> 				false
+		end
+	end,
+	Ability_blocks = lists:filter( Filter_fun, Blocks ),
+	activate_blocks( order_activated_block_list( Ability_blocks ) , Board).
 
 
 
@@ -111,8 +135,10 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y,Client_garbage_id]),
 
 
-	{ Gamestate, Opponent_gamestate } = powers_logic:handle_turn_begin(Begin_gamestate, Begin_opponent_gamestate),
+	{ Player_Board, Opponent_Board } = powers_logic:handle_turn_begin(Begin_gamestate#user_gamestate.board, Begin_opponent_gamestate#user_gamestate.board),
 
+	Gamestate = Begin_gamestate#user_gamestate{ board = Player_Board },
+	Opponent_gamestate = Begin_opponent_gamestate#user_gamestate{ board = Opponent_Board },
 
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
@@ -120,17 +146,24 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 			throw( invalid_move );
 		true ->
 
-			Board_after_reset_reinforcements = (Gamestate#user_gamestate.board)#board{ reinforcements = [] },
+			Board_after_reset_reinforcements = Player_Board#board{ reinforcements = [] },
 			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Board_after_reset_reinforcements),
 
 			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece, Game_rules ),
-			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate , Combos, Game_rules ),
+
+
 			
+			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate, Combos, Game_rules ),
+			
+
 			{Garbage_to_release_list, New_gamestate} = get_garbage_to_release(Client_garbage_id,New_gamestate_after_piece),
 			Board_after_release_garbage = release_garbage_list( Result_loop_board, Garbage_to_release_list ),
 
 
 			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
+			
+
+			
 			New_opponent_gamestate = add_garbage_to_stack( Generated_garbage_position_list, Opponent_gamestate ),
 
 
@@ -148,24 +181,20 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 																				New_opponent_gamestate#user_gamestate.current_garbage_id - 1 ),
 			gen_server:cast( Opponent_pid , { send_message, Msg } ),
 
-			Next_gamestate = New_gamestate_after_piece#user_gamestate{ 
+			Next_gamestate = New_gamestate#user_gamestate{ 
 												board = Board_after_release_garbage,
 												garbage_position_list = [],
 												current_piece = Next_piece,
 												current_piece_angle = down,
 												current_piece_x = ?STARTING_PIECE_X,
 												current_piece_y = Board_after_release_garbage#board.height - 1,
-												piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
-
-			
-			{ Result_gamestate, Result_opponent_gamestate } = powers_logic:handle_turn_passed(Next_gamestate, New_opponent_gamestate),
-
-			lager:info("\n GARBAGE for id ~p released ~p\n",[New_opponent_gamestate#user_gamestate.current_garbage_id,Garbage_to_release_list]),
-			lager:info("~p",[Result_opponent_gamestate#user_gamestate.garbage_position_list]),
-			lager:info("------------------------------",[]),
+												piece_generation_step = New_gamestate#user_gamestate.piece_generation_step + 1 },
 
 
-			{ Result_gamestate, Result_opponent_gamestate }
+			{ Result_player_Board, Result_opponent_board } = powers_logic:handle_turn_passed(Next_gamestate#user_gamestate.board, 
+																								New_opponent_gamestate#user_gamestate.board),
+
+			{ Next_gamestate#user_gamestate{ board = Result_player_Board}, New_opponent_gamestate#user_gamestate{ board = Result_opponent_board} }
 	end.
 
 
@@ -405,9 +434,6 @@ pop_combos( Board = #board{}, Combo_list ) ->
 										end, [], Combo_list), 
 	
 	Board_after_remove_combos_proximity = activate_blocks_by_combo_proximity( Blocks_by_proximity, Board_without_combos),
-
-	board:print_board(Board_after_remove_combos_proximity),
-
 	activate_combo_blocks( order_activated_block_list(Combo_blocks), Board_after_remove_combos_proximity).
 
 
@@ -1244,7 +1270,8 @@ google_docs_tests(Game_rules) ->
 				Color_garbage = proplists:get_value(<<"colorGarbage">>,Generated_garbage),
 				Hard_garbage = proplists:get_value(<<"hardGarbage">>,Generated_garbage),
 				Normal_garbage = proplists:get_value(<<"normalGarbage">>,Generated_garbage),
-				%Spawns_bomb = proplists:get_value(<<"spawnsBomb">>,Generated_garbage),
+				
+				Power_trigger = proplists:get_value(<<"triggerPower">>,Generated_garbage),
 
 				Power_generated = proplists:get_value(<<"PowerGenerated">>,Generated_garbage),
 				Power_type = get_power_type_from_test_type( Power_generated ),
@@ -1256,14 +1283,22 @@ google_docs_tests(Game_rules) ->
 				Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
 				{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( #user_gamestate{ random_state = 1 } , Combos, Game_rules ),
 
+				%case Power_trigger of
+				%	<<"none">> ->
+				%	<<"redbutton">> ->
+				%	<<"frenzy">> ->
+				%	<<"trash">> ->
+				%end,
+
+
+
 				case board:are_boards_equal(Result_loop_board,Final_board) of
 					true ->			do_nothing;
 					false ->
-									%io:format("\n expected result\n"),
-									%board:print_board(Final_board),
-									%io:format("\n actual result \n"),
-									%board:print_board(Result_loop_board),
-									io:format("\n")
+									io:format("\n expected result\n"),
+									board:print_board(Final_board),
+									io:format("\n actual result \n"),
+									board:print_board(Result_loop_board)
 				end,
 
 				?assertMatch( true , board:are_boards_equal(Result_loop_board,Final_board) ),
@@ -1297,7 +1332,9 @@ google_docs_tests(Game_rules) ->
 				?assertMatch( Calculated_number_normal_garbages, Normal_garbage ),
 				?assertMatch( Calculated_number_hard_garbages, Hard_garbage ),
 				?assertMatch( Calculated_number_color_garbages, Color_garbage ),
-				%?assertMatch( Calculated_block_type, Power_type ),
+				?assertMatch( Calculated_block_type, Power_type ),
+
+
 
 				ok
 				

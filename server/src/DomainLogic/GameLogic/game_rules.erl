@@ -157,9 +157,15 @@ get_garbage_from_combo_chain( Combos, Game_rules = #game_logic_rules{} ) ->
 
 
 
+get_combo_color( [] ) ->
+	shapeshifter;
 
-
-
+get_combo_color( Combo_list ) ->
+	[ Block | Rest_blocks ] = Combo_list,
+	case Block#block.type of
+		shapeshifter ->		get_combo_color( Rest_blocks );
+		_other ->			Block#block.color
+	end.
 
 
 
@@ -169,16 +175,24 @@ get_type_from_rule( [] , Combos) ->
 
 get_type_from_rule( [{{ Combo_size, Rule_color }, Power } | Rest] , Combos) ->
 	
+	
+
 	Combo_fits_rule = 
-	fun( Combo ) -> 
+	fun( Combo ) ->
 		Combo_list = sets:to_list(Combo),
-		[ Block | _Rest_blocks ] = Combo_list,
-		length(Combo_list) >= Combo_size andalso ( Rule_color == any orelse Rule_color == Block#block.color )
+		length(Combo_list) >= Combo_size andalso ( Rule_color == any orelse Rule_color == get_combo_color( Combo_list ) )
 	end,
 
 	case lists:any( fun( Combo_sequence )-> lists:any( Combo_fits_rule, Combo_sequence ) end, Combos ) of
-		false ->
-				get_type_from_rule( Rest, Combos);
-		true ->
-				Power
+		false ->		get_type_from_rule( Rest, Combos);
+		true ->			Power
 	end.
+
+
+
+
+
+
+
+
+	

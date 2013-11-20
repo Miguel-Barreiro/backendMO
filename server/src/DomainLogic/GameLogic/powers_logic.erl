@@ -10,50 +10,45 @@
 -define( RED_BUTTON_POWER, 3).
 
 
--spec handle_turn_begin(User_gamestate::#user_gamestate{}, Opponent_gamestate::#user_gamestate{}) -> {#user_gamestate{},#user_gamestate{}}.
-handle_turn_begin( User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) -> 
-	{ User_gamestate, Opponent_gamestate }.
+-spec handle_turn_begin(User_board::#board{}, Opponent_board::#board{}) -> {#board{},#board{}}.
+handle_turn_begin( User_board = #board{}, Opponent_board = #board{} ) -> 
+	{ User_board, Opponent_board }.
 
 
--spec handle_turn_passed(User_gamestate::#user_gamestate{}, Opponent_gamestate::#user_gamestate{}) -> {#user_gamestate{},#user_gamestate{}}.
-handle_turn_passed( User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) -> 
+-spec handle_turn_passed(User_board::#board{}, Opponent_board::#board{}) -> {#board{},#board{}}.
+handle_turn_passed( User_board = #board{}, Opponent_board = #board{} ) -> 
 
-	Gamestate_after_red_button = case User_gamestate#user_gamestate.red_button_pressed of
-		true ->				execute_red_button(User_gamestate);
-		false ->			User_gamestate
+	Board_after_red_button = case User_board#board.red_button_pressed of
+		true ->				execute_red_button(User_board);
+		false ->			User_board
 	end,
+	
+	New_board = Board_after_red_button#board{
+					thrash_turns = decrease_turn( Board_after_red_button#board.thrash_turns ), 
+					frenzy_turns = decrease_turn( Board_after_red_button#board.frenzy_turns )
+				},
+
+	{New_board, Opponent_board}.
 
 
 
-	New_user_gamestate = Gamestate_after_red_button#user_gamestate{ thrash_turns = decrease_turn( User_gamestate#user_gamestate.thrash_turns ), 
-																		frenzy_turns = decrease_turn( User_gamestate#user_gamestate.frenzy_turns )
-														},
-	{ New_user_gamestate, Opponent_gamestate }.
+-spec handle_use_power( Power::integer(), User_board::#board{}, Opponent_board::#board{}) -> {#board{},#board{}}.
+handle_use_power( ?THRASH_POWER, User_board = #board{}, Opponent_board = #board{}) ->
+	{User_board#board{thrash_turns = 5}, Opponent_board};
 
+handle_use_power( ?RED_BUTTON_POWER, User_board = #board{}, Opponent_board = #board{}) ->
+	{User_board#board{red_button_pressed = true}, Opponent_board};
 
-
--spec handle_use_power( Power::integer(), User_gamestate::#user_gamestate{}, Opponent_gamestate::#user_gamestate{} ) -> {#user_gamestate{},#user_gamestate{}}.
-handle_use_power( ?THRASH_POWER, User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}) ->
-	{User_gamestate#user_gamestate{ thrash_turns = 5 }, Opponent_gamestate};
-
-handle_use_power( ?RED_BUTTON_POWER, User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}) ->
-	{User_gamestate#user_gamestate{ red_button_pressed = true }, Opponent_gamestate};
-
-handle_use_power( ?FRENZY_POWER, User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}) ->
-	{User_gamestate#user_gamestate{ frenzy_turns = 5 }, Opponent_gamestate};
-
-handle_use_power( Power, User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}) ->
-	{User_gamestate, Opponent_gamestate}.
-
+handle_use_power( ?FRENZY_POWER, User_board = #board{}, Opponent_board = #board{}) ->
+	{User_board#board{frenzy_turns = 5}, Opponent_board}.
 
 
 
 
 
-execute_red_button( User_gamestate = #user_gamestate{} ) ->
-	User_gamestate.
-
-
+execute_red_button( Board = #board{} ) ->
+	New_board = game_logic:activate_ability_blocks( Board ),
+	New_board#board{ red_button_pressed = false }.
 
 
 

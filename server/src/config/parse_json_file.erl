@@ -64,6 +64,7 @@ get_block_type_from_json( Type ) ->
 		<<"BlockColorGreen">> ->		green;
 		<<"BlockColorPurple">> ->		purple;
 		<<"BlockColorWhite">> ->		white;
+		<<"BlockColorAny">>	->			shapeshifter;
 		_ -> 							any
 	end.
 

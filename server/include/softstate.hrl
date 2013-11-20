@@ -30,7 +30,12 @@
 
 	ghosts_to_trigger = 0 :: integer(),
 	reinforcements = [] :: [color_type()],
-	painted = []
+	painted = [],
+
+	frenzy_turns = 0 :: integer(),
+	thrash_turns = 0 :: integer(),
+	red_button_pressed = false
+
 }).
 
 -type garbage_type() :: garbage_hard | garbage_color | garbage.
@@ -71,12 +76,8 @@
 	garbage_position_list = [],
 
 	piece_generation_step = 0,
-	random_state = undefined,
-
-	frenzy_turns = 0 :: integer(),
-	thrash_turns = 0 :: integer(),
-	red_button_pressed = false
-
+	random_state = undefined
+	
 }).
 
 
