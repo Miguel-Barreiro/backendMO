@@ -148,7 +148,7 @@ create_login_success( User_id, Configuration_url, Configuration_version,
 
 create_generated_garbage_message( Garbages_position_list, Garbage_id) ->
 	
-	lager:info("create_generated_garbage_message for ~p ",[Garbages_position_list]),
+	lager:info("create_generated_garbage_message for ~p with garbage_id ~p",[Garbages_position_list,Garbage_id]),
 
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
@@ -160,7 +160,7 @@ create_generated_garbage_message( Garbages_position_list, Garbage_id) ->
 
 create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle, Client_garbage_id ) ->
 
-	lager:info("create_opponent_place_piece_message for ~p ",[Garbages_position_list]),
+	lager:info("create_opponent_place_piece_message for ~p with garbage_id ~p ",[Garbages_position_list,Client_garbage_id]),
 
 	Garbage_list_part = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(Garbages_position_list) ),
 
@@ -441,7 +441,7 @@ process_message( message_place_piece_code,
 							_Message_encoded ) 
 			when User_process_pid =/= no_user_process ->
 
-	lager:debug("place piece received to ~p",[User_process_pid]),
+	lager:debug("place piece received to ~p with garbage id ~p",[User_process_pid,Message#message_place_piece.placed_garbage_id]),
 	gen_server:cast( User_process_pid, { place_piece, 
 											Message#message_place_piece.x, 
 												Message#message_place_piece.y, 

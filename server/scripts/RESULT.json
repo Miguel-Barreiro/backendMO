@@ -418,6 +418,119 @@
     {
         "final": [
             {
+                "block": "w",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "Cp",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "CloneServer",
+        "origin": [
+            {
+                "block": "@",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "Cp",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
                 "block": "y",
                 "x": 12,
                 "y": 14
@@ -4344,6 +4457,114 @@
             },
             {
                 "block": "g",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [
+            {
+                "block": "w",
+                "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 14,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "CRp",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1
+        },
+        "name": "ChromaticServer",
+        "origin": [
+            {
+                "block": "@",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 13
+            },
+            {
+                "block": "b",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "CRp",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "y",
                 "x": 6,
                 "y": 14
             }

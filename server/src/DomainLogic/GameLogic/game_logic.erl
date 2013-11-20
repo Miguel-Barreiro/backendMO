@@ -107,8 +107,8 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 							Angle, Begin_gamestate = #user_gamestate{}, Begin_opponent_gamestate = #user_gamestate{}, 
 								Game_rules = #game_logic_rules{} ) ->
 
-	io:format("\nplaced the piece [~p ~p] with angle ~p in ~p,~p\n",
-					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y]),
+	io:format("\nplaced the piece [~p ~p] with angle ~p in ~p,~p with client_garbage_id ~p\n",
+					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y,Client_garbage_id]),
 
 
 	{ Gamestate, Opponent_gamestate } = powers_logic:handle_turn_begin(Begin_gamestate, Begin_opponent_gamestate),
@@ -139,16 +139,16 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 					do_nothing;
 				_other ->
 					Msg_generated = message_processor:create_generated_garbage_message( Generated_garbage_position_list, 
-																						New_opponent_gamestate#user_gamestate.current_garbage_id ),
+																						New_opponent_gamestate#user_gamestate.current_garbage_id - 1 ),
 					gen_server:cast( User_pid , { send_message, Msg_generated } )
 			end,
 
 			Msg = message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, 
 																			X, Y, Angle, 
-																				New_opponent_gamestate#user_gamestate.current_garbage_id ),
+																				New_opponent_gamestate#user_gamestate.current_garbage_id - 1 ),
 			gen_server:cast( Opponent_pid , { send_message, Msg } ),
 
-			New_gamestate = New_gamestate_after_piece#user_gamestate{ 
+			Next_gamestate = New_gamestate_after_piece#user_gamestate{ 
 												board = Board_after_release_garbage,
 												garbage_position_list = [],
 												current_piece = Next_piece,
@@ -158,7 +158,12 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 												piece_generation_step = New_gamestate_after_piece#user_gamestate.piece_generation_step + 1 },
 
 			
-			{ Result_gamestate, Result_opponent_gamestate } = powers_logic:handle_turn_passed(New_gamestate, New_opponent_gamestate),
+			{ Result_gamestate, Result_opponent_gamestate } = powers_logic:handle_turn_passed(Next_gamestate, New_opponent_gamestate),
+
+			lager:info("\n GARBAGE for id ~p released ~p\n",[New_opponent_gamestate#user_gamestate.current_garbage_id,Garbage_to_release_list]),
+			lager:info("~p",[Result_opponent_gamestate#user_gamestate.garbage_position_list]),
+			lager:info("------------------------------",[]),
+
 
 			{ Result_gamestate, Result_opponent_gamestate }
 	end.
@@ -386,7 +391,7 @@ calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 
 pop_combos( Board = #board{}, Combo_list ) ->
 
-	Combo_blocks  = lists:foldl( fun( Combo, All_combo_blocks )->
+	Combo_blocks = lists:foldl( fun( Combo, All_combo_blocks )->
 									lists:append( All_combo_blocks, sets:to_list(Combo) )
 								 end, [], Combo_list),
 
@@ -395,14 +400,15 @@ pop_combos( Board = #board{}, Combo_list ) ->
 											board:remove_block( Block#block.x, Block#block.y, Board_without_combos)
 										end, Board, Combo_blocks),
 
-
-
 	Blocks_by_proximity = lists:foldl( fun( Combo, List )->
 										lists:append( List, get_afected_by_combo_proximity(Combo , Board_without_combos))
 										end, [], Combo_list), 
 	
 	Board_after_remove_combos_proximity = activate_blocks_by_combo_proximity( Blocks_by_proximity, Board_without_combos),
-	activate_blocks( order_activated_block_list(Combo_blocks), Board_after_remove_combos_proximity).
+
+	board:print_board(Board_after_remove_combos_proximity),
+
+	activate_combo_blocks( order_activated_block_list(Combo_blocks), Board_after_remove_combos_proximity).
 
 
 
@@ -515,6 +521,23 @@ activate_blocks_by_combo_proximity( [ Block | Rest], Board = #board{}) ->
 
 
 
+
+
+activate_combo_blocks( [], Board = #board{} ) ->
+	Board;
+
+activate_combo_blocks( Block_list, Board = #board{} ) ->
+
+	Activate_fun = fun( Block, Result_Board = #board{} ) ->
+		activate_block( Block, Result_Board )
+	end,
+
+	Board_after_activate = lists:foldl( Activate_fun , Board, Block_list ),
+
+	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board_after_activate) ),
+	activate_blocks( New_activated_list, Board_after_activate).
+
+
 activate_blocks( [], Board = #board{} ) ->
 	Board;
 activate_blocks( Block_list, Board = #board{} ) ->
@@ -532,6 +555,9 @@ activate_blocks( Block_list, Board = #board{} ) ->
 
 	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board_after_activate) ),
 	activate_blocks( New_activated_list, Board_after_activate).
+
+
+
 
 
 
@@ -1233,10 +1259,10 @@ google_docs_tests(Game_rules) ->
 				case board:are_boards_equal(Result_loop_board,Final_board) of
 					true ->			do_nothing;
 					false ->
-									io:format("\n expected result\n"),
-									board:print_board(Final_board),
-									io:format("\n actual result \n"),
-									board:print_board(Result_loop_board),
+									%io:format("\n expected result\n"),
+									%board:print_board(Final_board),
+									%io:format("\n actual result \n"),
+									%board:print_board(Result_loop_board),
 									io:format("\n")
 				end,
 

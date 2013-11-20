@@ -169,12 +169,12 @@ get_block_representation( Block ) ->
 		#block{ type = tornado, color = purple } ->				"Tp";
 		#block{ type = tornado, color = green } ->				"Tg";
 
-		#block{ type = cloner, color = red } ->					"Cr";
-		#block{ type = cloner, color = yellow } ->				"Cy";
-		#block{ type = cloner, color = white } ->				"Cw";
-		#block{ type = cloner, color = blue } ->				"Cb";
-		#block{ type = cloner, color = purple } ->				"Cp";
-		#block{ type = cloner, color = green } ->				"Cg";
+		#block{ type = cloner, color = red } ->					"Dr";
+		#block{ type = cloner, color = yellow } ->				"Dy";
+		#block{ type = cloner, color = white } ->				"Dw";
+		#block{ type = cloner, color = blue } ->				"Db";
+		#block{ type = cloner, color = purple } ->				"Dp";
+		#block{ type = cloner, color = green } ->				"Dg";
 		
 		#block{ type = garbage } ->								"##";
 		
