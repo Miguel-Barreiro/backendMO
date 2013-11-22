@@ -585,39 +585,6 @@
         ]
     },
     {
-        "final": [],
-        "garbage": {
-            "PowerGenerated": "tornado",
-            "colorGarbage": 0,
-            "hardGarbage": 0,
-            "normalGarbage": 1,
-            "triggerPower": "frenzy"
-        },
-        "name": "SimplePowerFrenzy",
-        "origin": [
-            {
-                "block": "g",
-                "x": 2,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 3,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 4,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 5,
-                "y": 14
-            }
-        ]
-    },
-    {
         "final": [
             {
                 "block": "r",
@@ -1511,6 +1478,39 @@
             {
                 "block": "w",
                 "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "bomb",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "triggerPower": "frenzy"
+        },
+        "name": "SimplePowerPurpleFrenzy",
+        "origin": [
+            {
+                "block": "p",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 5,
                 "y": 14
             }
         ]
@@ -3092,6 +3092,39 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "tornado",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "triggerPower": "frenzy"
+        },
+        "name": "SimplePowerGreenFrenzy",
+        "origin": [
+            {
+                "block": "g",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "r",
@@ -3231,6 +3264,39 @@
             {
                 "block": "b",
                 "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "cloner",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "triggerPower": "frenzy"
+        },
+        "name": "SimplePowerWhiteFrenzy",
+        "origin": [
+            {
+                "block": "w",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 5,
                 "y": 14
             }
         ]
@@ -5458,6 +5524,39 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "paint",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "triggerPower": "frenzy"
+        },
+        "name": "SimplePowerRedFrenzy",
+        "origin": [
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "w",
@@ -5557,6 +5656,39 @@
             {
                 "block": "Cp",
                 "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "chromatic",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "triggerPower": "frenzy"
+        },
+        "name": "SimplePowerBlueFrenzy",
+        "origin": [
+            {
+                "block": "b",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 5,
                 "y": 14
             }
         ]
@@ -6978,6 +7110,39 @@
             {
                 "block": "#y",
                 "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "reinforcements",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 1,
+            "triggerPower": "frenzy"
+        },
+        "name": "SimplePowerYellowFrenzy",
+        "origin": [
+            {
+                "block": "y",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 5,
                 "y": 14
             }
         ]

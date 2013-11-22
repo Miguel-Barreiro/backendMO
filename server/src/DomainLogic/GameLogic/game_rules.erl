@@ -76,7 +76,7 @@ get_garbage_number( Combos, Game_rules = #game_logic_rules{} ) ->
 
 get_random_garbage_from_types( _, [] ) ->
 	[];
-get_random_garbage_from_types( 0, Types ) ->
+get_random_garbage_from_types( 0, _Types ) ->
 	[];
 get_random_garbage_from_types( Number, Types ) ->
 	Garbage = lists:nth( random:uniform( length(Types) ), Types), 
@@ -171,7 +171,7 @@ get_combo_color( Combo_list ) ->
 	end.
 
 
-get_minimum_combo_power( [], Combos) -> 
+get_minimum_combo_power( [], _combos) -> 
 	color;
 get_minimum_combo_power( Game_rules, Combos) -> 
 	Reverse_rules = lists:reverse(Game_rules),
@@ -179,7 +179,7 @@ get_minimum_combo_power( Game_rules, Combos) ->
 
 
 
-get_minimum_combo_power_rec( [{{ Combo_size, Rule_color }, Power } | Rest], Combos) -> 
+get_minimum_combo_power_rec( [{{ _combo_size, Rule_color }, Power } | Rest], Combos) -> 
 	Fun = 
 	fun( Combo, { Found, Didnt_match } ) ->
 		Combo_list = sets:to_list(Combo),
@@ -201,7 +201,7 @@ get_type_from_rule_with_frenzy( Game_rules , Combos) ->
 		Other -> 	Other
 	end.
 
-get_type_from_rule( [] , Combos) ->
+get_type_from_rule( [] , _combos) ->
 	color;
 
 get_type_from_rule( [{{ Combo_size, Rule_color }, Power } | Rest] , Combos) ->
