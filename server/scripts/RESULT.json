@@ -37,6 +37,8 @@
             "colorGarbage": 0,
             "hardGarbage": 2,
             "normalGarbage": 3,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "Simult2Paints1Chromatic",
@@ -276,6 +278,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 0,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "GarbageColorClientFail2",
@@ -419,6 +423,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PowerSinglePurpleCombo",
@@ -513,6 +519,8 @@
             "colorGarbage": 4,
             "hardGarbage": 0,
             "normalGarbage": 5,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChainReinforce",
@@ -632,6 +640,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "BombReinforcements",
@@ -741,6 +751,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "CloneServer",
@@ -820,6 +832,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultWithCollision4",
@@ -924,6 +938,8 @@
             "colorGarbage": 4,
             "hardGarbage": 0,
             "normalGarbage": 4,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PaintColorGarbage",
@@ -1007,6 +1023,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 5,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PowerSingleRedCombo2",
@@ -1071,6 +1089,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultWithCollision3",
@@ -1175,6 +1195,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultWithCollision2",
@@ -1263,6 +1285,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 3,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PowerSingleRedCombo1",
@@ -1312,6 +1336,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "Mix",
@@ -1361,19 +1387,24 @@
     {
         "final": [
             {
-                "block": "b",
-                "x": 12,
-                "y": 13
+                "block": "y",
+                "x": 11,
+                "y": 12
             },
             {
-                "block": "Cr",
+                "block": "p",
                 "x": 13,
-                "y": 13
+                "y": 12
             },
             {
                 "block": "y",
-                "x": 10,
-                "y": 14
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 13,
+                "y": 13
             },
             {
                 "block": "y",
@@ -1381,12 +1412,7 @@
                 "y": 14
             },
             {
-                "block": "g",
-                "x": 12,
-                "y": 14
-            },
-            {
-                "block": "r",
+                "block": "p",
                 "x": 13,
                 "y": 14
             }
@@ -1395,39 +1421,21 @@
             "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 1,
+            "normalGarbage": 0,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "frenzy"
         },
-        "name": "PowerFrenzy",
+        "name": "SimpleFrenzyDoubleWithoutSize",
         "origin": [
             {
                 "block": "y",
                 "x": 2,
-                "y": 11
-            },
-            {
-                "block": "y",
-                "x": 4,
-                "y": 11
-            },
-            {
-                "block": "y",
-                "x": 2,
-                "y": 12
-            },
-            {
-                "block": "r",
-                "x": 3,
-                "y": 12
-            },
-            {
-                "block": "Cy",
-                "x": 4,
                 "y": 12
             },
             {
                 "block": "p",
-                "x": 5,
+                "x": 4,
                 "y": 12
             },
             {
@@ -1436,48 +1444,18 @@
                 "y": 13
             },
             {
-                "block": "b",
-                "x": 3,
-                "y": 13
-            },
-            {
-                "block": "Cr",
+                "block": "p",
                 "x": 4,
                 "y": 13
             },
             {
-                "block": "Pr",
-                "x": 5,
-                "y": 13
-            },
-            {
-                "block": "w",
-                "x": 6,
-                "y": 13
-            },
-            {
-                "block": "Ry",
+                "block": "y",
                 "x": 2,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 3,
                 "y": 14
             },
             {
                 "block": "p",
                 "x": 4,
-                "y": 14
-            },
-            {
-                "block": "@",
-                "x": 5,
-                "y": 14
-            },
-            {
-                "block": "w",
-                "x": 6,
                 "y": 14
             }
         ]
@@ -1489,6 +1467,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "frenzy"
         },
         "name": "SimplePowerPurpleFrenzy",
@@ -1553,6 +1533,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleShapeshifter",
@@ -1722,6 +1704,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleHardGarbageFailStep2",
@@ -2056,6 +2040,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PaintProblem",
@@ -2375,6 +2361,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SingleChain",
@@ -2488,6 +2476,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PowerSingleRedCombo",
@@ -2577,6 +2567,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleGarbage",
@@ -2791,6 +2783,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleHardGarbageFail",
@@ -2975,6 +2969,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultTornado",
@@ -3098,6 +3094,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "frenzy"
         },
         "name": "SimplePowerGreenFrenzy",
@@ -3172,6 +3170,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "TornadoGarbage",
@@ -3275,6 +3275,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "frenzy"
         },
         "name": "SimplePowerWhiteFrenzy",
@@ -3324,6 +3326,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PopClone",
@@ -3383,6 +3387,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultWithCollision",
@@ -3450,6 +3456,41 @@
         ]
     },
     {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 2,
+            "passivePower": "killingBlow",
+            "secPowerGenerated": "none",
+            "triggerPower": "none"
+        },
+        "name": "SimpleKillingBlow",
+        "origin": [
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [
             {
                 "block": "#2",
@@ -3472,6 +3513,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PaintGarbage",
@@ -3576,6 +3619,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 4,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleReinforce",
@@ -3665,6 +3710,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleHardGarbage",
@@ -3703,6 +3750,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PowerSingleBlueCombo",
@@ -3747,6 +3796,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleBomb",
@@ -3816,6 +3867,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 3,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PopCloneNearCombo",
@@ -3905,6 +3958,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SameColorPaint",
@@ -3994,6 +4049,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 4,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChainShapeshifter",
@@ -4073,10 +4130,72 @@
     {
         "final": [],
         "garbage": {
+            "PowerGenerated": "bomb",
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 3,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
+            "triggerPower": "none"
+        },
+        "name": "SimplePowerSpawn",
+        "origin": [
+            {
+                "block": "p",
+                "x": 4,
+                "y": 10
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
             "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ShapeshiterPowerToSpawn",
@@ -4126,6 +4245,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "BombAndGhost2",
@@ -4245,6 +4366,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleShapeshifter1",
@@ -4318,6 +4441,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PowerSingleWhiteCombo",
@@ -4382,6 +4507,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleClone",
@@ -4466,6 +4593,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleShapeshifter2",
@@ -4575,6 +4704,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChainClone",
@@ -4674,6 +4805,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "BombAndGhost",
@@ -4763,6 +4896,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ProximityGhost",
@@ -4832,6 +4967,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "BombHardGarbage",
@@ -4895,6 +5032,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 3,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "TornadoGhost",
@@ -5044,6 +5183,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "Single4Combo",
@@ -5163,6 +5304,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 4,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChainGhost",
@@ -5262,6 +5405,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "BombAndGhost3",
@@ -5381,6 +5526,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChromaticServer",
@@ -5454,6 +5601,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PowerSingleYellowCombo",
@@ -5492,6 +5641,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PowerSingleGreenCombo",
@@ -5530,6 +5681,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "frenzy"
         },
         "name": "SimplePowerRedFrenzy",
@@ -5604,6 +5757,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultClone",
@@ -5667,6 +5822,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "frenzy"
         },
         "name": "SimplePowerBlueFrenzy",
@@ -5746,6 +5903,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "Chain2Paints1Chromatic",
@@ -5870,6 +6029,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ProximityGhost1",
@@ -5939,6 +6100,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultWithCollision1",
@@ -6058,6 +6221,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleTornado",
@@ -6177,6 +6342,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 3,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "PaintBomb",
@@ -6291,6 +6458,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 4,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChainPaint",
@@ -6440,6 +6609,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 0,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleGhost",
@@ -6499,6 +6670,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "CloneExecutingBeforeAbilites",
@@ -6542,6 +6715,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "TornadoClone",
@@ -6616,6 +6791,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ReinforcementsTriggerAfterAbilityChain",
@@ -6675,6 +6852,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 6,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultShapeshifter",
@@ -6769,6 +6948,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChromaticDoesntAffectGarbage",
@@ -6943,6 +7124,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "GarbageColorClientFail",
@@ -7119,8 +7302,125 @@
         "garbage": {
             "PowerGenerated": "reinforcements",
             "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
+            "triggerPower": "frenzy"
+        },
+        "name": "SimpleFrenzyDouble",
+        "origin": [
+            {
+                "block": "y",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "bomb",
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 3,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
+            "triggerPower": "frenzy"
+        },
+        "name": "SimplePowerSpawnFrenzy",
+        "origin": [
+            {
+                "block": "p",
+                "x": 4,
+                "y": 10
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 11
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 11
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 12
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 4,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "reinforcements",
+            "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "frenzy"
         },
         "name": "SimplePowerYellowFrenzy",
@@ -7148,12 +7448,90 @@
         ]
     },
     {
+        "final": [
+            {
+                "block": "r",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 15,
+                "y": 14
+            }
+        ],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 0,
+            "normalGarbage": 0,
+            "passivePower": "overload",
+            "secPowerGenerated": "shapeshifter",
+            "triggerPower": "none"
+        },
+        "name": "SimpleOverload",
+        "origin": [
+            {
+                "block": "r",
+                "x": 1,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 2,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "b",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "p",
+                "x": 6,
+                "y": 14
+            }
+        ]
+    },
+    {
         "final": [],
         "garbage": {
             "PowerGenerated": "tornado",
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ShapeshiterPowerToSpawn1",
@@ -7263,6 +7641,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "Single5Combo",
@@ -7407,6 +7787,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultWithCollision5",
@@ -7526,6 +7908,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "TornadoBombChain",
@@ -7615,6 +7999,8 @@
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChainTornado",
@@ -7749,6 +8135,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 5,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultTornado1",
@@ -7933,6 +8321,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimplePaint",
@@ -8082,6 +8472,8 @@
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimpleChromatic",
@@ -8186,6 +8578,8 @@
             "colorGarbage": 0,
             "hardGarbage": 1,
             "normalGarbage": 3,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultPaint",
@@ -8290,6 +8684,8 @@
             "colorGarbage": 2,
             "hardGarbage": 2,
             "normalGarbage": 4,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "SimultReinforce",

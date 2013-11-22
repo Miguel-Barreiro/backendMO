@@ -34,7 +34,11 @@
 
 	frenzy_turns = 0 :: integer(),
 	thrash_turns = 0 :: integer(),
-	red_button_pressed = false
+	red_button_pressed = false,
+	
+	is_overload_active = false,
+	killing_blow_active = false,
+	barrier_active = false
 
 }).
 

@@ -4,6 +4,7 @@
 -export([ get_block/3, set_block/4, remove_block/3, is_valid_position/3 ]).
 -export([ print_board/1, are_boards_equal/2, get_block_representation/1 ]).
 
+-export([get_column_height/2, get_number_blocks/1]).
 
 -include("include/softstate.hrl").
 
@@ -14,6 +15,9 @@ new_empty( Width, Height ) ->
 	Seed = random:uniform(2147483646),
 	#board{ height = Height, width = Width, abilities_random_state = Seed }.
 
+
+get_number_blocks(Board = #board{}) ->
+	gb_trees:size(Board#board.blocks).
 
 
 get_all_blocks( Board = #board{} ) ->
@@ -87,6 +91,19 @@ remove_block( X , Y, Board = #board{ blocks = Blocks } ) ->
 
 
 
+
+
+get_column_height( Column, Board = #board{} ) ->
+	get_column_height( Board, Column, 0 ).
+
+get_column_height( Board = #board{}, _X, Y ) when Y >= Board#board.height ->
+	throw( out_of_bounds );
+
+get_column_height( Board = #board{}, X, Y ) ->
+	case board:get_block( X , Y, Board ) of
+		empty ->		Y;
+		_other ->		get_column_height( Board, X , Y + 1)
+	end.
 
 
 

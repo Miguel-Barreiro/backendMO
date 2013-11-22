@@ -171,12 +171,13 @@ get_combo_color( Combo_list ) ->
 	end.
 
 
+get_minimum_combo_power( _, []) ->
+	color;
 get_minimum_combo_power( [], _combos) -> 
 	color;
 get_minimum_combo_power( Game_rules, Combos) -> 
 	Reverse_rules = lists:reverse(Game_rules),
 	get_minimum_combo_power_rec( Reverse_rules, lists:flatten(Combos)).
-
 
 
 get_minimum_combo_power_rec( [{{ _combo_size, Rule_color }, Power } | Rest], Combos) -> 
