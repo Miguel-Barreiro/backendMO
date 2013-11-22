@@ -184,7 +184,7 @@ get_minimum_combo_power_rec( [{{ _combo_size, Rule_color }, Power } | Rest], Com
 	Fun = 
 	fun( Combo, { Found, Didnt_match } ) ->
 		Combo_list = sets:to_list(Combo),
-		case Rule_color == get_combo_color( Combo_list ) of
+		case Rule_color == any orelse Rule_color == get_combo_color( Combo_list ) of
 			true ->			{ true, Didnt_match};
 			false ->		{ Found, [ Combo | Didnt_match]}
 		end
