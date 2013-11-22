@@ -9,7 +9,7 @@
 -export([create_login_success/4, create_login_success/18]).
 -export([create_match_created_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/2, create_user_reconected_message/0]).
--export([create_opponent_place_piece_message/6, create_generated_garbage_message/2 ]).
+-export([create_opponent_place_piece_message/7, create_generated_garbage_message/2 ]).
 -export([create_update_piece_message/3, create_new_configuration_message/2]).
 -export([create_rematch_message/0, create_no_rematch_message/0, create_rematch_timeout_message/0]).
 -export([create_insufficient_lifes_message/0 ]).
@@ -158,7 +158,7 @@ create_generated_garbage_message( Garbages_position_list, Garbage_id) ->
 	protocol_pb:encode_request(Req).
 
 
-create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle, Client_garbage_id ) ->
+create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle, Client_garbage_id, Generated_garbage_id ) ->
 
 	lager:info("create_opponent_place_piece_message for ~p with garbage_id ~p ",[Garbages_position_list,Client_garbage_id]),
 
@@ -170,7 +170,8 @@ create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, 
 						x = X,
 						y = Y,
 						state = Angle,
-						garbage_id = Client_garbage_id
+						garbage_id = Generated_garbage_id,
+						opponent_garbage_id = Client_garbage_id
 					}},
 	protocol_pb:encode_request(Req).
 

@@ -66,7 +66,7 @@ handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid =
 	{noreply, State};
 
 handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid })->
-	lager:debug("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
+	%lager:debug("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
 	case is_process_alive(Connection_pid) of
 		true ->
 			gen_server:cast( Connection_pid, {reply, Msg});

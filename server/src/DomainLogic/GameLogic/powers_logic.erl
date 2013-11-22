@@ -18,18 +18,18 @@ handle_turn_begin( User_board = #board{}, Opponent_board = #board{} ) ->
 -spec handle_turn_passed(User_board::#board{}, Opponent_board::#board{}) -> {#board{},#board{}}.
 handle_turn_passed( User_board = #board{}, Opponent_board = #board{} ) -> 
 
-	Board_after_red_button = case User_board#board.red_button_pressed of
-		true ->				execute_red_button(User_board);
-		false ->			User_board
-	end,
+	%Board_after_red_button = case User_board#board.red_button_pressed of
+	%	true ->				execute_red_button(User_board);
+	%	false ->			User_board
+	%end,
 	
-	New_board = Board_after_red_button#board{
-					thrash_turns = decrease_turn( Board_after_red_button#board.thrash_turns ), 
-					frenzy_turns = decrease_turn( Board_after_red_button#board.frenzy_turns )
-				},
+	%New_board = Board_after_red_button#board{
+	%				thrash_turns = decrease_turn( Board_after_red_button#board.thrash_turns ), 
+	%				frenzy_turns = decrease_turn( Board_after_red_button#board.frenzy_turns )
+	%			},
 
-	{New_board, Opponent_board}.
-
+	%{New_board, Opponent_board}.
+	{ User_board, Opponent_board }.	
 
 
 -spec handle_use_power( Power::integer(), User_board::#board{}, Opponent_board::#board{}) -> {#board{},#board{}}.

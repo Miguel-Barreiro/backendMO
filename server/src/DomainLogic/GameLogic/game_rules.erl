@@ -2,7 +2,7 @@
 
 -include("include/softstate.hrl").
 
--export([ get_current_rules/1, get_next_piece_type/2, get_garbage_number/2 ]).
+-export([ get_current_rules/1, get_next_piece_type/2, get_next_piece_type_with_frenzy/2, get_garbage_number/2 ]).
 
 
 -export([ get_offline_current_rules/1]).
@@ -30,6 +30,7 @@ get_offline_current_rules( Tier ) ->
 
 
 
+
 -spec get_current_rules( Tier::binary() ) -> #game_logic_rules{}.
 get_current_rules( Tier ) ->
 	#game_logic_rules{
@@ -48,7 +49,9 @@ get_current_rules( Tier ) ->
 	}.
 	
 
-
+-spec get_next_piece_type_with_frenzy( Combos:: [[[#block{}]]] , Game_rules::#game_logic_rules{} ) -> block_type().
+get_next_piece_type_with_frenzy(  Combos, Game_rules = #game_logic_rules{}) ->
+	get_type_from_rule_with_frenzy(  Game_rules#game_logic_rules.abilities_rule, Combos).
 
 
 -spec get_next_piece_type( Combos:: [[[#block{}]]] , Game_rules::#game_logic_rules{} ) -> block_type().
@@ -168,15 +171,40 @@ get_combo_color( Combo_list ) ->
 	end.
 
 
+get_minimum_combo_power( [], Combos) -> 
+	color;
+get_minimum_combo_power( Game_rules, Combos) -> 
+	Reverse_rules = lists:reverse(Game_rules),
+	get_minimum_combo_power_rec( Reverse_rules, lists:flatten(Combos)).
 
+
+
+get_minimum_combo_power_rec( [{{ Combo_size, Rule_color }, Power } | Rest], Combos) -> 
+	Fun = 
+	fun( Combo, { Found, Didnt_match } ) ->
+		Combo_list = sets:to_list(Combo),
+		case Rule_color == get_combo_color( Combo_list ) of
+			true ->			{ true, Didnt_match};
+			false ->		{ Found, [ Combo | Didnt_match]}
+		end
+	end,
+	case lists:foldl( Fun, {false, []}, Combos ) of
+		{ true, [] } ->				Power;
+		{ _, Not_matched } ->		get_minimum_combo_power_rec( Rest, Not_matched)
+	end.
+
+
+
+get_type_from_rule_with_frenzy( Game_rules , Combos) ->
+	case get_type_from_rule( Game_rules , Combos) of
+		color ->	get_minimum_combo_power( Game_rules, Combos);
+		Other -> 	Other
+	end.
 
 get_type_from_rule( [] , Combos) ->
 	color;
 
 get_type_from_rule( [{{ Combo_size, Rule_color }, Power } | Rest] , Combos) ->
-	
-	
-
 	Combo_fits_rule = 
 	fun( Combo ) ->
 		Combo_list = sets:to_list(Combo),

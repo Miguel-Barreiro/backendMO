@@ -139,14 +139,16 @@
 %%   y() = integer(),
 %%   state() = piece_rotation(),
 %%   garbage() = [#garbage_position{}],
-%%   garbage_id() = integer()
+%%   garbage_id() = integer(),
+%%   opponent_garbage_id() = integer()
 %% }.
 -record(message_opponent_place_piece,{
   x :: integer(),
   y :: integer(),
   state :: piece_rotation(),
   garbage = [] :: [#garbage_position{}],
-  garbage_id :: integer()}).
+  garbage_id :: integer(),
+  opponent_garbage_id :: integer()}).
 
 %% @type message_generated_garbage_record() = #message_generated_garbage_record{
 %%   garbage() = [#garbage_position{}],

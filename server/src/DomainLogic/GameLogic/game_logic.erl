@@ -150,21 +150,13 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Board_after_reset_reinforcements),
 
 			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece, Game_rules ),
-
-
-			
 			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate, Combos, Game_rules ),
 			
+			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
+			{New_opponent_gamestate,Generated_garbage_id} = add_garbage_to_stack( Generated_garbage_position_list, Opponent_gamestate ),
 
 			{Garbage_to_release_list, New_gamestate} = get_garbage_to_release(Client_garbage_id,New_gamestate_after_piece),
 			Board_after_release_garbage = release_garbage_list( Result_loop_board, Garbage_to_release_list ),
-
-
-			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
-			
-
-			
-			New_opponent_gamestate = add_garbage_to_stack( Generated_garbage_position_list, Opponent_gamestate ),
 
 
 			case length(Generated_garbage_position_list) of
@@ -172,18 +164,18 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 					do_nothing;
 				_other ->
 					Msg_generated = message_processor:create_generated_garbage_message( Generated_garbage_position_list, 
-																						New_opponent_gamestate#user_gamestate.current_garbage_id - 1 ),
+																						Generated_garbage_id ),
 					gen_server:cast( User_pid , { send_message, Msg_generated } )
 			end,
 
 			Msg = message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, 
 																			X, Y, Angle, 
-																				New_opponent_gamestate#user_gamestate.current_garbage_id - 1 ),
+																				Client_garbage_id,
+																				Generated_garbage_id ),
 			gen_server:cast( Opponent_pid , { send_message, Msg } ),
 
 			Next_gamestate = New_gamestate#user_gamestate{ 
 												board = Board_after_release_garbage,
-												garbage_position_list = [],
 												current_piece = Next_piece,
 												current_piece_angle = down,
 												current_piece_x = ?STARTING_PIECE_X,
@@ -201,21 +193,30 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 
 get_garbage_to_release( Client_garbage_id, Player_state = #user_gamestate{} ) ->
 	
+	lager:debug("current garbage stack is ~p\n",[Player_state#user_gamestate.garbage_position_list]),
+
 	Fun = fun( { Garbage_id , Garbage_list}, {Result_list, Unrelease_garbage} ) ->
 		case Garbage_id =< Client_garbage_id of
-			true ->			{ lists:append( Garbage_list , Result_list ) , Unrelease_garbage};
+			true ->			lager:info("adding ~p",[Garbage_id]),{ lists:append( Garbage_list , Result_list ) , Unrelease_garbage};
 			false ->		{ Result_list, [ { Garbage_id , Garbage_list} | Unrelease_garbage ] }
 		end
 	end,
 	{Result_list, Unrelease_garbage} = lists:foldl( Fun, {[],[]}, Player_state#user_gamestate.garbage_position_list ),
+
+	lager:info("\n garbage to release is ~p and unreleased now is ~p\n",[Result_list,Unrelease_garbage]),
+
 	{Result_list,Player_state#user_gamestate{ garbage_position_list = Unrelease_garbage } }.
 
 
 
 add_garbage_to_stack( Garbage_list, Player_state = #user_gamestate{} ) ->
 	New_opponent_garbage_list = [ {Player_state#user_gamestate.current_garbage_id, Garbage_list} | Player_state#user_gamestate.garbage_position_list ],
-	Player_state#user_gamestate{ garbage_position_list = New_opponent_garbage_list, 
-									current_garbage_id = Player_state#user_gamestate.current_garbage_id + 1 }.
+	{
+		Player_state#user_gamestate{ garbage_position_list = New_opponent_garbage_list, 
+										current_garbage_id = Player_state#user_gamestate.current_garbage_id + 1 },
+
+		Player_state#user_gamestate.current_garbage_id 
+	}.
 
 
 
@@ -275,7 +276,6 @@ handle_update_piece( _User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gam
 
 apply_gravity_combo_loop( Board = #board{} , Game_rules = #game_logic_rules{} ) ->
 	Board_after_gravity = simulate_gravity( Board ),
-	lager:debug("apply gravity"),
 	Combos = calculate_combos( Board_after_gravity, Game_rules ),
 	case Combos of
 		[] ->
@@ -850,7 +850,18 @@ calculate_garbage_from_combos( [], _, _ ) ->
 
 calculate_garbage_from_combos( Combos, Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = game_rules:get_garbage_number( Combos, Game_rules ),
-	generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board ).
+
+	case Board#board.thrash_turns > 0 of
+		false ->
+			generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board );
+		true ->
+			New_hard = case Hard_garbage_number of 0 -> 0; _ -> Hard_garbage_number + 1 end,
+			New_color = case Color_garbage_number of 0 -> 0; _ -> Color_garbage_number + 1 end,
+			New_normal = case Normal_garbage_number of 0 -> 0; _ -> Normal_garbage_number + 1 end,
+			generate_garbage_positions( New_hard, New_color, New_normal, Board )
+	end.
+
+	
 
 
 
@@ -859,11 +870,11 @@ calculate_garbage_from_combos( Combos, Board = #board{}, Game_rules = #game_logi
 
 
 
-calculate_next_piece( Gamestate = #user_gamestate{} , Combos, Game_rules = #game_logic_rules{} ) ->
+calculate_next_piece( Gamestate = #user_gamestate{}, Combos, Game_rules = #game_logic_rules{} ) ->
 	{ New_random_state, Random } = get_next_random( Gamestate#user_gamestate.random_state ),
 	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
 
-	{ Color, Type } = get_block_color_type(Random, Combos, Game_rules),
+	{ Color, Type } = get_block_color_type(Random, Combos, Gamestate#user_gamestate.board, Game_rules),
 	{ Color2, Type2 } = get_block_color_type(Random2),
 
 	{ Gamestate#user_gamestate{ random_state = New_random_state2 }, 
@@ -888,7 +899,7 @@ calculate_next_piece( Initial_random_state ) ->
 
 
 
-get_block_color_type( Random, Combos, Game_rules = #game_logic_rules{} ) ->
+get_block_color_type( Random, Combos, Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	Color = case Random rem 6 of
 		0 ->		red;
 		1 ->		yellow;
@@ -897,9 +908,12 @@ get_block_color_type( Random, Combos, Game_rules = #game_logic_rules{} ) ->
 		4 ->		purple;
 		5 ->		white
 	end,
-
-	Type = game_rules:get_next_piece_type( Combos, Game_rules),
-
+	
+	Type = case Board#board.frenzy_turns > 0 of
+		true ->			game_rules:get_next_piece_type_with_frenzy( Combos, Game_rules);
+		false ->		game_rules:get_next_piece_type( Combos, Game_rules)
+	end,
+	
 	{Color, Type}.
 
 
@@ -1276,20 +1290,20 @@ google_docs_tests(Game_rules) ->
 				Power_generated = proplists:get_value(<<"PowerGenerated">>,Generated_garbage),
 				Power_type = get_power_type_from_test_type( Power_generated ),
 
-				Start_board = create_board( Start, 0 ),
+
 				Final_board = create_board( Final, 9 ),
+				Temporary_board = create_board( Start, 0 ),
+
+				Start_board = case Power_trigger of
+					<<"none">> ->				Temporary_board;
+					<<"redbutton">> ->			Temporary_board#board{ red_button_pressed = true };
+					<<"frenzy">> ->				Temporary_board#board{ frenzy_turns = 5 };
+					<<"trash">> ->				Temporary_board#board{ thrash_turns = 5 }
+				end,
 
 				{ Combos, Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),
 				Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Game_rules ),
-				{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( #user_gamestate{ random_state = 1 } , Combos, Game_rules ),
-
-				%case Power_trigger of
-				%	<<"none">> ->
-				%	<<"redbutton">> ->
-				%	<<"frenzy">> ->
-				%	<<"trash">> ->
-				%end,
-
+				{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( #user_gamestate{ random_state = 1, board = Result_loop_board } , Combos, Game_rules ),
 
 
 				case board:are_boards_equal(Result_loop_board,Final_board) of
