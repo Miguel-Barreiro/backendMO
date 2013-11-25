@@ -2,9 +2,11 @@
 -include("include/softstate.hrl").
 
 
--export([ handle_use_power/3, handle_turn_passed/2, handle_turn_begin/2 ]).
+-export([ handle_use_power/4, handle_turn_passed/3 ]).
 
--export([trigger_overload/1, trigger_killing_blow/2]).
+-export([trigger_red_button/2]).
+
+-export([trigger_overload/2, trigger_killing_blow/3]).
 
 
 -define( FRENZY_POWER, 1).
@@ -12,63 +14,62 @@
 -define( RED_BUTTON_POWER, 3).
 
 
--spec handle_turn_begin(User_board::#board{}, Opponent_board::#board{}) -> {#board{},#board{}}.
-handle_turn_begin( User_board = #board{}, Opponent_board = #board{} ) -> 
-	{ User_board, Opponent_board }.
+-spec handle_turn_passed(User_board::#board{}, Opponent_board::#board{}, Game_rules::#game_logic_rules{}) -> {#board{},#board{}}.
+handle_turn_passed( User_board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) -> 
 
-
--spec handle_turn_passed(User_board::#board{}, Opponent_board::#board{}) -> {#board{},#board{}}.
-handle_turn_passed( User_board = #board{}, Opponent_board = #board{} ) -> 
-
-	Board_after_red_button = case User_board#board.red_button_pressed of
-		true ->				execute_red_button(User_board);
-		false ->			User_board
-	end,
-	
-	New_board = Board_after_red_button#board{
-					thrash_turns = decrease_turn( Board_after_red_button#board.thrash_turns ), 
-					frenzy_turns = decrease_turn( Board_after_red_button#board.frenzy_turns )
+	New_board = User_board#board{
+					thrash_turns = decrease_turn( User_board#board.thrash_turns ), 
+					frenzy_turns = decrease_turn( User_board#board.frenzy_turns ),
+					triggered_abilities = false
 				},
 
 	{New_board, Opponent_board}.
 
 
--spec handle_use_power( Power::integer(), User_board::#board{}, Opponent_board::#board{}) -> {#board{},#board{}}.
-handle_use_power( ?THRASH_POWER, User_board = #board{}, Opponent_board = #board{}) ->
+-spec handle_use_power( Power::integer(), User_board::#board{}, Opponent_board::#board{}, Game_rules::#game_logic_rules{}) -> {#board{},#board{}}.
+handle_use_power( ?THRASH_POWER, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{}) ->
 	{User_board#board{thrash_turns = 5}, Opponent_board};
 
-handle_use_power( ?RED_BUTTON_POWER, User_board = #board{}, Opponent_board = #board{}) ->
+handle_use_power( ?RED_BUTTON_POWER, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) ->
 	{User_board#board{red_button_pressed = true}, Opponent_board};
 
-handle_use_power( ?FRENZY_POWER, User_board = #board{}, Opponent_board = #board{}) ->
+handle_use_power( ?FRENZY_POWER, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) ->
 	{User_board#board{frenzy_turns = 5}, Opponent_board}.
 
 
 
 
--spec trigger_overload( Board::#board{} ) -> false | true.
-trigger_overload(Board = #board{}) ->
+-spec trigger_overload( Board::#board{}, Game_rules::#game_logic_rules{} ) -> false | true.
+trigger_overload(Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	case Board#board.is_overload_active of
 		false ->	false;
 		true ->		all_blocks_same_height( Board )
 	end.
 
 
--spec trigger_killing_blow( Board ::#board{}, Opponent_board ::#board{}) -> false | true.
-trigger_killing_blow(Board = #board{}, Opponent_board = #board{}) ->
-	board:get_number_blocks(Opponent_board) > 66.
+-spec trigger_killing_blow( Board ::#board{}, Opponent_board ::#board{}, Game_rules::#game_logic_rules{}) -> false | true.
+trigger_killing_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
+	case Board#board.killing_blow_active of
+		false ->			false;
+		true ->				board:get_number_blocks(Opponent_board) > 66
+	end.
 
 
+-spec trigger_barrier_blow( Board ::#board{}, Opponent_board ::#board{}, Game_rules::#game_logic_rules{}) -> false | true.
+trigger_barrier_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
+	case Opponent_board#board.barrier_active of
+		false ->			false;
+		true ->				Board#board.triggered_abilities
+	end.
 
 
-
-
-
-
-
-execute_red_button( Board = #board{} ) ->
-	New_board = game_logic:activate_ability_blocks( Board ),
-	New_board#board{ red_button_pressed = false }.
+-spec trigger_red_button( Board::#board{}, Game_rules::#game_logic_rules{} ) -> { [[set]] , #board{} }.
+trigger_red_button( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
+	case Board#board.red_button_pressed of
+		true ->				New_board = game_logic:activate_ability_blocks( Board ),
+							game_logic:apply_gravity_combo_loop(  New_board#board{ red_button_pressed = false }, Game_rules );
+		false ->			{ [], Board}
+	end.
 
 
 

@@ -49,7 +49,7 @@ get_current_rules( Tier ) ->
 	}.
 	
 
--spec get_next_piece_type_with_frenzy( Combos:: [[[#block{}]]] , Game_rules::#game_logic_rules{} ) -> block_type().
+-spec get_next_piece_type_with_frenzy( Combos:: [[[#block{}]]], Game_rules::#game_logic_rules{} ) -> block_type().
 get_next_piece_type_with_frenzy(  Combos, Game_rules = #game_logic_rules{}) ->
 	get_type_from_rule_with_frenzy(  Game_rules#game_logic_rules.abilities_rule, Combos).
 

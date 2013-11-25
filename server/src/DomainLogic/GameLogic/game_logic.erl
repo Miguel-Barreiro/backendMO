@@ -4,7 +4,7 @@
 
 -export([ handle_place_piece/6, handle_update_piece/5, create_new_game/3 ]).
 
--export([ activate_ability_blocks/1]).
+-export([ activate_ability_blocks/1, apply_gravity_combo_loop/2]).
 
 -define( BOARD_WIDTH , 6).
 -define( BOARD_HEIGHT , 13).
@@ -79,7 +79,6 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}, Client_garbage_id ) 
 	board:print_board( New_gamestate#user_gamestate.board ),
 	io:format("\n-------------------------------- \n",[]),
 
-
 	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
 													0, 0, up,
 													board:get_all_blocks( New_gamestate#user_gamestate.board), 
@@ -87,8 +86,7 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}, Client_garbage_id ) 
 														New_opponent_gamestate#user_gamestate.random_state, 
 														0, 0, up, 
 														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
-	gen_server:cast( User_pid , { send_message, Msg} ),	
-
+	gen_server:cast( User_pid , { send_message, Msg} ),
 
 	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
 
@@ -107,7 +105,6 @@ handle_place_piece( User_pid, X, Y, Angle, Game = #game{}, Client_garbage_id ) w
 																				Game#game.user2_gamestate, 
 																					Game#game.user1_gamestate,
 																						Game#game.game_rules ),
-
 
 	board:print_board( New_gamestate#user_gamestate.board ),
 	io:format("\n--------------------------------\n",[]),
@@ -134,60 +131,86 @@ handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
 	io:format("\nplaced the piece [~p ~p] with angle ~p in ~p,~p with client_garbage_id ~p\n",
 					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y,Client_garbage_id]),
 
-
-	{ Player_Board, Opponent_Board } = powers_logic:handle_turn_begin(Begin_gamestate#user_gamestate.board, Begin_opponent_gamestate#user_gamestate.board),
-
-	Gamestate = Begin_gamestate#user_gamestate{ board = Player_Board },
-	Opponent_gamestate = Begin_opponent_gamestate#user_gamestate{ board = Opponent_Board },
-
-	case Piece == Gamestate#user_gamestate.current_piece of	
+	case Piece == Begin_gamestate#user_gamestate.current_piece of	
 		false ->
 			lager:debug("invalid piece place: wrong piece",[]),
 			throw( invalid_move );
 		true ->
 
-			Board_after_reset_reinforcements = Player_Board#board{ reinforcements = [] },
-			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Board_after_reset_reinforcements),
+			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Begin_gamestate#user_gamestate.board),
+			{ Generated_garbage_position_list, 
+				Generated_garbage_id, 
+					Result_gamestate, 
+						Result_opponent_gamestate} = execute_turn( Begin_gamestate#user_gamestate{ 	board = Board_after_place_piece#board{ reinforcements = [] } }, 
+																										Begin_opponent_gamestate, 
+																											Game_rules, 
+																												Client_garbage_id ),
 
-			{ Combos , Result_loop_board } = apply_gravity_combo_loop( Board_after_place_piece, Game_rules ),
-			{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( Gamestate, Combos, Game_rules ),
-			
-			Generated_garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Opponent_Board, Game_rules ),
-			{New_opponent_gamestate,Generated_garbage_id} = add_garbage_to_stack( Generated_garbage_position_list, Opponent_gamestate ),
+			send_turn_messages(User_pid, Opponent_pid, Generated_garbage_position_list, Piece, Angle, X, Y, Client_garbage_id, Generated_garbage_id),
 
-			{Garbage_to_release_list, New_gamestate} = get_garbage_to_release(Client_garbage_id,New_gamestate_after_piece),
-			Board_after_release_garbage = release_garbage_list( Result_loop_board, Garbage_to_release_list ),
-
-
-			case length(Generated_garbage_position_list) of
-				0 ->
-					do_nothing;
-				_other ->
-					Msg_generated = message_processor:create_generated_garbage_message( Generated_garbage_position_list, 
-																						Generated_garbage_id ),
-					gen_server:cast( User_pid , { send_message, Msg_generated } )
-			end,
-
-			Msg = message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, 
-																			X, Y, Angle, 
-																				Client_garbage_id,
-																				Generated_garbage_id ),
-			gen_server:cast( Opponent_pid , { send_message, Msg } ),
-
-			Next_gamestate = New_gamestate#user_gamestate{ 
-												board = Board_after_release_garbage,
-												current_piece = Next_piece,
-												current_piece_angle = down,
-												current_piece_x = ?STARTING_PIECE_X,
-												current_piece_y = Board_after_release_garbage#board.height - 1,
-												piece_generation_step = New_gamestate#user_gamestate.piece_generation_step + 1 },
-
-
-			{ Result_player_Board, Result_opponent_board } = powers_logic:handle_turn_passed(Next_gamestate#user_gamestate.board, 
-																								New_opponent_gamestate#user_gamestate.board),
-
-			{ Next_gamestate#user_gamestate{ board = Result_player_Board}, New_opponent_gamestate#user_gamestate{ board = Result_opponent_board} }
+			{ Result_gamestate, Result_opponent_gamestate }
 	end.
+
+
+
+
+
+execute_turn( Player_gamestate = #user_gamestate{ board = Board}, 
+				Opponent_gamestate = # user_gamestate{ board = Opponent_Board}, 
+					Game_rules = #game_logic_rules{}, Client_garbage_id) ->
+
+	{ Normal_combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
+
+	{ Red_button_combos, Board_after_red_button } = powers_logic:trigger_red_button(Result_loop_board, Game_rules),
+	Combos_total = lists:append(Red_button_combos,Normal_combos),			
+
+	{ Gamestate_after_piece, Next_piece} = calculate_next_piece( Player_gamestate#user_gamestate{ board = Board_after_red_button}, Combos_total, Game_rules ),
+
+	{Garbage_to_release_list, Gamestate_after_garbage_release} = get_garbage_to_release(Client_garbage_id,Gamestate_after_piece),
+	Board_after_release_garbage = release_garbage_list( Gamestate_after_garbage_release#user_gamestate.board, Garbage_to_release_list ),
+
+	Generated_garbage_position_list = calculate_garbage_from_combos( Combos_total, Board_after_release_garbage, Opponent_Board, Game_rules ),
+	{New_opponent_gamestate,Generated_garbage_id} = add_garbage_to_stack( Generated_garbage_position_list, Opponent_gamestate ),
+
+	{ Result_player_Board, Result_opponent_board } = powers_logic:handle_turn_passed(Board_after_release_garbage, 
+																						New_opponent_gamestate#user_gamestate.board,
+																							Game_rules),
+	Result_gamestate = Gamestate_after_piece#user_gamestate{
+								board = Result_player_Board,
+								current_piece = Next_piece,
+								current_piece_angle = down,
+								current_piece_x = ?STARTING_PIECE_X,
+								current_piece_y = Result_player_Board#board.height - 1,
+								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1
+						},
+
+	Result_opponent_gamestate = Opponent_gamestate#user_gamestate{ board = Result_opponent_board},
+
+	{ Generated_garbage_position_list, Generated_garbage_id, Result_gamestate, Result_opponent_gamestate}.
+
+
+
+
+
+
+
+
+
+send_turn_messages(User_pid, Opponent_pid, Generated_garbage_position_list, Piece, Angle, X, Y, Client_garbage_id, Generated_garbage_id) ->
+	case length(Generated_garbage_position_list) of
+		0 ->
+			do_nothing;
+		_other ->
+			Msg_generated = message_processor:create_generated_garbage_message( Generated_garbage_position_list, 
+																				Generated_garbage_id ),
+			gen_server:cast( User_pid , { send_message, Msg_generated } )
+	end,
+
+	Msg = message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, 
+																	X, Y, Angle, 
+																		Client_garbage_id,
+																		Generated_garbage_id ),
+	gen_server:cast( Opponent_pid , { send_message, Msg } ).
 
 
 
@@ -282,7 +305,7 @@ apply_gravity_combo_loop( Board = #board{} , Game_rules = #game_logic_rules{} ) 
 			{ [], Board_after_gravity };
 		_other ->
 			Board_after_pop_combos = pop_combos( Board_after_gravity, Combos ),
-			Board_after_ghosts = trigger_ghosts(Board_after_pop_combos),
+			Board_after_ghosts = trigger_ghosts(Board_after_pop_combos, Game_rules),
 			Board_with_reinforcements = release_reinforcements( Board_after_ghosts ),
 			Board_after_ability_chain = reset_board( Board_with_reinforcements ),
 
@@ -374,8 +397,6 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 			board:print_board(Board),
 			throw( invalid_move )
 	end.
-
-
 
 
 
@@ -714,7 +735,8 @@ pop_paint( Block, Board = #board{}) ->
 
 	New_color = Block#block.color,
 	Board_without_paint = board:remove_block( X, Y , Board),
-
+	
+	Result_board = 
 	change_block_color( X + 1, Y, New_color, 
 		change_block_color( X, Y + 1, New_color, 
 			change_block_color( X - 1, Y, New_color, 
@@ -722,15 +744,17 @@ pop_paint( Block, Board = #board{}) ->
 					change_block_color( X + 1, Y + 1, New_color, 
 						change_block_color( X - 1, Y + 1, New_color,
 							change_block_color( X + 1, Y - 1, New_color,
-								change_block_color( X - 1, Y - 1, New_color, Board_without_paint)))))))).
+								change_block_color( X - 1, Y - 1, New_color, Board_without_paint)))))))),
+	Result_board#board{ triggered_abilities = true }.
+
 
 
 
 
 pop_reinforcement( Block, Board = #board{}) ->
 	New_color = Block#block.color,
-	Board_without_paint = board:remove_block( Block#block.x, Block#block.y , Board),
-	Board_without_paint#board{ reinforcements = [ New_color | Board_without_paint#board.reinforcements] }.
+	Result_board = board:remove_block( Block#block.x, Block#block.y , Board),
+	Result_board#board{ reinforcements = [ New_color | Result_board#board.reinforcements], triggered_abilities = true }.
 
 
 
@@ -748,18 +772,19 @@ pop_cloner( Cloner_block, Board = #board{}) ->
 		end
 	end,
 	Shifted_board = lists:foldl( Fun_shift_pieces, Board, lists:seq(Board#board.height, Y + 1, -1)),
-	board:set_block( #block{ type = color, color = Cloner_block#block.color }, X, Y + 1, Shifted_board ).
+	Result_board = board:set_block( #block{ type = color, color = Cloner_block#block.color }, X, Y + 1, Shifted_board ),
+	Result_board#board{ triggered_abilities = true }.
 
 
 
 pop_ghost( Block = #block{}, Board = #board{} ) ->
 	Board_without_ghost = board:remove_block( Block#block.x, Block#block.y , Board),
-	Board_without_ghost#board{ ghosts_to_trigger = Board_without_ghost#board.ghosts_to_trigger + 1 }.
+	Board_without_ghost#board{ ghosts_to_trigger = Board_without_ghost#board.ghosts_to_trigger + 1, triggered_abilities = true }.
 
 
 
 
-trigger_ghosts( Board = #board{} ) ->
+trigger_ghosts( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	
 	Garbage_only_filter = fun( Current_Block = #block{} ) ->
 		Current_Block#block.type == garbage orelse 
@@ -775,17 +800,18 @@ trigger_ghosts( Board = #board{} ) ->
 	end,
 
 	Garbage_list = lists:sort( Fun_order_garbages, lists:filter( Garbage_only_filter , board:get_all_blocks( Board ) ) ),
-	trigger_ghosts( Board#board.ghosts_to_trigger * 2, Garbage_list, Board).
+	Result_board = trigger_ghosts( Board#board.ghosts_to_trigger * 2, Garbage_list, Board, Game_rules),
+	Result_board#board{ triggered_abilities = true }.
 
 
 
 
 
-trigger_ghosts(_,[], Board = #board{}) ->
+trigger_ghosts(_,[], Board = #board{}, _Game_rules = #game_logic_rules{}) ->
 	Board;
-trigger_ghosts(0,_, Board = #board{}) ->
+trigger_ghosts(0,_, Board = #board{}, Game_rules = #game_logic_rules{}) ->
 	Board;
-trigger_ghosts(How_many, Garbage_list, Board = #board{}) ->
+trigger_ghosts(How_many, Garbage_list, Board = #board{}, Game_rules = #game_logic_rules{}) ->
 	{ New_random_state, Random } = get_next_random( Board#board.abilities_random_state ),
 	%Garbage = lists:nth( Random rem length(Garbage_list) + 1, Garbage_list),
 
@@ -796,7 +822,7 @@ trigger_ghosts(How_many, Garbage_list, Board = #board{}) ->
 	Board_with_shapeshifter = board:set_block( #block{ type = shapeshifter }, Garbage#block.x, Garbage#block.y, 
 												board:remove_block( Garbage#block.x, Garbage#block.y, Board ) ),
 
-	trigger_ghosts(How_many - 1, Result_garbage_list, Board_with_shapeshifter#board{ abilities_random_state = New_random_state }).
+	trigger_ghosts(How_many - 1, Result_garbage_list, Board_with_shapeshifter#board{ abilities_random_state = New_random_state }, Game_rules).
 
 
 
@@ -852,7 +878,7 @@ calculate_garbage_from_combos( Combos, Board = #board{}, Opponent_board = #board
 	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = game_rules:get_garbage_number( Combos, Game_rules ),
 
 	{ Normal_garbage_number2, Color_garbage_number2, Hard_garbage_number2 } = 
-		case powers_logic:trigger_killing_blow( Board, Opponent_board) of
+		case powers_logic:trigger_killing_blow( Board, Opponent_board, Game_rules) of
 			false ->	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number };
 			true ->		{ Normal_garbage_number * 2, Color_garbage_number * 2, Hard_garbage_number * 2 }
 		end,
@@ -864,14 +890,10 @@ calculate_garbage_from_combos( Combos, Board = #board{}, Opponent_board = #board
 			true ->
 				{ case Hard_garbage_number2 of 0 -> 0; _ -> Hard_garbage_number2 + 1 end,
 					case Color_garbage_number2 of 0 -> 0; _ -> Color_garbage_number2 + 1 end,
-						case Normal_garbage_number2 of 0 -> 0; _ -> Normal_garbage_number2 + 1 end }			
+						case Normal_garbage_number2 of 0 -> 0; _ -> Normal_garbage_number2 + 1 end }
 		end,
-
 	generate_garbage_positions( Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3, Board ).
 	
-
-
-
 
 
 
@@ -883,7 +905,7 @@ calculate_next_piece( Gamestate = #user_gamestate{}, Combos, Game_rules = #game_
 
 	{ Color, Type } = get_block_color_type(Random, Combos, Gamestate#user_gamestate.board, Game_rules),
 
-	{ Color2, Type2 } = case powers_logic:trigger_overload( Gamestate#user_gamestate.board ) of
+	{ Color2, Type2 } = case powers_logic:trigger_overload( Gamestate#user_gamestate.board, Game_rules ) of
 		true ->			{ undefined, shapeshifter};
 		false ->		get_block_color_type(Random2)
 	end,
@@ -906,10 +928,6 @@ calculate_next_piece( Initial_random_state ) ->
 
 
 
-
-
-
-
 get_block_color_type( Random, Combos, Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	Color = case Random rem 6 of
 		0 ->		red;
@@ -921,7 +939,7 @@ get_block_color_type( Random, Combos, Board = #board{}, Game_rules = #game_logic
 	end,
 	
 	Type = case Board#board.frenzy_turns > 0 of
-		true ->			game_rules:get_next_piece_type_with_frenzy( Combos, Game_rules);
+		true ->			game_rules:get_next_piece_type_with_frenzy( Combos, Game_rules );
 		false ->		game_rules:get_next_piece_type( Combos, Game_rules)
 	end,
 	
@@ -1389,10 +1407,16 @@ google_docs_tests(Game_rules) ->
 								end,
 
 
-				{ Combos, Result_loop_board } = apply_gravity_combo_loop( Start_board, Game_rules ),
-				Garbage_position_list = calculate_garbage_from_combos( Combos, Result_loop_board, Opponent_board, Game_rules ),
-				{ New_gamestate_after_piece, Next_piece} = calculate_next_piece( #user_gamestate{ random_state = 1, board = Result_loop_board } , Combos, Game_rules ),
-				{ Result_board , _ } = powers_logic:handle_turn_passed(Result_loop_board, #board{}),
+				{ Garbage_position_list, 
+					_, 
+						Result_gamestate,
+							Result_opponent_gamestate} = execute_turn( #user_gamestate{ board = Start_board, random_state = 0 },
+																			#user_gamestate{ board = Opponent_board, random_state = 0},
+																				Game_rules,
+																					0 ),
+
+				Result_board = Result_gamestate#user_gamestate.board,
+				Next_piece = Result_gamestate#user_gamestate.current_piece,
 
 				case board:are_boards_equal(Result_board,Final_board) of
 					true ->			do_nothing;
@@ -1431,9 +1455,9 @@ google_docs_tests(Game_rules) ->
 
 				io:format("calculated power [<~p>,<~p>], garbage ~p, garbage_hard ~p,  garbage_color ~p",[	Calculated_block_type,
 																											Calculated_sec_block_type,
-																												Calculated_number_normal_garbages,
-																												Calculated_number_hard_garbages,	
-									 																			Calculated_number_color_garbages ] ),
+																											Calculated_number_normal_garbages,
+																											Calculated_number_hard_garbages,	
+									 																		Calculated_number_color_garbages ] ),
 
 				?assertMatch( Calculated_number_normal_garbages, Normal_garbage ),
 				?assertMatch( Calculated_number_hard_garbages, Hard_garbage ),
