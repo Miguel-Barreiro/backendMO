@@ -2197,6 +2197,11 @@
     {
         "final": [
             {
+                "block": "g",
+                "x": 10,
+                "y": 11
+            },
+            {
                 "block": "r",
                 "x": 15,
                 "y": 11
@@ -2204,6 +2209,16 @@
             {
                 "block": "r",
                 "x": 10,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 13,
                 "y": 12
             },
             {
@@ -2223,11 +2238,16 @@
             },
             {
                 "block": "w",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "w",
                 "x": 12,
                 "y": 13
             },
             {
-                "block": "b",
+                "block": "y",
                 "x": 13,
                 "y": 13
             },
@@ -2247,7 +2267,7 @@
                 "y": 14
             },
             {
-                "block": "r",
+                "block": "y",
                 "x": 11,
                 "y": 14
             },
@@ -2464,6 +2484,16 @@
             },
             {
                 "block": "r",
+                "x": 11,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "r",
                 "x": 14,
                 "y": 12
             },
@@ -2475,6 +2505,16 @@
             {
                 "block": "b",
                 "x": 10,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 13,
                 "y": 13
             },
             {
@@ -2493,7 +2533,7 @@
                 "y": 14
             },
             {
-                "block": "r",
+                "block": "y",
                 "x": 11,
                 "y": 14
             },
@@ -2503,7 +2543,7 @@
                 "y": 14
             },
             {
-                "block": "b",
+                "block": "y",
                 "x": 13,
                 "y": 14
             },
@@ -2745,7 +2785,7 @@
                 "y": 14
             },
             {
-                "block": "?",
+                "block": "#1",
                 "x": 14,
                 "y": 14
             },
@@ -2816,7 +2856,7 @@
     {
         "final": [
             {
-                "block": "?",
+                "block": "@",
                 "x": 15,
                 "y": 12
             },
@@ -2860,11 +2900,6 @@
             {
                 "block": "r",
                 "x": 3,
-                "y": 12
-            },
-            {
-                "block": "@",
-                "x": 5,
                 "y": 12
             },
             {
@@ -3050,12 +3085,33 @@
         ]
     },
     {
-        "final": [],
+        "final": [
+            {
+                "block": "y",
+                "x": 11,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 11,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 13,
+                "y": 14
+            }
+        ],
         "garbage": {
-            "PowerGenerated": "tornado",
+            "PowerGenerated": "none",
             "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 5,
+            "normalGarbage": 1,
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "redbutton"
@@ -3692,6 +3748,26 @@
             {
                 "block": "g",
                 "x": 13,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "r",
+                "x": 13,
+                "y": 14
+            },
+            {
+                "block": "r",
+                "x": 14,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 15,
                 "y": 14
             }
         ],
@@ -4243,7 +4319,7 @@
                 "y": 14
             },
             {
-                "block": "r",
+                "block": "g",
                 "x": 14,
                 "y": 14
             }
@@ -4747,7 +4823,7 @@
     {
         "final": [
             {
-                "block": "?",
+                "block": "@",
                 "x": 15,
                 "y": 13
             },
@@ -4819,11 +4895,6 @@
                 "y": 14
             },
             {
-                "block": "#2",
-                "x": 3,
-                "y": 14
-            },
-            {
                 "block": "g",
                 "x": 4,
                 "y": 14
@@ -4850,6 +4921,11 @@
             {
                 "block": "w",
                 "x": 13,
+                "y": 14
+            },
+            {
+                "block": "#2",
+                "x": 14,
                 "y": 14
             }
         ],
@@ -4922,7 +4998,7 @@
             "PowerGenerated": "paint",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 3,
+            "normalGarbage": 2,
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none"
@@ -4999,6 +5075,11 @@
     {
         "final": [
             {
+                "block": "@",
+                "x": 15,
+                "y": 13
+            },
+            {
                 "block": "y",
                 "x": 11,
                 "y": 14
@@ -5018,7 +5099,7 @@
             "PowerGenerated": "paint",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 4,
+            "normalGarbage": 3,
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none"
@@ -5573,7 +5654,7 @@
     {
         "final": [
             {
-                "block": "r",
+                "block": "y",
                 "x": 12,
                 "y": 14
             },
@@ -6051,7 +6132,7 @@
     {
         "final": [
             {
-                "block": "?",
+                "block": "@",
                 "x": 11,
                 "y": 14
             },
@@ -6110,11 +6191,6 @@
             {
                 "block": "@",
                 "x": 2,
-                "y": 14
-            },
-            {
-                "block": "#2",
-                "x": 3,
                 "y": 14
             },
             {
@@ -6440,6 +6516,11 @@
             {
                 "block": "y",
                 "x": 12,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 12,
                 "y": 14
             }
         ],
@@ -6706,7 +6787,7 @@
     {
         "final": [],
         "garbage": {
-            "PowerGenerated": "cloner",
+            "PowerGenerated": "ghost",
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 2,
@@ -8853,7 +8934,7 @@
     {
         "final": [
             {
-                "block": "?",
+                "block": "@",
                 "x": 15,
                 "y": 12
             },
@@ -8989,6 +9070,11 @@
                 "y": 8
             },
             {
+                "block": "r",
+                "x": 10,
+                "y": 9
+            },
+            {
                 "block": "w",
                 "x": 13,
                 "y": 9
@@ -9004,8 +9090,13 @@
                 "y": 9
             },
             {
-                "block": "r",
+                "block": "g",
                 "x": 10,
+                "y": 10
+            },
+            {
+                "block": "b",
+                "x": 11,
                 "y": 10
             },
             {
@@ -9024,12 +9115,22 @@
                 "y": 10
             },
             {
-                "block": "g",
+                "block": "w",
                 "x": 10,
                 "y": 11
             },
             {
-                "block": "w",
+                "block": "r",
+                "x": 11,
+                "y": 11
+            },
+            {
+                "block": "b",
+                "x": 12,
+                "y": 11
+            },
+            {
+                "block": "#w",
                 "x": 13,
                 "y": 11
             },
@@ -9044,8 +9145,13 @@
                 "y": 11
             },
             {
-                "block": "w",
+                "block": "@",
                 "x": 10,
+                "y": 12
+            },
+            {
+                "block": "b",
+                "x": 11,
                 "y": 12
             },
             {
@@ -9131,9 +9237,9 @@
         ],
         "garbage": {
             "PowerGenerated": "none",
-            "colorGarbage": 2,
+            "colorGarbage": 0,
             "hardGarbage": 0,
-            "normalGarbage": 2,
+            "normalGarbage": 1,
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none"
@@ -9882,17 +9988,27 @@
         "final": [
             {
                 "block": "r",
+                "x": 13,
+                "y": 12
+            },
+            {
+                "block": "r",
                 "x": 11,
                 "y": 13
             },
             {
                 "block": "g",
-                "x": 14,
+                "x": 12,
                 "y": 13
             },
             {
-                "block": "b",
-                "x": 15,
+                "block": "g",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "p",
+                "x": 14,
                 "y": 13
             },
             {
@@ -9930,18 +10046,13 @@
             "PowerGenerated": "tornado",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 4,
+            "normalGarbage": 3,
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none"
         },
         "name": "ChainPaint",
         "origin": [
-            {
-                "block": "r",
-                "x": 2,
-                "y": 10
-            },
             {
                 "block": "g",
                 "x": 3,
@@ -9978,6 +10089,16 @@
                 "y": 12
             },
             {
+                "block": "g",
+                "x": 5,
+                "y": 12
+            },
+            {
+                "block": "g",
+                "x": 6,
+                "y": 12
+            },
+            {
                 "block": "r",
                 "x": 2,
                 "y": 13
@@ -9998,7 +10119,7 @@
                 "y": 13
             },
             {
-                "block": "b",
+                "block": "g",
                 "x": 6,
                 "y": 13
             },
@@ -10251,11 +10372,6 @@
             {
                 "block": "r",
                 "x": 11,
-                "y": 12
-            },
-            {
-                "block": "g",
-                "x": 11,
                 "y": 13
             },
             {
@@ -10264,7 +10380,7 @@
                 "y": 13
             },
             {
-                "block": "g",
+                "block": "w",
                 "x": 13,
                 "y": 13
             },
@@ -10320,11 +10436,6 @@
         },
         "name": "SimplePaint",
         "origin": [
-            {
-                "block": "r",
-                "x": 2,
-                "y": 10
-            },
             {
                 "block": "g",
                 "x": 3,

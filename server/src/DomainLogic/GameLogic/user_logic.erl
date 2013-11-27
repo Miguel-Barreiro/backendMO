@@ -54,8 +54,9 @@ logout( #logic_user{ user = User, lifes_generate_timer = Timer_ref } ) ->
 
 -spec can_enter_game( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> false | true.
 can_enter_game( #logic_user{ user = User }, Powers ) ->
-	Current_lifes = proplists:get_value(?LIFES_KEY, User#mc_user.wallet),
-	Current_lifes >= (?LIFE_GAME_COST + length(Powers)).
+	true.
+	%Current_lifes = proplists:get_value(?LIFES_KEY, User#mc_user.wallet),
+	%Current_lifes >= (?LIFE_GAME_COST + length(Powers)).
 
 
 

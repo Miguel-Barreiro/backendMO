@@ -316,6 +316,7 @@ create_insufficient_lifes_message() ->
 
 
 create_use_power_message(Type) ->
+	lager:info("message power sent ~p",[Type]),
 	Req = #request{ type = message_generic_power, power_content = #message_generic_power{ type = Type } },
 	protocol_pb:encode_request(Req).
 
@@ -529,8 +530,8 @@ login_guest_user( User_id , Client_time, User ) ->
 			true ->
 				lager:debug("reconnected a user to an existing proccess"),
 				gen_server:cast( User_pid, { reconnecting , self() } ),
-				dont_save,
-				{save, User_creation_function() }
+				dont_save
+				%{save, User_creation_function() }
 		end
 	end,
 

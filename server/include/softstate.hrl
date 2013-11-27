@@ -31,6 +31,7 @@
 	ghosts_to_trigger = 0 :: integer(),
 	reinforcements = [] :: [color_type()],
 	painted = [],
+	
 	triggered_abilities = false,
 
 	frenzy_turns = 0 :: integer(),
