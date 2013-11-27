@@ -530,7 +530,7 @@ login_guest_user( User_id , Client_time, User ) ->
 			true ->
 				lager:debug("reconnected a user to an existing proccess"),
 				gen_server:cast( User_pid, { reconnecting , self() } ),
-				dont_save
+				dont_save  
 				%{save, User_creation_function() }
 		end
 	end,

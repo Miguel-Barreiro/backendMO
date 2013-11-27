@@ -193,6 +193,13 @@ get_block_representation( Block ) ->
 		#block{ type = cloner, color = purple } ->				"Dp";
 		#block{ type = cloner, color = green } ->				"Dg";
 		
+		#block{ type = ghost, color = red } ->					"Gr";
+		#block{ type = ghost, color = yellow } ->				"Gy";
+		#block{ type = ghost, color = white } ->				"Gw";
+		#block{ type = ghost, color = blue } ->					"Gb";
+		#block{ type = ghost, color = purple } ->				"Gp";
+		#block{ type = ghost, color = green } ->				"Gg";
+
 		#block{ type = garbage } ->								"##";
 		
 		#block{ type = garbage_hard, hardness = 1 } ->			"#1";

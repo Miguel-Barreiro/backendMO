@@ -86,7 +86,8 @@ handle_cast( game_created, State = #game_state{ user1 = User1, user2 = User2, st
 	Seed = 1,
 	lager:debug("enter game was sent!"),
 
-	Starting_game_logic_state = game_logic:create_new_game( User1#game_user.pid, User2#game_user.pid, Seed ),
+	Starting_game_logic_state = game_logic:create_new_game( User1#game_user.pid, User1#game_user.powers_equipped, 
+																User2#game_user.pid, User2#game_user.powers_equipped, Seed ),
 
 	gen_server:cast( User1#game_user.pid , { enter_game, User1#game_user.powers_equipped, self(), User2#game_user.user_id, Seed } ),
 	gen_server:cast( User2#game_user.pid , { enter_game, User2#game_user.powers_equipped, self(), User1#game_user.user_id, Seed } ),

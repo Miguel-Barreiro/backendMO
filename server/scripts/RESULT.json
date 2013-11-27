@@ -184,263 +184,6 @@
     {
         "final": [
             {
-                "block": "y",
-                "x": 12,
-                "y": 14
-            }
-        ],
-        "garbage": {
-            "PowerGenerated": "none",
-            "colorGarbage": 0,
-            "hardGarbage": 1,
-            "normalGarbage": 2,
-            "passivePower": "none",
-            "secPowerGenerated": "none",
-            "triggerPower": "none"
-        },
-        "name": "SimultWithCollision4",
-        "origin": [
-            {
-                "block": "r",
-                "x": 2,
-                "y": 10
-            },
-            {
-                "block": "w",
-                "x": 3,
-                "y": 10
-            },
-            {
-                "block": "w",
-                "x": 4,
-                "y": 10
-            },
-            {
-                "block": "r",
-                "x": 2,
-                "y": 11
-            },
-            {
-                "block": "Pp",
-                "x": 3,
-                "y": 11
-            },
-            {
-                "block": "Tb",
-                "x": 4,
-                "y": 11
-            },
-            {
-                "block": "Bb",
-                "x": 2,
-                "y": 12
-            },
-            {
-                "block": "y",
-                "x": 3,
-                "y": 12
-            },
-            {
-                "block": "Bg",
-                "x": 4,
-                "y": 12
-            },
-            {
-                "block": "b",
-                "x": 2,
-                "y": 13
-            },
-            {
-                "block": "y",
-                "x": 3,
-                "y": 13
-            },
-            {
-                "block": "g",
-                "x": 4,
-                "y": 13
-            },
-            {
-                "block": "b",
-                "x": 1,
-                "y": 14
-            },
-            {
-                "block": "b",
-                "x": 2,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 3,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 4,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 5,
-                "y": 14
-            }
-        ]
-    },
-    {
-        "final": [
-            {
-                "block": "p",
-                "x": 11,
-                "y": 11
-            },
-            {
-                "block": "p",
-                "x": 11,
-                "y": 12
-            },
-            {
-                "block": "w",
-                "x": 11,
-                "y": 13
-            },
-            {
-                "block": "p",
-                "x": 12,
-                "y": 13
-            },
-            {
-                "block": "p",
-                "x": 11,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 12,
-                "y": 14
-            },
-            {
-                "block": "p",
-                "x": 13,
-                "y": 14
-            }
-        ],
-        "garbage": {
-            "PowerGenerated": "none",
-            "colorGarbage": 0,
-            "hardGarbage": 1,
-            "normalGarbage": 2,
-            "passivePower": "none",
-            "secPowerGenerated": "none",
-            "triggerPower": "none"
-        },
-        "name": "SimultWithCollision5",
-        "origin": [
-            {
-                "block": "p",
-                "x": 2,
-                "y": 7
-            },
-            {
-                "block": "p",
-                "x": 2,
-                "y": 8
-            },
-            {
-                "block": "w",
-                "x": 2,
-                "y": 9
-            },
-            {
-                "block": "r",
-                "x": 2,
-                "y": 10
-            },
-            {
-                "block": "w",
-                "x": 3,
-                "y": 10
-            },
-            {
-                "block": "w",
-                "x": 4,
-                "y": 10
-            },
-            {
-                "block": "r",
-                "x": 2,
-                "y": 11
-            },
-            {
-                "block": "Pp",
-                "x": 3,
-                "y": 11
-            },
-            {
-                "block": "CRb",
-                "x": 4,
-                "y": 11
-            },
-            {
-                "block": "Bb",
-                "x": 2,
-                "y": 12
-            },
-            {
-                "block": "y",
-                "x": 3,
-                "y": 12
-            },
-            {
-                "block": "Bg",
-                "x": 4,
-                "y": 12
-            },
-            {
-                "block": "b",
-                "x": 2,
-                "y": 13
-            },
-            {
-                "block": "y",
-                "x": 3,
-                "y": 13
-            },
-            {
-                "block": "g",
-                "x": 4,
-                "y": 13
-            },
-            {
-                "block": "b",
-                "x": 1,
-                "y": 14
-            },
-            {
-                "block": "b",
-                "x": 2,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 3,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 4,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 5,
-                "y": 14
-            }
-        ]
-    },
-    {
-        "final": [
-            {
                 "block": "?",
                 "x": 12,
                 "y": 13
@@ -448,11 +191,6 @@
             {
                 "block": "y",
                 "x": 12,
-                "y": 14
-            },
-            {
-                "block": "?",
-                "x": 13,
                 "y": 14
             }
         ],
@@ -468,32 +206,12 @@
         "name": "SimultWithCollision2",
         "origin": [
             {
-                "block": "w",
-                "x": 3,
-                "y": 10
-            },
-            {
-                "block": "w",
-                "x": 4,
-                "y": 10
-            },
-            {
-                "block": "Pp",
-                "x": 3,
-                "y": 11
-            },
-            {
-                "block": "Pb",
-                "x": 4,
-                "y": 11
-            },
-            {
                 "block": "Bb",
                 "x": 2,
                 "y": 12
             },
             {
-                "block": "y",
+                "block": "Pp",
                 "x": 3,
                 "y": 12
             },
@@ -513,7 +231,7 @@
                 "y": 13
             },
             {
-                "block": "g",
+                "block": "Pg",
                 "x": 4,
                 "y": 13
             },
@@ -547,7 +265,7 @@
     {
         "final": [
             {
-                "block": "y",
+                "block": "p",
                 "x": 12,
                 "y": 14
             }
@@ -564,32 +282,12 @@
         "name": "SimultWithCollision3",
         "origin": [
             {
-                "block": "w",
-                "x": 3,
-                "y": 10
-            },
-            {
-                "block": "w",
-                "x": 4,
-                "y": 10
-            },
-            {
-                "block": "Pp",
-                "x": 3,
-                "y": 11
-            },
-            {
-                "block": "Tb",
-                "x": 4,
-                "y": 11
-            },
-            {
                 "block": "Bb",
                 "x": 2,
                 "y": 12
             },
             {
-                "block": "y",
+                "block": "Pp",
                 "x": 3,
                 "y": 12
             },
@@ -609,7 +307,7 @@
                 "y": 13
             },
             {
-                "block": "g",
+                "block": "Tg",
                 "x": 4,
                 "y": 13
             },
@@ -642,6 +340,11 @@
     },
     {
         "final": [
+            {
+                "block": "p",
+                "x": 12,
+                "y": 12
+            },
             {
                 "block": "p",
                 "x": 12,
@@ -667,11 +370,6 @@
             {
                 "block": "w",
                 "x": 3,
-                "y": 10
-            },
-            {
-                "block": "Pp",
-                "x": 3,
                 "y": 11
             },
             {
@@ -680,7 +378,7 @@
                 "y": 12
             },
             {
-                "block": "y",
+                "block": "Pp",
                 "x": 3,
                 "y": 12
             },
@@ -1013,237 +711,6 @@
             {
                 "block": "p",
                 "x": 4,
-                "y": 14
-            }
-        ]
-    },
-    {
-        "final": [
-            {
-                "block": "g",
-                "x": 10,
-                "y": 11
-            },
-            {
-                "block": "r",
-                "x": 14,
-                "y": 11
-            },
-            {
-                "block": "r",
-                "x": 15,
-                "y": 11
-            },
-            {
-                "block": "r",
-                "x": 10,
-                "y": 12
-            },
-            {
-                "block": "r",
-                "x": 11,
-                "y": 12
-            },
-            {
-                "block": "b",
-                "x": 13,
-                "y": 12
-            },
-            {
-                "block": "r",
-                "x": 14,
-                "y": 12
-            },
-            {
-                "block": "w",
-                "x": 15,
-                "y": 12
-            },
-            {
-                "block": "b",
-                "x": 10,
-                "y": 13
-            },
-            {
-                "block": "y",
-                "x": 11,
-                "y": 13
-            },
-            {
-                "block": "y",
-                "x": 13,
-                "y": 13
-            },
-            {
-                "block": "g",
-                "x": 14,
-                "y": 13
-            },
-            {
-                "block": "w",
-                "x": 15,
-                "y": 13
-            },
-            {
-                "block": "g",
-                "x": 10,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 11,
-                "y": 14
-            },
-            {
-                "block": "b",
-                "x": 12,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 13,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 14,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 15,
-                "y": 14
-            }
-        ],
-        "garbage": {
-            "PowerGenerated": "none",
-            "colorGarbage": 0,
-            "hardGarbage": 0,
-            "normalGarbage": 1,
-            "passivePower": "none",
-            "secPowerGenerated": "none",
-            "triggerPower": "redbutton"
-        },
-        "name": "SimpleRedButtonClone",
-        "origin": [
-            {
-                "block": "g",
-                "x": 1,
-                "y": 11
-            },
-            {
-                "block": "r",
-                "x": 2,
-                "y": 11
-            },
-            {
-                "block": "b",
-                "x": 3,
-                "y": 11
-            },
-            {
-                "block": "b",
-                "x": 4,
-                "y": 11
-            },
-            {
-                "block": "r",
-                "x": 5,
-                "y": 11
-            },
-            {
-                "block": "r",
-                "x": 6,
-                "y": 11
-            },
-            {
-                "block": "r",
-                "x": 1,
-                "y": 12
-            },
-            {
-                "block": "y",
-                "x": 2,
-                "y": 12
-            },
-            {
-                "block": "w",
-                "x": 3,
-                "y": 12
-            },
-            {
-                "block": "y",
-                "x": 4,
-                "y": 12
-            },
-            {
-                "block": "r",
-                "x": 5,
-                "y": 12
-            },
-            {
-                "block": "w",
-                "x": 6,
-                "y": 12
-            },
-            {
-                "block": "b",
-                "x": 1,
-                "y": 13
-            },
-            {
-                "block": "w",
-                "x": 2,
-                "y": 13
-            },
-            {
-                "block": "Cg",
-                "x": 3,
-                "y": 13
-            },
-            {
-                "block": "w",
-                "x": 4,
-                "y": 13
-            },
-            {
-                "block": "g",
-                "x": 5,
-                "y": 13
-            },
-            {
-                "block": "w",
-                "x": 6,
-                "y": 13
-            },
-            {
-                "block": "g",
-                "x": 1,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 2,
-                "y": 14
-            },
-            {
-                "block": "w",
-                "x": 3,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 4,
-                "y": 14
-            },
-            {
-                "block": "g",
-                "x": 5,
-                "y": 14
-            },
-            {
-                "block": "y",
-                "x": 6,
                 "y": 14
             }
         ]
@@ -1678,6 +1145,16 @@
                 "y": 13
             },
             {
+                "block": "b",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 14,
+                "y": 13
+            },
+            {
                 "block": "r",
                 "x": 10,
                 "y": 14
@@ -1690,6 +1167,11 @@
             {
                 "block": "w",
                 "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
                 "y": 14
             },
             {
@@ -1849,6 +1331,11 @@
                 "y": 13
             },
             {
+                "block": "y",
+                "x": 13,
+                "y": 13
+            },
+            {
                 "block": "r",
                 "x": 10,
                 "y": 14
@@ -1861,6 +1348,11 @@
             {
                 "block": "y",
                 "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
                 "y": 14
             },
             {
@@ -1986,10 +1478,10 @@
             }
         ],
         "garbage": {
-            "PowerGenerated": "tornado",
+            "PowerGenerated": "none",
             "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 3,
+            "normalGarbage": 2,
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none"
@@ -3168,7 +2660,7 @@
     {
         "final": [],
         "garbage": {
-            "PowerGenerated": "cloner",
+            "PowerGenerated": "ghost",
             "colorGarbage": 0,
             "hardGarbage": 0,
             "normalGarbage": 1,
@@ -3773,9 +3265,9 @@
         ],
         "garbage": {
             "PowerGenerated": "tornado",
-            "colorGarbage": 4,
+            "colorGarbage": 2,
             "hardGarbage": 0,
-            "normalGarbage": 4,
+            "normalGarbage": 3,
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none"
@@ -4995,7 +4487,7 @@
     {
         "final": [],
         "garbage": {
-            "PowerGenerated": "paint",
+            "PowerGenerated": "none",
             "colorGarbage": 2,
             "hardGarbage": 0,
             "normalGarbage": 2,
@@ -5735,17 +5227,12 @@
     {
         "final": [
             {
-                "block": "?",
-                "x": 12,
-                "y": 11
-            },
-            {
                 "block": "y",
                 "x": 11,
                 "y": 12
             },
             {
-                "block": "g",
+                "block": "?",
                 "x": 12,
                 "y": 12
             },
@@ -5755,7 +5242,7 @@
                 "y": 13
             },
             {
-                "block": "g",
+                "block": "y",
                 "x": 12,
                 "y": 13
             },
@@ -5773,11 +5260,6 @@
                 "block": "w",
                 "x": 12,
                 "y": 14
-            },
-            {
-                "block": "?",
-                "x": 13,
-                "y": 14
             }
         ],
         "garbage": {
@@ -5794,30 +5276,20 @@
             {
                 "block": "p",
                 "x": 3,
-                "y": 8
+                "y": 9
             },
             {
                 "block": "p",
                 "x": 3,
-                "y": 9
+                "y": 10
             },
             {
                 "block": "Pp",
                 "x": 3,
-                "y": 10
-            },
-            {
-                "block": "p",
-                "x": 4,
-                "y": 10
-            },
-            {
-                "block": "CRr",
-                "x": 3,
                 "y": 11
             },
             {
-                "block": "w",
+                "block": "p",
                 "x": 4,
                 "y": 11
             },
@@ -5827,7 +5299,7 @@
                 "y": 12
             },
             {
-                "block": "y",
+                "block": "CRr",
                 "x": 3,
                 "y": 12
             },
@@ -7698,6 +7170,11 @@
     {
         "final": [
             {
+                "block": "y",
+                "x": 12,
+                "y": 14
+            },
+            {
                 "block": "b",
                 "x": 15,
                 "y": 14
@@ -8071,7 +7548,7 @@
                 "y": 13
             },
             {
-                "block": "g",
+                "block": "y",
                 "x": 12,
                 "y": 13
             },
@@ -8195,6 +7672,66 @@
             {
                 "block": "g",
                 "x": 5,
+                "y": 14
+            }
+        ]
+    },
+    {
+        "final": [],
+        "garbage": {
+            "PowerGenerated": "none",
+            "colorGarbage": 0,
+            "hardGarbage": 1,
+            "normalGarbage": 2,
+            "passivePower": "none",
+            "secPowerGenerated": "none",
+            "triggerPower": "none"
+        },
+        "name": "DoubleComboBlowsDoubleGarbage",
+        "origin": [
+            {
+                "block": "r",
+                "x": 3,
+                "y": 10
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 11
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 12
+            },
+            {
+                "block": "r",
+                "x": 3,
+                "y": 13
+            },
+            {
+                "block": "g",
+                "x": 4,
+                "y": 13
+            },
+            {
+                "block": "#2",
+                "x": 3,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 4,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 5,
+                "y": 14
+            },
+            {
+                "block": "g",
+                "x": 6,
                 "y": 14
             }
         ]
@@ -8373,6 +7910,16 @@
     },
     {
         "final": [
+            {
+                "block": "p",
+                "x": 12,
+                "y": 12
+            },
+            {
+                "block": "p",
+                "x": 12,
+                "y": 13
+            },
             {
                 "block": "y",
                 "x": 12,
@@ -8707,8 +8254,23 @@
     {
         "final": [
             {
-                "block": "w",
+                "block": "y",
+                "x": 10,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 10,
+                "y": 14
+            },
+            {
+                "block": "g",
                 "x": 12,
+                "y": 14
+            },
+            {
+                "block": "y",
+                "x": 14,
                 "y": 14
             }
         ],
@@ -8726,11 +8288,6 @@
             {
                 "block": "w",
                 "x": 3,
-                "y": 11
-            },
-            {
-                "block": "b",
-                "x": 4,
                 "y": 11
             },
             {
@@ -8759,12 +8316,12 @@
                 "y": 13
             },
             {
-                "block": "b",
+                "block": "Tr",
                 "x": 3,
                 "y": 13
             },
             {
-                "block": "Bb",
+                "block": "b",
                 "x": 4,
                 "y": 13
             },
@@ -8779,12 +8336,12 @@
                 "y": 14
             },
             {
-                "block": "Tr",
+                "block": "Bb",
                 "x": 3,
                 "y": 14
             },
             {
-                "block": "r",
+                "block": "b",
                 "x": 4,
                 "y": 14
             },
@@ -9846,13 +9403,23 @@
                 "y": 12
             },
             {
+                "block": "w",
+                "x": 12,
+                "y": 12
+            },
+            {
                 "block": "g",
                 "x": 11,
                 "y": 13
             },
             {
-                "block": "w",
+                "block": "g",
                 "x": 12,
+                "y": 13
+            },
+            {
+                "block": "y",
+                "x": 13,
                 "y": 13
             },
             {
@@ -9868,6 +9435,11 @@
             {
                 "block": "y",
                 "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
                 "y": 14
             },
             {
@@ -9987,7 +9559,7 @@
     {
         "final": [
             {
-                "block": "r",
+                "block": "g",
                 "x": 13,
                 "y": 12
             },
@@ -10219,6 +9791,16 @@
                 "y": 13
             },
             {
+                "block": "b",
+                "x": 13,
+                "y": 13
+            },
+            {
+                "block": "w",
+                "x": 14,
+                "y": 13
+            },
+            {
                 "block": "r",
                 "x": 10,
                 "y": 14
@@ -10231,6 +9813,11 @@
             {
                 "block": "w",
                 "x": 12,
+                "y": 14
+            },
+            {
+                "block": "w",
+                "x": 13,
                 "y": 14
             },
             {

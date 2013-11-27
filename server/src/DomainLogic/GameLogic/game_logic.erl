@@ -2,7 +2,7 @@
 
 -include("include/softstate.hrl").
 
--export([ handle_place_piece/6, handle_update_piece/5, create_new_game/3, handle_power_use/3 ]).
+-export([ handle_place_piece/6, handle_update_piece/5, create_new_game/5, handle_power_use/3 ]).
 
 -export([ activate_ability_blocks/1, apply_gravity_combo_loop/2]).
 
@@ -14,7 +14,7 @@
 %-------------- PUBLIC -------------------------
 
 
-create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
+create_new_game( User1_pid, User1_powers, User2_pid, User2_powers, Initial_seed  ) ->
 
 	{ New_random_state, Piece } = calculate_next_piece( Initial_seed ),
 
@@ -34,6 +34,22 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 
 
 
+
+
+equip_powers( User_gamestate = #user_gamestate{}, Powers )->
+	User_gamestate#user_gamestate{ board = equip_powers(User_gamestate#user_gamestate.board, Powers) };
+equip_powers( Board = #board{}, [] )->
+	Board;
+equip_powers( Board = #board{}, [ Power | Rest ] )->
+	New_board = case Power of
+		<<"frenzypower">> ->			Board#board{ active_powers_equiped = [ frenzy | Board#board.active_powers_equiped] };
+		<<"trashpower">> ->				Board#board{ active_powers_equiped = [ trash | Board#board.active_powers_equiped] };
+		<<"redbuttonpower">> ->			Board#board{ active_powers_equiped = [ redbutton | Board#board.active_powers_equiped] };
+		<<"overloadpower">> ->			Board#board{ is_overload_active = true };
+		<<"killingblowpower">> ->		Board#board{ killing_blow_active = true };
+		<<"barrierpower">> ->			Board#board{ barrier_active = true }
+	end,
+	equip_powers( New_board, Rest ).
 
 
 handle_power_use( User_pid, Power, Game = #game{} ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid -> 
@@ -207,14 +223,13 @@ execute_turn( Player_gamestate = #user_gamestate{ board = Board},
 	{ Result_player_Board, Result_opponent_board } = powers_logic:handle_turn_passed(Board_after_release_garbage, 
 																						New_opponent_gamestate#user_gamestate.board,
 																							Game_rules),
-	Result_gamestate = Gamestate_after_piece#user_gamestate{
+	Result_gamestate = Gamestate_after_garbage_release#user_gamestate{
 								board = Result_player_Board,
 								current_piece = Next_piece,
 								current_piece_angle = down,
 								current_piece_x = ?STARTING_PIECE_X,
 								current_piece_y = Result_player_Board#board.height - 1,
-								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1,
-								garbage_position_list = []
+								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1
 						},
 
 	Result_opponent_gamestate = New_opponent_gamestate#user_gamestate{ board = Result_opponent_board},
@@ -563,7 +578,8 @@ order_activated_block_list( Block_list ) ->
 activate_blocks_by_combo_proximity( [], Board = #board{}) ->
 	Board;
 activate_blocks_by_combo_proximity( [ Block | Rest], Board = #board{}) ->
-	case Block of
+
+	case board:get_block( Block#block.x, Block#block.y, Board) of
 		
 		Cloner_block when Cloner_block#block.type == cloner ->
 			New_board = pop_cloner( Cloner_block, Board),
@@ -571,22 +587,22 @@ activate_blocks_by_combo_proximity( [ Block | Rest], Board = #board{}) ->
 
 		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness > 1 ->
 			New_board = board:set_block( Garbage_block#block{ hardness = Garbage_block#block.hardness - 1 }, 
-								Block#block.x, Block#block.y, board:remove_block( Block#block.x, Block#block.y , Board)),
+								Garbage_block#block.x, Garbage_block#block.y, board:remove_block( Garbage_block#block.x, Garbage_block#block.y , Board)),
 			activate_blocks_by_combo_proximity( Rest, New_board);
 
 		Garbage_block when Garbage_block#block.type == garbage_hard ->
-			New_board = board:remove_block( Block#block.x, Block#block.y , Board),
+			New_board = board:remove_block( Garbage_block#block.x, Garbage_block#block.y , Board),
 			activate_blocks_by_combo_proximity( Rest, New_board);
 
 
 		Garbage_block when Garbage_block#block.type == garbage_color ->
 			New_board = board:set_block( #block{ type = color , color = Garbage_block#block.color }, 
-								Block#block.x, Block#block.y, 
-									board:remove_block( Block#block.x, Block#block.y, Board) ),
+								Garbage_block#block.x, Garbage_block#block.y, 
+									board:remove_block( Garbage_block#block.x, Garbage_block#block.y, Board) ),
 			activate_blocks_by_combo_proximity( Rest, New_board);
 
 		Garbage_block when Garbage_block#block.type == garbage ->
-			New_board = board:remove_block( Block#block.x, Block#block.y, Board),
+			New_board = board:remove_block( Garbage_block#block.x, Garbage_block#block.y, Board),
 			activate_blocks_by_combo_proximity( Rest, New_board);
 
 		_other ->
