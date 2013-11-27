@@ -5,7 +5,7 @@
 
 -export([process/2 , process_pre_login_message/1, handle_disconect/0, handle_connect/0, process_message/4, process_user_disconect/2]).
 
--export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0]).
+-export([create_lost_message/1,create_won_message/1, create_difficult_message/1,create_disconect_message/0, create_use_power_message/1]).
 -export([create_login_success/4, create_login_success/18]).
 -export([create_match_created_message/2, create_start_message/1]).
 -export([create_user_disconects_message/1, create_game_restarts_message/2, create_user_reconected_message/0]).
@@ -311,6 +311,12 @@ create_rematch_timeout_message() ->
 
 create_insufficient_lifes_message() ->
 	Req = #request{ type = message_not_enough_lifes },
+	protocol_pb:encode_request(Req).
+
+
+
+create_use_power_message(Type) ->
+	Req = #request{ type = message_generic_power, power_content = #message_generic_power{ type = Type } },
 	protocol_pb:encode_request(Req).
 
 

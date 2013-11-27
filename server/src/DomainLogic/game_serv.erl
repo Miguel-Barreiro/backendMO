@@ -191,9 +191,14 @@ handle_cast( { place_piece, X, Y, Angle, User_pid, Client_garbage_id } , State =
 
 
 
-
-
-handle_cast({ use_power, Power, User_pid }, State = #game_state{}) ->
+handle_cast({ use_power, Power, User_pid }, State = #game_state{ user1 = User1, user2 = User2 }) ->
+	Msg = message_processor:create_use_power_message( Power),
+	case User_pid == User2#game_user.pid of
+		true ->
+			gen_server:cast( User1#game_user.pid, {send_message, Msg});
+		false ->
+			gen_server:cast( User2#game_user.pid, {send_message, Msg})
+	end,
 	New_game_state = game_logic:handle_power_use( User_pid, Power, State#game_state.game_logic_state ),
 	{ noreply, State#game_state{ game_logic_state = New_game_state } };
 	
