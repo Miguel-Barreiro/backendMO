@@ -193,6 +193,11 @@ handle_cast( { place_piece, X, Y, Angle, User_pid, Client_garbage_id } , State =
 
 
 
+handle_cast({ use_power, Power, User_pid }, State = #game_state{}) ->
+	New_game_state = game_logic:handle_power_use( User_pid, Power, State#game_state.game_logic_state ),
+	{ noreply, State#game_state{ game_logic_state = New_game_state } };
+	
+
 
 
 handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = User1, user2 = User2 } )  ->

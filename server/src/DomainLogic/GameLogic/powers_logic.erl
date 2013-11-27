@@ -9,13 +9,9 @@
 -export([trigger_overload/2, trigger_killing_blow/3]).
 
 
--define( FRENZY_POWER, 1).
--define( THRASH_POWER, 2).
--define( RED_BUTTON_POWER, 3).
-
 
 -spec handle_turn_passed(User_board::#board{}, Opponent_board::#board{}, Game_rules::#game_logic_rules{}) -> {#board{},#board{}}.
-handle_turn_passed( User_board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) -> 
+handle_turn_passed( User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) -> 
 
 	New_board = User_board#board{
 					thrash_turns = decrease_turn( User_board#board.thrash_turns ), 
@@ -26,14 +22,14 @@ handle_turn_passed( User_board = #board{}, Opponent_board = #board{}, Game_rules
 	{New_board, Opponent_board}.
 
 
--spec handle_use_power( Power::integer(), User_board::#board{}, Opponent_board::#board{}, Game_rules::#game_logic_rules{}) -> {#board{},#board{}}.
-handle_use_power( ?THRASH_POWER, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{}) ->
+-spec handle_use_power( atom(), User_board::#board{}, Opponent_board::#board{}, Game_rules::#game_logic_rules{}) -> {#board{},#board{}}.
+handle_use_power( trash, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{}) ->
 	{User_board#board{thrash_turns = 5}, Opponent_board};
 
-handle_use_power( ?RED_BUTTON_POWER, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) ->
+handle_use_power( redbutton, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) ->
 	{User_board#board{red_button_pressed = true}, Opponent_board};
 
-handle_use_power( ?FRENZY_POWER, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) ->
+handle_use_power( frenzy, User_board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) ->
 	{User_board#board{frenzy_turns = 5}, Opponent_board}.
 
 

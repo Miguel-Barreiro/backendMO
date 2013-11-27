@@ -2,7 +2,7 @@
 
 -include("include/softstate.hrl").
 
--export([ handle_place_piece/6, handle_update_piece/5, create_new_game/3 ]).
+-export([ handle_place_piece/6, handle_update_piece/5, create_new_game/3, handle_power_use/3 ]).
 
 -export([ activate_ability_blocks/1, apply_gravity_combo_loop/2]).
 
@@ -31,6 +31,38 @@ create_new_game( User1_pid, User2_pid, Initial_seed  ) ->
 	Game_rules = game_rules:get_current_rules(<<"Normal">>),
 
 	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed, game_rules = Game_rules }.
+
+
+
+
+
+handle_power_use( User_pid, Power, Game = #game{} ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid -> 
+
+	io:format("\n-------------------------------- \n",[]),
+	io:format("\n USER 1 ~p USED POWER \n",[User_pid]),
+
+	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
+	{New_gamestate, New_opponent_gamestate} = handle_power_use( Power, User_pid, Opponent_pid, 
+																	Game#game.user1_gamestate, Game#game.user2_gamestate, 
+																		Game#game.game_rules),
+	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
+
+
+handle_power_use( User_pid, Power, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid -> 
+	io:format("\n-------------------------------- \n",[]),
+	io:format("\n USER 1 ~p USED POWER \n",[User_pid]),
+
+	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
+	{New_gamestate, New_opponent_gamestate} = handle_power_use( Power, User_pid, Opponent_pid, 
+																	Game#game.user2_gamestate, Game#game.user1_gamestate, 
+																		Game#game.game_rules),
+	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate }.
+
+
+handle_power_use( Power, _User_pid, _Opponent_pid, User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}, Game_rules = #game_logic_rules{} ) ->
+	{User_board, Opponent_board} = powers_logic:handle_use_power( Power, User_gamestate#user_gamestate.board, Opponent_gamestate#user_gamestate.board, Game_rules),
+	{ User_gamestate#user_gamestate{ board = User_board }, Opponent_gamestate#user_gamestate{ board = Opponent_board } }.
+
 
 
 
@@ -162,9 +194,9 @@ execute_turn( Player_gamestate = #user_gamestate{ board = Board},
 	{ Normal_combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
 
 	{ Red_button_combos, Board_after_red_button } = powers_logic:trigger_red_button(Result_loop_board, Game_rules),
-	Combos_total = lists:append(Red_button_combos,Normal_combos),			
+	Combos_total = lists:append(Red_button_combos, Normal_combos),			
 
-	{ Gamestate_after_piece, Next_piece} = calculate_next_piece( Player_gamestate#user_gamestate{ board = Board_after_red_button}, Combos_total, Game_rules ),
+	{Gamestate_after_piece, Next_piece} = calculate_next_piece( Player_gamestate#user_gamestate{ board = Board_after_red_button}, Combos_total, Game_rules ),
 
 	{Garbage_to_release_list, Gamestate_after_garbage_release} = get_garbage_to_release(Client_garbage_id,Gamestate_after_piece),
 	Board_after_release_garbage = release_garbage_list( Gamestate_after_garbage_release#user_gamestate.board, Garbage_to_release_list ),
@@ -184,7 +216,7 @@ execute_turn( Player_gamestate = #user_gamestate{ board = Board},
 								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1
 						},
 
-	Result_opponent_gamestate = Opponent_gamestate#user_gamestate{ board = Result_opponent_board},
+	Result_opponent_gamestate = New_opponent_gamestate#user_gamestate{ board = Result_opponent_board},
 
 	{ Generated_garbage_position_list, Generated_garbage_id, Result_gamestate, Result_opponent_gamestate}.
 
@@ -492,10 +524,6 @@ add_affected_block_around_to_set( X, Y, Board = #board{}, Combo, Set ) ->
 			Set
 	end.
 	
-
-
-
-
 
 
 
@@ -972,10 +1000,6 @@ get_next_random( X ) ->
 
 
 
-
-
-
-
 generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{} ) ->
 	lager:debug("generating garbage: ~p hard , ~p color , ~p normal",[Hard_garbage_number,Color_garbage_number,Normal_garbage_number]),
 	generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board, lists:seq( 0, Board#board.width - 1 ) ).
@@ -1410,7 +1434,7 @@ google_docs_tests(Game_rules) ->
 				{ Garbage_position_list, 
 					_, 
 						Result_gamestate,
-							Result_opponent_gamestate} = execute_turn( #user_gamestate{ board = Start_board, random_state = 0 },
+							_Result_opponent_gamestate} = execute_turn( #user_gamestate{ board = Start_board, random_state = 0 },
 																			#user_gamestate{ board = Opponent_board, random_state = 0},
 																				Game_rules,
 																					0 ),
