@@ -46,7 +46,7 @@ trigger_overload(Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 trigger_killing_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	case Board#board.killing_blow_active of
 		false ->			false;
-		true ->				board:get_number_blocks(Opponent_board) > 66
+		true ->				board:get_number_blocks(Opponent_board) > 48
 	end.
 
 

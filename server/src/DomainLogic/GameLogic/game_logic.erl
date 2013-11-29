@@ -7,7 +7,7 @@
 -export([ activate_ability_blocks/1, apply_gravity_combo_loop/2]).
 
 -define( BOARD_WIDTH , 6).
--define( BOARD_HEIGHT , 13).
+-define( BOARD_HEIGHT , 10).
 -define( STARTING_PIECE_X , 3).
 
 
@@ -1266,7 +1266,7 @@ create_board( Block_list, X_offset ) ->
 
 		Value = proplists:get_value(<<"block">>, Block_properties),
 		X = proplists:get_value(<<"x">>, Block_properties) - 1 - X_offset,
-		Y = ?BOARD_HEIGHT - proplists:get_value(<<"y">>, Block_properties) + 1,
+		Y = 14 - proplists:get_value(<<"y">>, Block_properties),
 
 		{Real_block_type, Color, Hardness} = 
 		case Value of
@@ -1408,33 +1408,8 @@ create_near_death_board() ->
 								board:set_block( #block{ color = blue }, 5, 7,
 
 									board:set_block( #block{ color = blue }, 0, 8,
-									board:set_block( #block{ color = green }, 1, 8,
-									board:set_block( #block{ color = red }, 2, 8,
-									board:set_block( #block{ color = white }, 3, 8,
-									board:set_block( #block{ color = purple }, 4, 8,
-									board:set_block( #block{ color = yellow }, 5, 8,
-									
-										board:set_block( #block{ color = yellow }, 0, 9,
-										board:set_block( #block{ color = blue }, 1, 9,
-										board:set_block( #block{ color = green }, 2, 9,
-										board:set_block( #block{ color = red }, 3, 9,
-										board:set_block( #block{ color = white }, 4, 9,
-										board:set_block( #block{ color = purple }, 5, 9,
-										
-											board:set_block( #block{ color = purple }, 0, 10,
-											board:set_block( #block{ color = yellow }, 1, 10,
-											board:set_block( #block{ color = blue }, 2, 10,
-											board:set_block( #block{ color = green }, 3, 10,
-											board:set_block( #block{ color = red }, 4, 10,
-											board:set_block( #block{ color = white }, 5, 10,
-											
-												board:set_block( #block{ color = yellow }, 1, 11,
-												board:set_block( #block{ color = blue }, 2, 11,
-												board:set_block( #block{ color = green }, 3, 11,
-												board:set_block( #block{ color = red }, 4, 11,
-												board:set_block( #block{ color = white }, 5, 11,
 
-												board:new_empty(6,14)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))).
+										board:new_empty(6,10)))))))))))))))))))))))))))))))))))))))))))))))))).
 
 
 
