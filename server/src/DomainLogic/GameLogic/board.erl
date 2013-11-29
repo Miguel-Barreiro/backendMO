@@ -204,6 +204,8 @@ get_block_representation( Block ) ->
 		
 		#block{ type = garbage_hard, hardness = 1 } ->			"#1";
 		#block{ type = garbage_hard, hardness = 2 } ->			"#2";
+		#block{ type = garbage_hard, hardness = 3 } ->			"#3";
+		#block{ type = garbage_hard, hardness = 4 } ->			"#4";
 
 		#block{ type = garbage_color, color = red } ->			"#r";
 		#block{ type = garbage_color, color = yellow } ->		"#y";
