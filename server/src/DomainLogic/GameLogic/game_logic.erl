@@ -52,6 +52,9 @@ equip_powers( Board = #board{}, [ Power | Rest ] )->
 	equip_powers( New_board, Rest ).
 
 
+
+
+
 handle_power_use( User_pid, Power, Game = #game{} ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid -> 
 
 	io:format("\n-------------------------------- \n",[]),
@@ -779,7 +782,7 @@ pop_paint( Block, Board = #board{}) ->
 						change_block_color( X, Y + 1, New_color, 
 							change_block_color( X - 1, Y, New_color, 
 								change_block_color( X, Y -1, New_color, Board_without_paint)))),
-	Result_board#board{ triggered_abilities = true }.
+	Result_board#board{ triggered_abilities = Board#board.triggered_abilities + 1 }.
 
 
 
@@ -788,7 +791,7 @@ pop_paint( Block, Board = #board{}) ->
 pop_reinforcement( Block, Board = #board{}) ->
 	New_color = Block#block.color,
 	Result_board = board:remove_block( Block#block.x, Block#block.y , Board),
-	Result_board#board{ reinforcements = [ New_color | Result_board#board.reinforcements], triggered_abilities = true }.
+	Result_board#board{ reinforcements = [ New_color | Result_board#board.reinforcements], triggered_abilities = Board#board.triggered_abilities + 1 }.
 
 
 
@@ -807,13 +810,13 @@ pop_cloner( Cloner_block, Board = #board{}) ->
 	end,
 	Shifted_board = lists:foldl( Fun_shift_pieces, Board, lists:seq(Board#board.height, Y + 1, -1)),
 	Result_board = board:set_block( #block{ type = color, color = Cloner_block#block.color }, X, Y + 1, Shifted_board ),
-	Result_board#board{ triggered_abilities = true }.
+	Result_board#board{ triggered_abilities = Board#board.triggered_abilities + 1 }.
 
 
 
 pop_ghost( Block = #block{}, Board = #board{} ) ->
 	Board_without_ghost = board:remove_block( Block#block.x, Block#block.y , Board),
-	Board_without_ghost#board{ ghosts_to_trigger = Board_without_ghost#board.ghosts_to_trigger + 1, triggered_abilities = true }.
+	Board_without_ghost#board{ ghosts_to_trigger = Board_without_ghost#board.ghosts_to_trigger + 1, triggered_abilities = Board#board.triggered_abilities + 1 }.
 
 
 
@@ -845,7 +848,7 @@ trigger_ghosts( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 
 	Garbage_list = lists:sort( Fun_order_garbages, lists:filter( Garbage_only_filter , board:get_all_blocks( Board ) ) ),
 	Result_board = trigger_ghosts( 1, Garbage_list, Board, Game_rules),
-	Result_board#board{ triggered_abilities = true, ghosts_to_trigger = 0 }.
+	Result_board#board{ triggered_abilities = Board#board.triggered_abilities + 1, ghosts_to_trigger = 0 }.
 
 
 
@@ -923,11 +926,18 @@ calculate_garbage_from_combos( [], _, _, _ ) ->
 calculate_garbage_from_combos( Combos, Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = game_rules:get_garbage_number( Combos, Game_rules ),
 
+	Normal_garbage_number_with_abilities = Normal_garbage_number + Board#board.triggered_abilities,
+
 	{ Normal_garbage_number2, Color_garbage_number2, Hard_garbage_number2 } = 
-		case powers_logic:trigger_killing_blow( Board, Opponent_board, Game_rules) of
-			false ->	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number };
-			true ->		{ Normal_garbage_number * 2, Color_garbage_number * 2, Hard_garbage_number * 2 }
+		case Opponent_board#board.barrier_active of 
+
+			true when Normal_garbage_number > 0 andalso Board#board.triggered_abilities > 0 ->
+				{ Normal_garbage_number_with_abilities - 1, Color_garbage_number, Hard_garbage_number };
+
+			_ ->
+				{ Normal_garbage_number_with_abilities, Color_garbage_number, Hard_garbage_number }
 		end,
+
 
 	{ Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3 } =
 		case Board#board.thrash_turns > 0 of
@@ -938,7 +948,15 @@ calculate_garbage_from_combos( Combos, Board = #board{}, Opponent_board = #board
 					case Color_garbage_number2 of 0 -> 0; _ -> Color_garbage_number2 + 1 end,
 						case Normal_garbage_number2 of 0 -> 0; _ -> Normal_garbage_number2 + 1 end }
 		end,
-	generate_garbage_positions( Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3, Board ).
+
+
+	{ Normal_garbage_number4, Color_garbage_number4, Hard_garbage_number4 } = 
+		case powers_logic:trigger_killing_blow( Board, Opponent_board, Game_rules) of
+			false ->	{ Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3 };
+			true ->		{ Normal_garbage_number3 * 2, Color_garbage_number3 * 2, Hard_garbage_number3 * 2 }
+		end,
+
+	generate_garbage_positions( Normal_garbage_number4, Color_garbage_number4, Hard_garbage_number4, Board ).
 	
 
 
