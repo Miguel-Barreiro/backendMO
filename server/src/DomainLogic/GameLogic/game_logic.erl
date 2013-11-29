@@ -30,7 +30,13 @@ create_new_game( User1_pid, User1_powers, User2_pid, User2_powers, Initial_seed 
 
 	Game_rules = game_rules:get_current_rules(<<"Normal">>),
 
-	#game{ user1_gamestate = User1_gamestate, user2_gamestate = User2_gamestate, initial_seed = Initial_seed, game_rules = Game_rules }.
+	User1_final_gamestate = equip_powers(User1_gamestate,User1_powers),
+	User2_final_gamestate = equip_powers(User2_gamestate,User2_powers),
+
+	#game{ user1_gamestate = User1_final_gamestate, 
+			user2_gamestate = User2_final_gamestate,
+				initial_seed = Initial_seed, 
+					game_rules = Game_rules }.
 
 
 
