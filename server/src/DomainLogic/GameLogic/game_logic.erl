@@ -227,12 +227,13 @@ execute_turn( Player_gamestate = #user_gamestate{ board = Board},
 																						New_opponent_gamestate#user_gamestate.board,
 																							Game_rules),
 	Result_gamestate = Gamestate_after_garbage_release#user_gamestate{
-								board = Result_player_Board,
+								board = Result_player_Board#board{ triggered_abilities = 0 },
 								current_piece = Next_piece,
 								current_piece_angle = down,
 								current_piece_x = ?STARTING_PIECE_X,
 								current_piece_y = Result_player_Board#board.height - 1,
-								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1
+								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1,
+
 						},
 
 	Result_opponent_gamestate = New_opponent_gamestate#user_gamestate{ board = Result_opponent_board},
