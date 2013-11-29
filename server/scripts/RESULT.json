@@ -2238,7 +2238,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 2
+            "tripleGarbage": 1
         },
         "name": "TornadoClone",
         "origin": [
@@ -3553,7 +3553,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 1
+            "tripleGarbage": 0
         },
         "name": "PopClone",
         "origin": [
@@ -4615,7 +4615,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 2
+            "tripleGarbage": 1
         },
         "name": "CloneExecutingBeforeAbilites",
         "origin": [
@@ -5089,7 +5089,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 3
+            "tripleGarbage": 2
         },
         "name": "Chain2Paints1Chromatic",
         "origin": [
@@ -5445,7 +5445,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 1
+            "tripleGarbage": 2
         },
         "name": "BombAndGhost",
         "origin": [
@@ -5902,7 +5902,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 1
+            "tripleGarbage": 0
         },
         "name": "PopCloneNearCombo",
         "origin": [
@@ -6161,7 +6161,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 1
+            "tripleGarbage": 0
         },
         "name": "SimpleClone",
         "origin": [
@@ -6702,7 +6702,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 2
+            "tripleGarbage": 0
         },
         "name": "SimultClone",
         "origin": [
@@ -7727,7 +7727,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 4
+            "tripleGarbage": 2
         },
         "name": "Mix",
         "origin": [
@@ -8261,7 +8261,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 3
+            "tripleGarbage": 2
         },
         "name": "TornadoBombChain",
         "origin": [
@@ -8388,7 +8388,7 @@
             "passivePower": "none",
             "secPowerGenerated": "none",
             "triggerPower": "none",
-            "tripleGarbage": 2
+            "tripleGarbage": 0
         },
         "name": "ChainClone",
         "origin": [

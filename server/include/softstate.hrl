@@ -32,7 +32,7 @@
 	reinforcements = [] :: [color_type()],
 	painted = [],
 	
-	triggered_abilities = 0,
+	triggered_abilities = [],
 
 	frenzy_turns = 0 :: integer(),
 	thrash_turns = 0 :: integer(),

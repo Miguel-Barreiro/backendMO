@@ -227,13 +227,12 @@ execute_turn( Player_gamestate = #user_gamestate{ board = Board},
 																						New_opponent_gamestate#user_gamestate.board,
 																							Game_rules),
 	Result_gamestate = Gamestate_after_garbage_release#user_gamestate{
-								board = Result_player_Board#board{ triggered_abilities = 0 },
+								board = Result_player_Board#board{ triggered_abilities = [] },
 								current_piece = Next_piece,
 								current_piece_angle = down,
 								current_piece_x = ?STARTING_PIECE_X,
 								current_piece_y = Result_player_Board#board.height - 1,
-								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1,
-
+								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1
 						},
 
 	Result_opponent_gamestate = New_opponent_gamestate#user_gamestate{ board = Result_opponent_board},
@@ -665,20 +664,41 @@ remove_block( Block = #block{}, Board = #board{} )->
 	board:remove_block( Block#block.x, Block#block.y, Board ).
 
 
+activate_block( Block = #block{}, Board = #board{} ) when Block#block.type == tornado ->
+	io:format("pop~p\n",[Block]),
+	Board#board{ triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) };
 
-activate_block( Paint_block = #block{}, Board = #board{} ) when Paint_block#block.type == paint ->
-	pop_paint( Paint_block, Board );
+activate_block( Block = #block{}, Board = #board{} ) when Block#block.type == chromatic_bomb ->
+	io:format("pop~p\n",[Block]),
+	Board#board{ triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) };
 
-activate_block( Reinforcement_block = #block{}, Board = #board{} ) when Reinforcement_block#block.type == reinforcements ->
-	pop_reinforcement( Reinforcement_block, Board );
+activate_block( Block = #block{}, Board = #board{} ) when Block#block.type == bomb ->
+	io:format("pop~p\n",[Block]),
+	Board#board{ triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) };
 
-activate_block( Ghost_block = #block{}, Board = #board{} ) when Ghost_block#block.type == ghost ->
-	pop_ghost( Ghost_block, Board);
+activate_block( Block = #block{}, Board = #board{} ) when Block#block.type == paint ->
+	io:format("pop~p\n",[Block]),
+	pop_paint( Block, Board );
+
+activate_block( Block = #block{}, Board = #board{} ) when Block#block.type == reinforcements ->
+	io:format("pop~p\n",[Block]),
+	pop_reinforcement( Block, Board );
+
+activate_block( Block = #block{}, Board = #board{} ) when Block#block.type == ghost ->
+	io:format("pop~p\n",[Block]),
+	pop_ghost( Block, Board);
 
  activate_block( _ , Board = #board{} ) ->
 	Board.
 
 
+
+
+add_ability_block( Block, List ) ->
+	case lists:any( fun( Any_block ) -> Any_block == Block end, List) of
+		false ->	[ Block | List];
+		true ->		List
+	end.
 
 
 
@@ -783,7 +803,7 @@ pop_paint( Block, Board = #board{}) ->
 						change_block_color( X, Y + 1, New_color, 
 							change_block_color( X - 1, Y, New_color, 
 								change_block_color( X, Y -1, New_color, Board_without_paint)))),
-	Result_board#board{ triggered_abilities = Board#board.triggered_abilities + 1 }.
+	Result_board#board{ triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) }.
 
 
 
@@ -792,7 +812,8 @@ pop_paint( Block, Board = #board{}) ->
 pop_reinforcement( Block, Board = #board{}) ->
 	New_color = Block#block.color,
 	Result_board = board:remove_block( Block#block.x, Block#block.y , Board),
-	Result_board#board{ reinforcements = [ New_color | Result_board#board.reinforcements], triggered_abilities = Board#board.triggered_abilities + 1 }.
+	Result_board#board{ reinforcements = [ New_color | Result_board#board.reinforcements], 
+						 triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) }.
 
 
 
@@ -811,13 +832,14 @@ pop_cloner( Cloner_block, Board = #board{}) ->
 	end,
 	Shifted_board = lists:foldl( Fun_shift_pieces, Board, lists:seq(Board#board.height, Y + 1, -1)),
 	Result_board = board:set_block( #block{ type = color, color = Cloner_block#block.color }, X, Y + 1, Shifted_board ),
-	Result_board#board{ triggered_abilities = Board#board.triggered_abilities + 1 }.
+	Result_board.
 
 
 
 pop_ghost( Block = #block{}, Board = #board{} ) ->
 	Board_without_ghost = board:remove_block( Block#block.x, Block#block.y , Board),
-	Board_without_ghost#board{ ghosts_to_trigger = Board_without_ghost#board.ghosts_to_trigger + 1, triggered_abilities = Board#board.triggered_abilities + 1 }.
+	Board_without_ghost#board{ ghosts_to_trigger = Board_without_ghost#board.ghosts_to_trigger + 1,
+								 triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) }.
 
 
 
@@ -849,7 +871,7 @@ trigger_ghosts( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 
 	Garbage_list = lists:sort( Fun_order_garbages, lists:filter( Garbage_only_filter , board:get_all_blocks( Board ) ) ),
 	Result_board = trigger_ghosts( 1, Garbage_list, Board, Game_rules),
-	Result_board#board{ triggered_abilities = Board#board.triggered_abilities + 1, ghosts_to_trigger = 0 }.
+	Result_board#board{ ghosts_to_trigger = 0 }.
 
 
 
@@ -919,45 +941,46 @@ release_garbage_list( Board = #board{}, [{garbage, Garbage_position} | Rest ] ) 
 
 
 
-
-
-calculate_garbage_from_combos( [], _, _, _ ) ->
-	[];
-
 calculate_garbage_from_combos( Combos, Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
-	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = game_rules:get_garbage_number( Combos, Game_rules ),
+	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = case Combos of 
+		[] -> { 0,0,0 };
+		_ -> game_rules:get_garbage_number( Combos, Game_rules )
+	end,
+	
+	io:format("\nWTF ~p\n",[Board#board.triggered_abilities]),
 
-	Normal_garbage_number_with_abilities = Normal_garbage_number + Board#board.triggered_abilities,
+	Triple_garbage_number = length(Board#board.triggered_abilities),
 
-	{ Normal_garbage_number2, Color_garbage_number2, Hard_garbage_number2 } = 
-		case Opponent_board#board.barrier_active of 
+	{ Triple_garbage_number2, Normal_garbage_number2, Color_garbage_number2, Hard_garbage_number2 } = 
+		case powers_logic:trigger_barrier_blow(Board, Opponent_board, Game_rules) of 
 
-			true when Normal_garbage_number > 0 andalso Board#board.triggered_abilities > 0 ->
-				{ Normal_garbage_number_with_abilities - 1, Color_garbage_number, Hard_garbage_number };
+			true when Normal_garbage_number > 0 ->
+				{ Triple_garbage_number, Normal_garbage_number - 1, Color_garbage_number, Hard_garbage_number };
 
 			_ ->
-				{ Normal_garbage_number_with_abilities, Color_garbage_number, Hard_garbage_number }
+				{ Triple_garbage_number, Normal_garbage_number, Color_garbage_number, Hard_garbage_number }
 		end,
 
 
-	{ Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3 } =
+	{ Triple_garbage_number3, Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3 } =
 		case Board#board.thrash_turns > 0 of
 			false ->
-				{Hard_garbage_number2, Color_garbage_number2, Normal_garbage_number2};
+				{ Triple_garbage_number2, Hard_garbage_number2, Color_garbage_number2, Normal_garbage_number2};
 			true ->
-				{ case Hard_garbage_number2 of 0 -> 0; _ -> Hard_garbage_number2 + 1 end,
-					case Color_garbage_number2 of 0 -> 0; _ -> Color_garbage_number2 + 1 end,
-						case Normal_garbage_number2 of 0 -> 0; _ -> Normal_garbage_number2 + 1 end }
+				{ case Triple_garbage_number2 of 0 -> 0; _ -> Triple_garbage_number2 + 1 end,
+					case Hard_garbage_number2 of 0 -> 0; _ -> Hard_garbage_number2 + 1 end,
+						case Color_garbage_number2 of 0 -> 0; _ -> Color_garbage_number2 + 1 end,
+							case Normal_garbage_number2 of 0 -> 0; _ -> Normal_garbage_number2 + 1 end }
 		end,
 
 
-	{ Normal_garbage_number4, Color_garbage_number4, Hard_garbage_number4 } = 
+	{ Triple_garbage_number4, Normal_garbage_number4, Color_garbage_number4, Hard_garbage_number4 } = 
 		case powers_logic:trigger_killing_blow( Board, Opponent_board, Game_rules) of
-			false ->	{ Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3 };
-			true ->		{ Normal_garbage_number3 * 2, Color_garbage_number3 * 2, Hard_garbage_number3 * 2 }
+			false ->	{ Triple_garbage_number3, Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3 };
+			true ->		{ Triple_garbage_number3 * 2, Normal_garbage_number3 * 2, Color_garbage_number3 * 2, Hard_garbage_number3 * 2 }
 		end,
 
-	generate_garbage_positions( Normal_garbage_number4, Color_garbage_number4, Hard_garbage_number4, Board ).
+	generate_garbage_positions( Triple_garbage_number4, Normal_garbage_number4, Color_garbage_number4, Hard_garbage_number4, Board ).
 	
 
 
@@ -1037,49 +1060,60 @@ get_next_random( X ) ->
 
 
 
-generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{} ) ->
-	lager:debug("generating garbage: ~p hard , ~p color , ~p normal",[Hard_garbage_number,Color_garbage_number,Normal_garbage_number]),
-	generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board, lists:seq( 0, Board#board.width - 1 ) ).
+generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{} ) ->
+	%lager:debug("generating garbage: ~p hard , ~p color , ~p normal",[Hard_garbage_number,Color_garbage_number,Normal_garbage_number]),
+	generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, 
+									Board, lists:seq( 0, Board#board.width - 1 ) ).
 
 
-generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{}, [] ) ->
-	generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board, lists:seq( 0 , Board#board.width - 1 ) );
+generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{}, [] ) ->
+	generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, 
+									Board, lists:seq( 0 , Board#board.width - 1 ) );
 
 
-generate_garbage_positions( 0, 0, 0, _ , _ ) ->
+generate_garbage_positions( 0, 0, 0, 0, _ , _ ) ->
 	[];
 
 
-generate_garbage_positions( 0, 0, Normal_garbage_number, Board = #board{}, Column_list ) ->
+generate_garbage_positions( 0, 0, 0, Normal_garbage_number, Board = #board{}, Column_list ) ->
 	Random = random:uniform( length(Column_list) ) - 1,
 
 	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
 	New_column_list = lists:append( List1 , List2 ),
 
 	[ {garbage , Position} | 
-		generate_garbage_positions( 0, 0, Normal_garbage_number - 1, Board, New_column_list )];
+		generate_garbage_positions( 0, 0, 0, Normal_garbage_number - 1, Board, New_column_list )];
 
 
-
-generate_garbage_positions( 0, Color_garbage_number, Normal_garbage_number, Board = #board{}, Column_list ) ->
+generate_garbage_positions( 0, 0, Color_garbage_number, Normal_garbage_number, Board = #board{}, Column_list ) ->
 	Random = random:uniform( length(Column_list) ) - 1,
 
 	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
 	New_column_list = lists:append( List1 , List2 ),
 
 	[ {{garbage_color, generate_random_garbage_color() }, Position} | 
-		generate_garbage_positions( 0, Color_garbage_number - 1, Normal_garbage_number, Board, New_column_list )];
+		generate_garbage_positions( 0, 0, Color_garbage_number - 1, Normal_garbage_number, Board, New_column_list )];
 
 
-
-generate_garbage_positions( Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{}, Column_list ) ->
+generate_garbage_positions( 0, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{}, Column_list ) ->
 	Random = random:uniform( length(Column_list) ) - 1,
 
 	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
 	New_column_list = lists:append( List1 , List2 ),
 
 	[ {{garbage_hard, 2}, Position} | 
-		generate_garbage_positions( Hard_garbage_number -1, Color_garbage_number, Normal_garbage_number, Board, New_column_list )].
+		generate_garbage_positions( 0, Hard_garbage_number -1, Color_garbage_number, Normal_garbage_number, Board, New_column_list )];
+
+
+
+generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{}, Column_list ) ->
+	Random = random:uniform( length(Column_list) ) - 1,
+
+	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
+	New_column_list = lists:append( List1 , List2 ),
+
+	[ {{garbage_hard, 3}, Position} | 
+		generate_garbage_positions( Triple_garbage_number - 1, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board, New_column_list )].
 
 
 
@@ -1434,6 +1468,7 @@ google_docs_tests(Game_rules) ->
 				Color_garbage = proplists:get_value(<<"colorGarbage">>,Generated_garbage),
 				Hard_garbage = proplists:get_value(<<"hardGarbage">>,Generated_garbage),
 				Normal_garbage = proplists:get_value(<<"normalGarbage">>,Generated_garbage),
+				Triple_Hard_garbage = case proplists:get_value(<<"tripleGarbage">>,Generated_garbage) of undefined -> 0; Other -> Other end,
 
 				Secondary_generated_power = proplists:get_value(<<"secPowerGenerated">>,Generated_garbage),
 				Secondary_generated_type = get_power_type_from_test_type( Secondary_generated_power ),
@@ -1499,7 +1534,14 @@ google_docs_tests(Game_rules) ->
 
 				Calculated_number_hard_garbages = length( lists:filter( fun( {Garbage,_} )-> 
 																			case Garbage of 
-																				{garbage_hard , _ } -> 		true;
+																				{garbage_hard , 2 } -> 		true;
+																				_ -> 						false
+																			end
+																		end, Garbage_position_list)),
+
+				Calculated_number_triple_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+																			case Garbage of 
+																				{garbage_hard , 3 } -> 		true;
 																				_ -> 						false
 																			end
 																		end, Garbage_position_list)),
@@ -1514,8 +1556,9 @@ google_docs_tests(Game_rules) ->
 				Calculated_block_type = Next_block#block.type,
 				Calculated_sec_block_type = Next_sec_block#block.type,
 
-				io:format("calculated power [<~p>,<~p>], garbage ~p, garbage_hard ~p,  garbage_color ~p",[	Calculated_block_type,
+				io:format("calculated power [<~p>,<~p>], tripleGarbage ~p garbage ~p, garbage_hard ~p,  garbage_color ~p",[	Calculated_block_type,
 																											Calculated_sec_block_type,
+																											Calculated_number_triple_garbages,
 																											Calculated_number_normal_garbages,
 																											Calculated_number_hard_garbages,	
 									 																		Calculated_number_color_garbages ] ),
@@ -1523,6 +1566,7 @@ google_docs_tests(Game_rules) ->
 				?assertMatch( Calculated_number_normal_garbages, Normal_garbage ),
 				?assertMatch( Calculated_number_hard_garbages, Hard_garbage ),
 				?assertMatch( Calculated_number_color_garbages, Color_garbage ),
+				?assertMatch( Calculated_number_triple_garbages,Triple_Hard_garbage),
 
 				?assertMatch( Calculated_block_type, Power_type ),
 				?assertMatch( Calculated_sec_block_type, Secondary_generated_type),

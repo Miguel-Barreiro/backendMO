@@ -6,7 +6,7 @@
 
 -export([trigger_red_button/2]).
 
--export([trigger_overload/2, trigger_killing_blow/3]).
+-export([trigger_overload/2, trigger_killing_blow/3, trigger_barrier_blow/3]).
 
 
 
@@ -15,8 +15,7 @@ handle_turn_passed( User_board = #board{}, Opponent_board = #board{}, _Game_rule
 
 	New_board = User_board#board{
 					thrash_turns = decrease_turn( User_board#board.thrash_turns ), 
-					frenzy_turns = decrease_turn( User_board#board.frenzy_turns ),
-					triggered_abilities = false
+					frenzy_turns = decrease_turn( User_board#board.frenzy_turns )
 				},
 
 	{New_board, Opponent_board}.
@@ -55,15 +54,20 @@ trigger_killing_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #
 trigger_barrier_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	case Opponent_board#board.barrier_active of
 		false ->			false;
-		true ->				Board#board.triggered_abilities
+		true ->				length( Board#board.triggered_abilities ) > 0
 	end.
+
+
 
 
 -spec trigger_red_button( Board::#board{}, Game_rules::#game_logic_rules{} ) -> { [[set]] , #board{} }.
 trigger_red_button( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	case Board#board.red_button_pressed of
 		true ->				New_board = game_logic:activate_ability_blocks( Board ),
-							game_logic:apply_gravity_combo_loop(  New_board#board{ red_button_pressed = false }, Game_rules );
+							Result = game_logic:apply_gravity_combo_loop(  New_board#board{ red_button_pressed = false }, Game_rules ),
+							{ _ , B} = Result,
+							io:format("red btn ~p",[B#board.triggered_abilities]),
+							Result;
 		false ->			{ [], Board}
 	end.
 
