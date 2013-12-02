@@ -35,7 +35,7 @@ handle_use_power( frenzy, User_board = #board{}, Opponent_board = #board{}, _Gam
 
 
 -spec trigger_overload( Board::#board{}, Game_rules::#game_logic_rules{} ) -> false | true.
-trigger_overload(Board = #board{}, Game_rules = #game_logic_rules{} ) ->
+trigger_overload(Board = #board{}, _Game_rules = #game_logic_rules{} ) ->
 	case Board#board.is_overload_active of
 		false ->	false;
 		true ->		all_blocks_same_height( Board )
@@ -43,7 +43,7 @@ trigger_overload(Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 
 
 -spec trigger_killing_blow( Board ::#board{}, Opponent_board ::#board{}, Game_rules::#game_logic_rules{}) -> false | true.
-trigger_killing_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
+trigger_killing_blow(Board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) ->
 	case Board#board.killing_blow_active of
 		false ->			false;
 		true ->				board:get_number_blocks(Opponent_board) > 48
@@ -51,7 +51,7 @@ trigger_killing_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #
 
 
 -spec trigger_barrier_blow( Board ::#board{}, Opponent_board ::#board{}, Game_rules::#game_logic_rules{}) -> false | true.
-trigger_barrier_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
+trigger_barrier_blow(Board = #board{}, Opponent_board = #board{}, _Game_rules = #game_logic_rules{} ) ->
 	case Opponent_board#board.barrier_active of
 		false ->			false;
 		true ->				length( Board#board.triggered_abilities ) > 0
@@ -63,11 +63,8 @@ trigger_barrier_blow(Board = #board{}, Opponent_board = #board{}, Game_rules = #
 -spec trigger_red_button( Board::#board{}, Game_rules::#game_logic_rules{} ) -> { [[set]] , #board{} }.
 trigger_red_button( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 	case Board#board.red_button_pressed of
-		true ->				New_board = game_logic:activate_ability_blocks( Board ),
-							Result = game_logic:apply_gravity_combo_loop(  New_board#board{ red_button_pressed = false }, Game_rules ),
-							{ _ , B} = Result,
-							io:format("red btn ~p",[B#board.triggered_abilities]),
-							Result;
+		true ->				{ Combos , Result_loop_board } = game_logic:activate_ability_blocks( Board, Game_rules ),
+							{ Combos , Result_loop_board#board{ red_button_pressed = false } };
 		false ->			{ [], Board}
 	end.
 

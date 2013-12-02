@@ -4,7 +4,7 @@
 
 -export([ handle_place_piece/6, handle_update_piece/5, create_new_game/5, handle_power_use/3 ]).
 
--export([ activate_ability_blocks/1, apply_gravity_combo_loop/2]).
+-export([ activate_ability_blocks/2, apply_gravity_combo_loop/2]).
 
 -define( BOARD_WIDTH , 6).
 -define( BOARD_HEIGHT , 10).
@@ -94,7 +94,7 @@ handle_power_use( Power, _User_pid, _Opponent_pid, User_gamestate = #user_gamest
 
 
 
-activate_ability_blocks( Board = #board{} ) ->
+activate_ability_blocks( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 
 	Blocks = board:get_all_blocks(Board),
 
@@ -110,7 +110,11 @@ activate_ability_blocks( Board = #board{} ) ->
 		end
 	end,
 	Ability_blocks = lists:filter( Filter_fun, Blocks ),
-	activate_blocks( order_activated_block_list( Ability_blocks ) , Board).
+	New_board = activate_blocks( order_activated_block_list( Ability_blocks ) , Board),
+	Board_after_ghosts = trigger_ghosts(New_board, Game_rules),
+	Board_with_reinforcements = release_reinforcements( Board_after_ghosts ),
+	Board_after_ability_chain = reset_board( Board_with_reinforcements ),
+	{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_ability_chain, Game_rules ).
 
 
 
@@ -369,7 +373,6 @@ apply_gravity_combo_loop( Board = #board{} , Game_rules = #game_logic_rules{} ) 
 			{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_ability_chain, Game_rules ),
 			{ [ Combos | New_Combos ] , New_board}
 	end.
-
 
 
 

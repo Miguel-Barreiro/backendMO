@@ -471,7 +471,7 @@ process_message( message_update_piece_code, User_process_pid, #request{ update_p
 
 process_message( message_generic_power, User_process_pid, #request{ power_content = Message }, Message_encoded )
 			when User_process_pid =/= no_user_process ->
-	lager:debug("generic power received ~p",[self()]),
+	lager:debug("~p generic power received ~p",[self(),Message#message_generic_power.type]),
 
 	gen_server:cast( User_process_pid, { use_power, Message#message_generic_power.type }),
 	{no_reply};
