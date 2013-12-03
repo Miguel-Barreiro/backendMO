@@ -289,6 +289,9 @@ handle_cast(remove_from_queue , State = #user_process_state{ connection_pid = Co
 	{noreply, State#user_process_state{ game_state = init } };
 
 
+handle_cast({debug_confirm_board_synch, RemoteStateElems}, State = #user_process_state{ game_pid=GamePid }) ->
+	gen_server:cast( GamePid, {debug_confirm_board_synch,self(),RemoteStateElems} ),
+	{noreply, State};
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

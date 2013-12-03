@@ -1,7 +1,5 @@
-www_logs
-www_root
-
 *.swp
 *.bak
 *.pyc
+*.pyo
 *~

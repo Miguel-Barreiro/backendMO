@@ -52,6 +52,21 @@ init(InitData) ->
 
 
 
+debug_cmp_usergamestates( 
+			LocalPlayerState = #user_gamestate{
+				board = LBoard,
+				current_piece = LPiece,
+				current_piece_angle = LPieceangle,
+				current_piece_x = LPieceX, current_piece_y=LPieceY,
+				garbage_position_list = LGarbagePossionList,
+				random_state = LRandomState	
+			},
+			{RRandom, RPieceX, RPieceY, RPieceAngle, RBlocks, RGarbageMessageList}
+) ->
+	
+	
+	error.
+
 
 
 
@@ -379,6 +394,26 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 
 
 
+handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentStateElems, RemotePlayerStateElems}}, State = #game_state{ user1=User1, user2=User2, game_logic_state=GameLogicState }) ->
+	{LocalPlayerState,User,OpponentUser} = if
+		UserPid =:= User1#game_user.pid ->
+			{GameLogicState#game.user1_gamestate,User1,User2};
+		UserPid =:= User2#game_user.pid ->
+			{GameLogicState#game.user2_gamestate,User2,User1}
+	end,
+
+	case debug_cmp_usergamestates( LocalPlayerState, RemotePlayerStateElems ) of
+		ok ->
+			{noreply, State};
+		error ->
+			gen_server:cast( User#game_user.pid,         {game_lost, User#game_user.powers_equipped, board_mismatch}),
+			gen_server:cast( OpponentUser#game_user.pid, {game_win,  OpponentUser#game_user.powers_equipped, disconect}),
+			{stop, normal, State}
+	end;
+	
+			
+
+
 
 
 
@@ -468,3 +503,14 @@ terminate(Reason, _State) ->
 
 code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
+
+
+
+
+
+
+
+
+
+
+

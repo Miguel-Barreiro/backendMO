@@ -23,9 +23,10 @@
 -define(DISCONECT_RESPONSE,<<"you sir are out of order">>).
 
 
--define( GAME_END_OPPONNENT_LOST , 1).
--define( GAME_END_OPPONNENT_WON , 2).
--define( GAME_END_OPPONNENT_DISCONECT , 3).
+-define(GAME_END_OPPONNENT_LOST , 1).
+-define(GAME_END_OPPONNENT_WON , 2).
+-define(GAME_END_OPPONNENT_DISCONECT , 3).
+-define(GAME_END_PLAYER_MISMATCH , 4).
 
 
 process_pre_login_message(Msg) ->
@@ -198,10 +199,19 @@ create_start_message( Start_date ) ->
 
 
 
+create_lost_message(board_mismatch) ->
+	Req = #request{
+			type = message_game_end_code,
+			game_end_content = #message_game_end{ reason = ?GAME_END_PLAYER_MISMATCH }
+	},
+	protocol_pb:encode_request( Req );
+
+
 create_lost_message(_Lost_details) ->
 	Req = #request{ type = message_game_end_code,
 					game_end_content = #message_game_end{ reason = ?GAME_END_OPPONNENT_WON } },
 	protocol_pb:encode_request(Req).
+
 
 
 
@@ -213,13 +223,13 @@ create_won_message(disconect) ->
 	protocol_pb:encode_request(Req);
 
 
-
 create_won_message(_Won_details) ->
 	Req = #request{ type = message_game_end_code,
 					game_end_content = #message_game_end{  
 						reason = ?GAME_END_OPPONNENT_LOST
 					}},
 	protocol_pb:encode_request(Req).
+
 
 
 create_difficult_message( Level ) ->
@@ -381,6 +391,24 @@ create_debug_board(Player_current_random_step, Player_current_piece_x, Player_cu
 
 
 
+extract_elems_from_debug_boards( OpponentState, PlayerState ) ->
+	[OpponentStateElems, PlayerStateElems] = lists:map(
+			fun(PbGameState) ->
+				{
+						PbGameState#game_state.current_random,
+						PbGameState#game_state.current_piece_x,
+						PbGameState#game_state.current_piece_y,
+						PbGameState#game_state.current_piece_angle,
+						PbGameState#game_state.blocks, 
+						PbGameState#game_state.garbage_message_list
+				}
+			end,
+			[OpponentState, PlayerState]
+	),
+	{OpponentStateElems, PlayerStateElems}.
+
+
+
 %%::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 %%
 %%										MESSAGE PROCESSING
@@ -499,6 +527,17 @@ process_message( message_rematch, User_process_pid, #request{ message_sync_conte
 
 process_message( message_no_rematch, User_process_pid, #request{ message_sync_content = _Message }, _Message_encoded ) ->
 	gen_server:cast( User_process_pid, message_no_rematch),
+	{no_reply};
+
+
+process_message( message_debug_board, User_process_pid, #request{ debug_game_state_content=DebugGameStateContent }, _Message_encoded ) ->
+	gen_server:cast(
+		User_process_pid,
+		extract_elems_from_debug_boards(
+				DebugGameStateContent#message_debug_board.opponent_state,
+				DebugGameStateContent#message_debug_board.player_state
+		)
+	),
 	{no_reply};
 
 
