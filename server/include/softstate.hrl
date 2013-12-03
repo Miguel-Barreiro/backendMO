@@ -21,6 +21,11 @@
 %	GAME LOGIC
 %----------------------
 
+-define(DEFAULT_BOARD_WIDTH, 6).
+-define(DEFAULT_BOARD_HEIGHT, 10 ).
+
+
+
 -record( board, {
 	blocks = gb_trees:empty() :: gb_tree(),
 	width :: integer(),

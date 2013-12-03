@@ -6,9 +6,9 @@
 
 -export([ activate_ability_blocks/2, apply_gravity_combo_loop/2]).
 
--define( BOARD_WIDTH , 6).
--define( BOARD_HEIGHT , 10).
--define( STARTING_PIECE_X , 3).
+-define(BOARD_WIDTH , ?DEFAULT_BOARD_WIDTH).
+-define(BOARD_HEIGHT , ?DEFAULT_BOARD_HEIGHT).
+-define(STARTING_PIECE_X , 3).
 
 
 %-------------- PUBLIC -------------------------

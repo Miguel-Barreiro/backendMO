@@ -194,6 +194,8 @@ decode_game_state_impl(Binary) ->
         (2,Val,Rec) -> Rec#game_state{current_piece_x = protocol_buffers:cast(int32,Val)};
         (3,Val,Rec) -> Rec#game_state{current_piece_y = protocol_buffers:cast(int32,Val)};
         (4,{varint,Enum},Rec) -> Rec#game_state{current_piece_angle=to_piece_rotation(Enum)};
+        (5,{varint,Enum},Rec) -> Rec#game_state{current_piece_block1_type=to_type_block(Enum)};
+        (6,{varint,Enum},Rec) -> Rec#game_state{current_piece_block2_type=to_type_block(Enum)};
         (7,{length_encoded,Bin},#game_state{blocks=F}=Rec) when is_list(F) -> Rec#game_state{blocks = Rec#game_state.blocks ++ [decode_block_position_impl(Bin)]}
 ;
         (8,{length_encoded,Bin},#game_state{garbage_message_list=F}=Rec) when is_list(F) -> Rec#game_state{garbage_message_list = Rec#game_state.garbage_message_list ++ [decode_garbage_position_impl(Bin)]}
@@ -207,6 +209,8 @@ encode_game_state(R) when is_record(R,game_state) ->
     protocol_buffers:encode(2,int32,R#game_state.current_piece_x),
     protocol_buffers:encode(3,int32,R#game_state.current_piece_y),
     protocol_buffers:encode(4,int32,from_piece_rotation(R#game_state.current_piece_angle)),
+    protocol_buffers:encode(5,int32,from_type_block(R#game_state.current_piece_block1_type)),
+    protocol_buffers:encode(6,int32,from_type_block(R#game_state.current_piece_block2_type)),
     [ protocol_buffers:encode(7,length_encoded,encode_block_position(X)) || X <- R#game_state.blocks],
     [ protocol_buffers:encode(8,length_encoded,encode_garbage_position(X)) || X <- R#game_state.garbage_message_list]
   ].

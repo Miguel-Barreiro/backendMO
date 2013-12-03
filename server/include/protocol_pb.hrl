@@ -52,6 +52,8 @@
 %%   current_piece_x() = integer(),
 %%   current_piece_y() = integer(),
 %%   current_piece_angle() = piece_rotation(),
+%%   current_piece_block1_type() = type_block(),
+%%   current_piece_block2_type() = type_block(),
 %%   blocks() = [#block_position{}],
 %%   garbage_message_list() = [#garbage_position{}]
 %% }.
@@ -60,6 +62,8 @@
   current_piece_x :: integer(),
   current_piece_y :: integer(),
   current_piece_angle :: piece_rotation(),
+  current_piece_block1_type :: type_block(),
+  current_piece_block2_type :: type_block(),
   blocks = [] :: [#block_position{}],
   garbage_message_list = [] :: [#garbage_position{}]}).
 

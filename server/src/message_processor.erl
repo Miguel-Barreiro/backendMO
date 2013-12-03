@@ -391,21 +391,69 @@ create_debug_board(Player_current_random_step, Player_current_piece_x, Player_cu
 
 
 
-extract_elems_from_debug_boards( OpponentState, PlayerState ) ->
-	[OpponentStateElems, PlayerStateElems] = lists:map(
-			fun(PbGameState) ->
-				{
-						PbGameState#game_state.current_random,
-						PbGameState#game_state.current_piece_x,
-						PbGameState#game_state.current_piece_y,
-						PbGameState#game_state.current_piece_angle,
-						PbGameState#game_state.blocks, 
-						PbGameState#game_state.garbage_message_list
-				}
-			end,
-			[OpponentState, PlayerState]
-	),
-	{OpponentStateElems, PlayerStateElems}.
+
+convert_protocolbltype_to_gamebltype( ProtocolBlType ) when is_atom(ProtocolBlType) -> 
+	ProtocolBlType.
+
+convert_protocolblcolor_to_gameblcolor( ProtocolBlColor ) when is_atom(ProtocolBlColor) -> 
+	ProtocolBlColor.
+
+convert_protocolpangle_to_gamepangle( ProtocolPAngle ) when is_atom(ProtocolPAngle) ->
+	ProtocolPAngle.
+
+
+convert_protocolgstate_to_gameboard( PBlocks ) ->
+	lists:foldl(
+		fun( PBlock, GBoard ) ->
+				Type = convert_protocolbltype_to_gamebltype( 
+						PBlock#block_position.type
+				),
+				Color = convert_protocolblcolor_to_gameblcolor( 
+						PBlock#block_position.color
+				),
+				Hardness =PBlock#block_position.exploding_times_left,
+				X = PBlock#block_position.x,
+				Y = PBlock#block_position.y,
+
+				GBlock = #block{
+						type=Type, color=Color, hardness=Hardness, x=X, y=Y
+				},
+				board:set_block( GBlock, X, Y, GBoard )
+		end,
+		board:new_empty( ?DEFAULT_BOARD_WIDTH, ?DEFAULT_BOARD_HEIGHT ),
+		PBlocks
+	).
+
+
+convert_protocolgstate_to_usergstateelems( ProtocolGState ) ->
+	PrRandom = ProtocolGState#game_state.current_random,
+	PrPieceX = ProtocolGState#game_state.current_piece_x,
+	PrPieceY = ProtocolGState#game_state.current_piece_y,
+	PrPieceAngle = ProtocolGState#game_state.current_piece_angle,
+	PrPieceBlock1Type = ProtocolGState#game_state.current_piece_block1_type,
+	PrPieceBlock2Type = ProtocolGState#game_state.current_piece_block2_type,
+	PrBlocks = ProtocolGState#game_state.blocks,
+%	PrGarbageMessageList = ProtocolGState#game_state.garbage_message_list,
+
+
+	UStateBoard = convert_protocolgstate_to_gameboard( PrBlocks ),
+%	UStatePiece = ,
+	UStatePieceX = PrPieceX,
+	UStatePieceY = PrPieceY,
+	UStatePieceAngle = convert_protocolpangle_to_gamepangle( PrPieceAngle ),
+	
+%	UStateGarbageId = ,
+%	UStateGarbagePositionList = ,
+	UStatePieceGenerationStep = PrRandom,
+
+	
+	GState = #user_gamestate{
+		board = UStateBoard, 
+		current_piece_angle = UStatePieceAngle,
+		current_piece_x = UStatePieceX, current_piece_y = UStatePieceY,
+		piece_generation_step = UStatePieceGenerationStep
+	},
+	{GState, {PrPieceBlock1Type,PrPieceBlock2Type}}.
 
 
 
@@ -533,10 +581,17 @@ process_message( message_no_rematch, User_process_pid, #request{ message_sync_co
 process_message( message_debug_board, User_process_pid, #request{ debug_game_state_content=DebugGameStateContent }, _Message_encoded ) ->
 	gen_server:cast(
 		User_process_pid,
-		extract_elems_from_debug_boards(
-				DebugGameStateContent#message_debug_board.opponent_state,
-				DebugGameStateContent#message_debug_board.player_state
-		)
+		{
+			debug_confirm_board_synch,
+			{
+				convert_protocolgstate_to_usergstateelems(
+					DebugGameStateContent#message_debug_board.opponent_state
+				),
+				convert_protocolgstate_to_usergstateelems(
+					DebugGameStateContent#message_debug_board.player_state
+				)
+			}
+		}
 	),
 	{no_reply};
 

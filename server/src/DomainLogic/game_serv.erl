@@ -54,18 +54,17 @@ init(InitData) ->
 
 debug_cmp_usergamestates( 
 			LocalPlayerState = #user_gamestate{
-				board = LBoard,
-				current_piece = LPiece,
-				current_piece_angle = LPieceangle,
-				current_piece_x = LPieceX, current_piece_y=LPieceY,
-				garbage_position_list = LGarbagePossionList,
-				random_state = LRandomState	
+				board = LBoard, current_piece = LPiece, current_piece_angle = LPieceAngle, current_piece_x = LPieceX, current_piece_y=LPieceY,
+				garbage_position_list = LGarbagePositionList, random_state = LRandomState	
 			},
-			{RRandom, RPieceX, RPieceY, RPieceAngle, RBlocks, RGarbageMessageList}
+			RemotePlayerState = #user_gamestate{
+				board = RBoard, current_piece = RPiece, current_piece_angle = RPieceAngle, current_piece_x = RPieceX, current_piece_y=RPieceY,
+				garbage_position_list = RGarbagePositionList, random_state = RRandomState	
+			},
+			{RemotePlayerPieceBlock1Type, RemotePlayerPieceBlock2Type}
 ) ->
-	
-	
-	error.
+	lager:debug( "Received Game State comparison request;\n\nLocal: ~p\n\nRemote: ~p\n\nRemote piece block types: ~p,~p\n", [LocalPlayerState,RemotePlayerState,RemotePlayerPieceBlock1Type,RemotePlayerPieceBlock2Type] ),
+	ok.
 
 
 
@@ -394,7 +393,7 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 
 
 
-handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentStateElems, RemotePlayerStateElems}}, State = #game_state{ user1=User1, user2=User2, game_logic_state=GameLogicState }) ->
+handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentUGStateElems, RemotePlayerUGStateElems}}, State = #game_state{ user1=User1, user2=User2, game_logic_state=GameLogicState }) ->
 	{LocalPlayerState,User,OpponentUser} = if
 		UserPid =:= User1#game_user.pid ->
 			{GameLogicState#game.user1_gamestate,User1,User2};
@@ -402,7 +401,8 @@ handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentStateElems, Re
 			{GameLogicState#game.user2_gamestate,User2,User1}
 	end,
 
-	case debug_cmp_usergamestates( LocalPlayerState, RemotePlayerStateElems ) of
+	{RemotePlayerState, RemotePlayerPieceBlockTypes} = RemotePlayerUGStateElems,
+	case debug_cmp_usergamestates( LocalPlayerState, RemotePlayerState, RemotePlayerPieceBlockTypes ) of
 		ok ->
 			{noreply, State};
 		error ->
