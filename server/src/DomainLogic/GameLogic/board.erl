@@ -2,7 +2,7 @@
 
 -export([ new_empty/2 , get_all_blocks/1 ]).
 -export([ get_block/3, set_block/4, remove_block/3, is_valid_position/3 ]).
--export([ print_board/1, are_boards_equal/2, get_block_representation/1 ]).
+-export([ print_board/1, lager_print_board/1, are_boards_equal/2, get_block_representation/1 ]).
 
 -export([get_column_height/2, get_number_blocks/1]).
 
@@ -42,15 +42,31 @@ get_block( X , Y , #board{ blocks = Blocks }) ->
 	end.
 
 
+
+are_blocks_equal( Block1 = #block{type=garbage_hard}, Block2 = #block{type=garbage_hard} ) 
+-> 
+	Block1 =:= Block2;
+
+are_blocks_equal( Block1 = #block{type=garbage_color}, Block2 = #block{type=garbage_color} ) 
+-> 
+	Block1 =:= Block2;
+
+are_blocks_equal( Block1, Block2 ) when is_record(Block1,block) andalso is_record(Block2,block) ->
+	Block1#block{hardness=undefined} =:= Block2#block{hardness=undefined}.
+
+
+
+
+
 are_boards_equal(Board = #board{}, Board2 = #board{} ) ->
 
 	Board1_keys = gb_trees:keys(Board#board.blocks),
 	Board2_keys = gb_trees:keys(Board2#board.blocks),
 
 	Compare_fun = fun( Block_key ) ->
-		Block1 = gb_trees:lookup( Block_key, Board#board.blocks),
-		Block2 = gb_trees:lookup( Block_key, Board2#board.blocks),
-		Block2 == Block1
+		{value,Block1} = gb_trees:lookup( Block_key, Board#board.blocks),
+		{value,Block2} = gb_trees:lookup( Block_key, Board2#board.blocks),
+		are_blocks_equal( Block1, Block2 )
 	end,
 
 	case length(Board2_keys) == length(Board1_keys) of
@@ -116,6 +132,17 @@ print_board( Board = #board{}, 0 ) ->
 print_board( Board = #board{}, Row ) ->
 	io:format( get_print_string( Board#board.width ) ++ "\n", get_column_chars( Row, Board)),
 	print_board( Board, Row - 1 ).
+
+
+lager_print_board( Board = #board{} ) ->
+	lager_print_board( Board, Board#board.height ).
+
+lager_print_board( Board = #board{}, 0 ) ->
+	lager:debug( get_print_string( Board#board.width ) ++ "\n", get_column_chars( 0, Board));
+lager_print_board( Board = #board{}, Row ) ->
+	lager:debug( get_print_string( Board#board.width ) ++ "\n", get_column_chars( Row, Board)),
+	lager_print_board( Board, Row - 1 ).
+
 
 
 get_column_chars( Row, Board = #board{}) ->

@@ -22,7 +22,7 @@
 %----------------------
 
 -define(DEFAULT_BOARD_WIDTH, 6).
--define(DEFAULT_BOARD_HEIGHT, 10 ).
+-define(DEFAULT_BOARD_HEIGHT, 11 ).
 
 
 

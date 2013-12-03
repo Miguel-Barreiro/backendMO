@@ -63,7 +63,16 @@ debug_cmp_usergamestates(
 			},
 			{RemotePlayerPieceBlock1Type, RemotePlayerPieceBlock2Type}
 ) ->
-	lager:debug( "Received Game State comparison request;\n\nLocal: ~p\n\nRemote: ~p\n\nRemote piece block types: ~p,~p\n", [LocalPlayerState,RemotePlayerState,RemotePlayerPieceBlock1Type,RemotePlayerPieceBlock2Type] ),
+	lager:debug( "Received Game State comparison request;\n\tLRandomState: ~p\nRRandomState: ~p\n\nLocal: ~p\n\nRemote: ~p\n\nRemote piece block types: ~p,~p\n", [LRandomState,RRandomState,LocalPlayerState,RemotePlayerState,RemotePlayerPieceBlock1Type,RemotePlayerPieceBlock2Type] ),
+
+	lager:debug( "\nLeft:" ),
+	board:lager_print_board( LBoard ),
+	lager:debug( "\nRight:" ),
+	board:lager_print_board( RBoard ),
+
+	CompResult = board:are_boards_equal( LBoard, RBoard ), 
+	lager:debug( "Comparison result: ~p\n\n", [CompResult] ),
+
 	ok.
 
 
@@ -394,10 +403,10 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 
 
 handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentUGStateElems, RemotePlayerUGStateElems}}, State = #game_state{ user1=User1, user2=User2, game_logic_state=GameLogicState }) ->
-	{LocalPlayerState,User,OpponentUser} = if
-		UserPid =:= User1#game_user.pid ->
+	{LocalPlayerState,User,OpponentUser} = case {UserPid=:=User1#game_user.pid, UserPid=:=User2#game_user.pid} of
+		{true,false} ->
 			{GameLogicState#game.user1_gamestate,User1,User2};
-		UserPid =:= User2#game_user.pid ->
+		{false,true} ->
 			{GameLogicState#game.user2_gamestate,User2,User1}
 	end,
 

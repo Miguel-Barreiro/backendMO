@@ -41,6 +41,7 @@ process_pre_login_message(Msg) ->
 
 process(Msg, User_process_pid) ->
 	Request = protocol_pb:decode_request(Msg),
+	lager:debug( "Received MSG:\n\t~p----------------------------------", [Request] ),
 
 	case Request#request.type of
 		undefined -> {reply_with_disconnect, create_disconect_message() };
@@ -391,6 +392,14 @@ create_debug_board(Player_current_random_step, Player_current_piece_x, Player_cu
 
 
 
+convert_protocolbltype_to_gamebltype( garbage_color, 1 ) -> 
+	color;
+
+convert_protocolbltype_to_gamebltype( ProtocolBlType, _ ) ->
+	convert_protocolbltype_to_gamebltype( ProtocolBlType ).
+
+convert_protocolbltype_to_gamebltype( basic_block ) -> 
+	color;
 
 convert_protocolbltype_to_gamebltype( ProtocolBlType ) when is_atom(ProtocolBlType) -> 
 	ProtocolBlType.
@@ -402,16 +411,18 @@ convert_protocolpangle_to_gamepangle( ProtocolPAngle ) when is_atom(ProtocolPAng
 	ProtocolPAngle.
 
 
+
+
 convert_protocolgstate_to_gameboard( PBlocks ) ->
 	lists:foldl(
 		fun( PBlock, GBoard ) ->
 				Type = convert_protocolbltype_to_gamebltype( 
-						PBlock#block_position.type
+						PBlock#block_position.type, PBlock#block_position.exploding_times_left
 				),
 				Color = convert_protocolblcolor_to_gameblcolor( 
 						PBlock#block_position.color
 				),
-				Hardness =PBlock#block_position.exploding_times_left,
+				Hardness = PBlock#block_position.exploding_times_left,
 				X = PBlock#block_position.x,
 				Y = PBlock#block_position.y,
 
@@ -584,9 +595,11 @@ process_message( message_debug_board, User_process_pid, #request{ debug_game_sta
 		{
 			debug_confirm_board_synch,
 			{
-				convert_protocolgstate_to_usergstateelems(
-					DebugGameStateContent#message_debug_board.opponent_state
-				),
+%				convert_protocolgstate_to_usergstateelems(
+%					DebugGameStateContent#message_debug_board.opponent_state
+%				),
+				undefined,
+
 				convert_protocolgstate_to_usergstateelems(
 					DebugGameStateContent#message_debug_board.player_state
 				)
