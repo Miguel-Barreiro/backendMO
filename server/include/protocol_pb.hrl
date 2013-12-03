@@ -38,12 +38,14 @@
 %% @type garbage_position_record() = #garbage_position_record{
 %%   type() = type_block(),
 %%   x() = integer(),
-%%   color() = 'undefined' | color_block()
+%%   color() = 'undefined' | color_block(),
+%%   hardness() = 'undefined' | integer()
 %% }.
 -record(garbage_position,{
   type :: type_block(),
   x :: integer(),
-  color :: 'undefined' | color_block()}).
+  color :: 'undefined' | color_block(),
+  hardness :: 'undefined' | integer()}).
 
 %% @type game_state_record() = #game_state_record{
 %%   current_random() = integer(),

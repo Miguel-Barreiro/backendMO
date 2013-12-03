@@ -168,7 +168,8 @@ decode_garbage_position_impl(Binary) ->
   protocol_buffers:decode(Binary,#garbage_position{},
      fun(1,{varint,Enum},Rec) -> Rec#garbage_position{type=to_type_block(Enum)};
         (2,Val,Rec) -> Rec#garbage_position{x = protocol_buffers:cast(int32,Val)};
-        (3,{varint,Enum},Rec) -> Rec#garbage_position{color=to_color_block(Enum)}
+        (3,{varint,Enum},Rec) -> Rec#garbage_position{color=to_color_block(Enum)};
+        (4,Val,Rec) -> Rec#garbage_position{hardness = protocol_buffers:cast(int32,Val)}
       end).
 
 encode_garbage_position(undefined) -> undefined;
@@ -176,7 +177,8 @@ encode_garbage_position(R) when is_record(R,garbage_position) ->
   [
     protocol_buffers:encode(1,int32,from_type_block(R#garbage_position.type)),
     protocol_buffers:encode(2,int32,R#garbage_position.x),
-    protocol_buffers:encode(3,int32,from_color_block(R#garbage_position.color))
+    protocol_buffers:encode(3,int32,from_color_block(R#garbage_position.color)),
+    protocol_buffers:encode(4,int32,R#garbage_position.hardness)
   ].
 
 decode_game_state(B) ->
