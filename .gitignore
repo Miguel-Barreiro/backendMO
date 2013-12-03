@@ -1,3 +1,7 @@
-server/ebin
-server/rel/server
-server/.eunit
+www_logs
+www_root
+
+*.swp
+*.bak
+*.pyc
+*~
