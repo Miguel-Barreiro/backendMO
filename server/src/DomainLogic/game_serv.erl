@@ -84,6 +84,12 @@ debug_cmp_usergamestates(
 	lager:debug( "\nRemote:" ),
 	RBoardTxt = board:lager_print_board( RBoard ),
 
+	Ret = case board:are_boards_equal( LBoard, RBoard ) of
+		true ->
+			lager:debug( "\e[32mComparison success.\e[m" ),
+			ok;
+		false ->
+			lager:debug( "\e[1m\e[31mComparison FAILED.\e[m" ),
 			MailSenderName = "MiniOrbs @ " ++ swiss:get_localhostname(),
 			VsString = binary_to_list(GameUser1#game_user.user_id) ++ " VS " ++ binary_to_list(GameUser2#game_user.user_id),
 			PlayerIndexStr = "User #" ++ integer_to_list( UserIndex ),
@@ -105,12 +111,6 @@ debug_cmp_usergamestates(
 				?DEBUG_BOARDSYNCH_REPORT_MSENDERADDR, ?DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS,
 				MailSubject, MailBody
 			),		
-	Ret = case board:are_boards_equal( LBoard, RBoard ) of
-		true ->
-			lager:debug( "\e[32mComparison success.\e[m" ),
-			ok;
-		false ->
-			lager:debug( "\e[1m\e[31mComparison FAILED.\e[m" ),
 			error
 	end,
 
