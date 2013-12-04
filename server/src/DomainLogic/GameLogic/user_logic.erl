@@ -7,13 +7,15 @@
 -export([can_enter_game/2,handle_game_start/2,handle_game_lost/2,handle_game_win/2]).
 
 
--define(LIFE_GENERATION_TIMEOUT,120).
--define(MAX_LIFES,6).
--define(LIFE_GAME_COST,1).
+-define(LIFE_GENERATION_TIMEOUT, 120).
+-define(MAX_LIFES, 6).
+-define(LIFE_GAME_COST, 1).
+-define(COIN_LIFE_RATIO, 1).
 
 
--define(LIFES_KEY,<<"lifes">>).
--define(LAST_LOGIN_KEY,<<"time_since_last_login">>).
+-define(LIFES_KEY, <<"lifes">>).
+-define(COINS_KEY, <<"coins">>).
+-define(LAST_LOGIN_KEY, <<"time_since_last_login">>).
 
 
 
@@ -125,8 +127,6 @@ add_lifes_to_user( Amount, User = #mc_user{} , Timer_ref) ->
 
 
 
-
-
 remove_lifes_from_user( Amount, User = #mc_user{}, Timer_ref ) ->
 
 	New_timer_ref = case Timer_ref of
@@ -150,11 +150,6 @@ remove_lifes_from_user( Amount, User = #mc_user{}, Timer_ref ) ->
 	
 
 
-
-
-
-
-
 generate_missing_lifes( User = #mc_user{}, Timer_ref, Session_start_time ) ->
 
 	case proplists:get_value(?LAST_LOGIN_KEY, User#mc_user.properties) of
@@ -175,5 +170,83 @@ generate_missing_lifes( User = #mc_user{}, Timer_ref, Session_start_time ) ->
 				Lifes_to_generate ->	add_lifes_to_user( Lifes_to_generate, User, Timer_ref )
 			end
 	end.
+
+
+
+
+
+
+
+add_coins_to_user( Amount, User = #mc_user{} ) when Amount > 0 ->
+	Current_coins = case proplists:get_value(?COINS_KEY, User#mc_user.wallet) of
+		undefined ->	0;
+		Other -> 		Other
+	end,
+
+	lager:debug("adding coins: Current_coins ~p  Amount ~p",[Current_coins,Amount]),
+	{ok, NewBalance} = user_store:update_wallet_balance( User#mc_user.user_id, ?COINS_KEY, Amount ),
+	NewWallet = [ {?COINS_KEY, NewBalance} | proplists:delete( ?COINS_KEY, User#mc_user.wallet ) ],
+	User#mc_user{ wallet=NewWallet }.
+
+
+remove_coins_from_user( Amount, User = #mc_user{} ) when Amount > 0 ->
+	Current_coins = case proplists:get_value(?COINS_KEY, User#mc_user.wallet) of
+		undefined ->	0;
+		Other -> 		Other
+	end,
+
+	lager:debug("removing coins: Current_coins ~p  Amount ~p",[Current_coins,Amount]),
+	case Amount > Current_coins of
+		true ->
+			{error, not_enough_coins};
+		false ->
+			{ok, NewBalance} = user_store:update_wallet_balance( User#mc_user.user_id, ?COINS_KEY, -Amount ),
+			NewWallet = [ {?COINS_KEY, NewBalance} | proplists:delete( ?COINS_KEY, User#mc_user.wallet ) ],
+			User#mc_user{ wallet=NewWallet }
+	end.
+			
+
+
+
+
+
+
+max_coin_life_conversion( User ) ->
+	max_coin_life_conversion( User, ?COIN_LIFE_RATIO ).
+
+max_coin_life_conversion( User = #mc_user{}, CoinLifeRatio ) when is_integer(CoinLifeRatio) andalso CoinLifeRatio>0 
+->
+	CurrentCoins = case proplists:get_value(?COINS_KEY, User#mc_user.wallet) of
+		undefined ->	0;
+		OtherCVal ->	OtherCVal
+	end,
+	CurrentLives = case proplists:get_value(?LIFES_KEY, User#mc_user.wallet) of
+		undefined ->	0;
+		OtherLVal -> 	OtherLVal
+	end,
+
+	C_MaxSpendableCoins = CurrentCoins,
+	C_MaxWinnableLives = C_MaxSpendableCoins * ?COIN_LIFE_RATIO,
+	L_MaxWinnableLives = ?MAX_LIFES - CurrentLives,
+	L_MaxSpendableCoins = trunc(L_MaxWinnableLives / ?COIN_LIFE_RATIO),
+
+	case C_MaxSpendableCoins > L_MaxSpendableCoins of
+		true ->
+			{L_MaxSpendableCoins, L_MaxWinnableLives};
+		false ->
+			{C_MaxSpendableCoins, C_MaxWinnableLives}
+	end.
+
+	
+	
+
+
+
+
+
+
+
+
+
 
 
