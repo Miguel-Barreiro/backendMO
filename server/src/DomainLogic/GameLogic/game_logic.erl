@@ -392,6 +392,7 @@ release_reinforcements( Board = #board{} ) ->
 				empty ->
 					board:set_block( #block{ type = color, color = Color }, X, Y, Inner_result_Board);
 				_block ->
+					lager:info("reinforcements caused the out of bounds"),
 					throw(out_of_bounds)
 			end
 		end,

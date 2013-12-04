@@ -662,7 +662,7 @@ convert_garbage_to_protocol_garbage( { Type , X } , Result ) ->
 	Garbage_result = case Type of
 		garbage ->						#garbage_position{ x = X, type = garbage, color = undefined};
 		{garbage_color, Color } ->		#garbage_position{ x = X, type = garbage_color, color = Color};
-		{garbage_hard, Hardness} ->		#garbage_position{ x = X, type = garbage_hard, color = undefined }
+		{garbage_hard, Hardness} ->		#garbage_position{ x = X, type = garbage_hard, color = undefined, hardness = Hardness }
 	end,
 	[ Garbage_result | Result].
 
