@@ -56,7 +56,8 @@ logout( #logic_user{ user = User, lifes_generate_timer = Timer_ref } ) ->
 can_enter_game( #logic_user{ user = User }, Powers ) ->
 	true.
 	%Current_lifes = proplists:get_value(?LIFES_KEY, User#mc_user.wallet),
-	%Current_lifes >= (?LIFE_GAME_COST + length(Powers)).
+	% FIXME: no effect is temporary for development convenience.
+	%Current_lifes >= ?LIFE_GAME_COST.
 
 
 
@@ -69,13 +70,13 @@ handle_game_start( Logic_user = #logic_user{ lifes_generate_timer = _Timer_ref, 
 
 -spec handle_game_lost( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_lost( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
-	remove_lifes_from_user( ?LIFE_GAME_COST + length(Powers), User, Timer_ref ),
+	remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
 	{ ok , Logic_user}.
 
 
 -spec handle_game_win( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_win( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
-	remove_lifes_from_user( length(Powers), User, Timer_ref ),
+	remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
 	{ ok , Logic_user}.
 
 
