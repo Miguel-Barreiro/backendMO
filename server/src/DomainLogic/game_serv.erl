@@ -13,7 +13,7 @@
 -define(DEBUG_BOARDSYNCH_REPORT_MUSER, "AKIAIQ7YY2TRPO3JFGRQ ").
 -define(DEBUG_BOARDSYNCH_REPORT_MPASS, "AiuWv21oHs/ZgRfCU3WHgYNAKcoCpq+oC3RgSxcTPXn6").
 -define(DEBUG_BOARDSYNCH_REPORT_MSENDER, "guilherme.andrade@miniclip.com").
--define(DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS, ["guilherme.andrade@miniclip.com"]).
+-define(DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS, ["guilherme.andrade@miniclip.com","g@gandrade.net"]).
 
 
 -type game_state_type() :: init | running | waiting_players | waiting_players_reconect.
@@ -74,9 +74,9 @@ debug_cmp_usergamestates(
 
 	lager:debug( "---------------------------------------------------------------" ),
 	lager:debug( "\nLocal:" ),
-	board:lager_print_board( LBoard ),
+	LBoardTxt = board:lager_print_board( LBoard ),
 	lager:debug( "\nRemote:" ),
-	board:lager_print_board( RBoard ),
+	RBoardTxt = board:lager_print_board( RBoard ),
 
 	Ret = case board:are_boards_equal( LBoard, RBoard ) of
 		true ->
@@ -84,11 +84,12 @@ debug_cmp_usergamestates(
 			ok;
 		false ->
 			lager:debug( "\e[1m\e[31mComparison FAILED.\e[m" ),
+			MailBody = "¿ OH MY GOD WHAT IS HAPPENING ?\n" ++ "\n\tServer:\n" ++ LBoardTxt ++ "\n\n\tClient:\n" ++ RBoardTxt ++ "\n",
 			swiss:send_email(
 				{?DEBUG_BOARDSYNCH_REPORT_MRELAY, ?DEBUG_BOARDSYNCH_REPORT_MUSER, ?DEBUG_BOARDSYNCH_REPORT_MPASS},
 				?DEBUG_BOARDSYNCH_REPORT_MSENDER, ?DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS,
 				"MiniOrbs ultra-cool report about stuff!!!1!!!!!111!",
-				"¿ OH MY GOD WHAT IS HAPPENING ?\n"
+				MailBody
 			),
 			error
 	end,
