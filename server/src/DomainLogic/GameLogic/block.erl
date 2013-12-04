@@ -1,6 +1,6 @@
 -module( block ).
 
--export([ new_color/2, new_color/1 ]).
+-export([ new_color/1 ]).
 -export([ new_garbage/0 ]).
 -export([ new_garbage_hard/1 ]).
 -export([ new_garbage_color/1 ]).
@@ -33,7 +33,7 @@ new_garbage() ->
 
 -spec new_garbage_hard( Hardness::integer() ) -> #block{}.
 new_garbage_hard(Hardness) ->
-	#block{ type = garbage, Hardness = Hardness }.
+	#block{ type = garbage, hardness = Hardness }.
 
 
 
