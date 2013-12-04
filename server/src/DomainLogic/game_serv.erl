@@ -10,10 +10,10 @@
 -define(COUNTDOWN_TO_START_MSECONDS , 5000).
 
 -define(DEBUG_BOARDSYNCH_REPORT_MRELAY, "email-smtp.us-east-1.amazonaws.com").
--define(DEBUG_BOARDSYNCH_REPORT_MUSER, "AKIAIQ7YY2TRPO3JFGRQ ").
+-define(DEBUG_BOARDSYNCH_REPORT_MUSER, "AKIAIQ7YY2TRPO3JFGRQ").
 -define(DEBUG_BOARDSYNCH_REPORT_MPASS, "AiuWv21oHs/ZgRfCU3WHgYNAKcoCpq+oC3RgSxcTPXn6").
--define(DEBUG_BOARDSYNCH_REPORT_MSENDER, "guilherme.andrade@miniclip.com").
--define(DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS, ["guilherme.andrade@miniclip.com","g@gandrade.net"]).
+-define(DEBUG_BOARDSYNCH_REPORT_MSENDERADDR, "guilherme.andrade@miniclip.com").
+-define(DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS, ["guilherme.andrade@miniclip.com","g@gandrade.net","ana.oliveira@miniclip.com"]).
 
 
 -type game_state_type() :: init | running | waiting_players | waiting_players_reconect.
@@ -60,15 +60,20 @@ init(InitData) ->
 
 
 debug_cmp_usergamestates( 
+			GameState = #game_state {
+				user1 = GameUser1, user2 = GameUser2
+			},
 			LocalPlayerState = #user_gamestate{
 				board = LBoard, current_piece = LPiece, current_piece_angle = LPieceAngle, current_piece_x = LPieceX, current_piece_y=LPieceY,
-				garbage_position_list = LGarbagePositionList, random_state = LRandomState	
+				garbage_position_list = LGarbagePositionList, random_state = LRandomState,
+				current_garbage_id = LGarbageId
 			},
 			RemotePlayerState = #user_gamestate{
 				board = RBoard, current_piece = RPiece, current_piece_angle = RPieceAngle, current_piece_x = RPieceX, current_piece_y=RPieceY,
 				garbage_position_list = RGarbagePositionList, random_state = RRandomState	
 			},
-			{RemotePlayerPieceBlock1Type, RemotePlayerPieceBlock2Type}
+			{RemotePlayerPieceBlock1Type, RemotePlayerPieceBlock2Type},
+			UserIndex
 ) ->
 %	lager:debug( "Received Game State comparison request;\n\tLRandomState: ~p\nRRandomState: ~p\n\nLocal: ~p\n\nRemote: ~p\n\nRemote piece block types: ~p,~p\n", [LRandomState,RRandomState,LocalPlayerState,RemotePlayerState,RemotePlayerPieceBlock1Type,RemotePlayerPieceBlock2Type] ),
 
@@ -78,19 +83,35 @@ debug_cmp_usergamestates(
 	lager:debug( "\nRemote:" ),
 	RBoardTxt = board:lager_print_board( RBoard ),
 
+	MailSenderName = "MiniOrbs @ " ++ swiss:get_localhostname(),
+	VsString = GameUser1#game_user.user_id ++ " VS " ++ GameUser2#game_user.user_id,
+	PlayerIndexStr = "User #" ++ integer_to_list( UserIndex ),
+	AppVersionStr = swiss:get_appversion_str(),
+	MailSubject = "[Board Mismatch] " ++ VsString ++ " - " ++ PlayerIndexStr,
+
+	MailBody = "When :" ++ httpd_util:rfc1123_date() ++ "\n" 
+		++ "Game: " ++ VsString ++ "\n" 
+		++ PlayerIndexStr ++ "\n"
+		++ "Current garb id: " ++ integer_to_list(LGarbageId) ++ "\n"
+		++ "Version: " ++ AppVersionStr ++ "\n"
+		++ "-------------------------------------------------\n\n" 
+		++ "Server board:\n" ++ LBoardTxt ++ "\n\n"
+		++ "Client board:\n" ++ RBoardTxt ++ "\n",
+
+	swiss:send_email(
+		{?DEBUG_BOARDSYNCH_REPORT_MRELAY, ?DEBUG_BOARDSYNCH_REPORT_MUSER, ?DEBUG_BOARDSYNCH_REPORT_MPASS},
+		MailSenderName,
+		?DEBUG_BOARDSYNCH_REPORT_MSENDERADDR, ?DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS,
+		"MiniOrbs ultra-cool report about stuff!!!1!!!!!111!",
+		MailBody
+	),
+
 	Ret = case board:are_boards_equal( LBoard, RBoard ) of
 		true ->
 			lager:debug( "\e[32mComparison success.\e[m" ),
 			ok;
 		false ->
 			lager:debug( "\e[1m\e[31mComparison FAILED.\e[m" ),
-			MailBody = "¿ OH MY GOD WHAT IS HAPPENING ?\n" ++ "\n\tServer:\n" ++ LBoardTxt ++ "\n\n\tClient:\n" ++ RBoardTxt ++ "\n",
-			swiss:send_email(
-				{?DEBUG_BOARDSYNCH_REPORT_MRELAY, ?DEBUG_BOARDSYNCH_REPORT_MUSER, ?DEBUG_BOARDSYNCH_REPORT_MPASS},
-				?DEBUG_BOARDSYNCH_REPORT_MSENDER, ?DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS,
-				"MiniOrbs ultra-cool report about stuff!!!1!!!!!111!",
-				MailBody
-			),
 			error
 	end,
 
@@ -425,15 +446,15 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 
 
 handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentUGStateElems, RemotePlayerUGStateElems}}, State = #game_state{ user1=User1, user2=User2, game_logic_state=GameLogicState }) ->
-	{LocalPlayerState,User,OpponentUser} = case {UserPid=:=User1#game_user.pid, UserPid=:=User2#game_user.pid} of
+	{LocalPlayerState,User,OpponentUser,UserIndex} = case {UserPid=:=User1#game_user.pid, UserPid=:=User2#game_user.pid} of
 		{true,false} ->
-			{GameLogicState#game.user1_gamestate,User1,User2};
+			{GameLogicState#game.user1_gamestate,User1,User2,1};
 		{false,true} ->
-			{GameLogicState#game.user2_gamestate,User2,User1}
+			{GameLogicState#game.user2_gamestate,User2,User1,2}
 	end,
 
 	{RemotePlayerState, RemotePlayerPieceBlockTypes} = RemotePlayerUGStateElems,
-	case debug_cmp_usergamestates( LocalPlayerState, RemotePlayerState, RemotePlayerPieceBlockTypes ) of
+	case debug_cmp_usergamestates( State, LocalPlayerState, RemotePlayerState, RemotePlayerPieceBlockTypes, UserIndex ) of
 		ok ->
 			{noreply, State};
 		error ->

@@ -1,6 +1,6 @@
 -module(swiss).
 
--export([unix_timestamp/0, unix_timestamp_ms/0, subscribe/1, notify/2, ip_to_binary/1, string_join/2, string_replace/3, to_integer/1, send_email/5]).
+-export([unix_timestamp/0, unix_timestamp_ms/0, subscribe/1, notify/2, ip_to_binary/1, string_join/2, string_replace/3, to_integer/1, send_email/6, get_localhostname/0, get_appversion_str/0]).
 
 -include("include/softstate.hrl").
 
@@ -47,17 +47,18 @@ to_binary(Value) when is_binary(Value) -> Value;
 to_binary(Value) when is_list(Value) -> list_to_binary(Value).
 
 
-send_email( {Relay,Username,Password}, Sender, Recipients, Subject, Body ) when
-		(is_list(Sender) orelse is_binary(Sender)) 
+send_email( {Relay,Username,Password}, SenderName, Sender, Recipients, Subject, Body ) when
+		(is_list(SenderName) orelse is_binary(SenderName)) andalso (is_list(Sender) orelse is_binary(Sender))
 			andalso is_list(Recipients) andalso (is_list(Subject) orelse is_binary(Subject))
 			andalso (is_list(Body) orelse is_binary(Body))
 ->
+	BinSenderName = to_binary(SenderName),
 	BinSender = to_binary(Sender),
 	BinJoinedRecipients = to_binary( string:join( lists:map( fun(R)->to_list(R)end, Recipients ), "," ) ), 
 	BinSubject = to_binary(Subject),
 	BinBody = to_binary(Body),
 	FinalBody = <<
-			<<"From: \"MiniOrbs\" <">>/binary, BinSender/binary, <<">\n">>/binary,
+			<<"From: \"">>/binary, BinSenderName/binary, <<"\" <">>/binary, BinSender/binary, <<">\n">>/binary,
 			<<"To: ">>/binary, BinJoinedRecipients/binary,  <<"\n">>/binary,
 			<<"Subject: ">>/binary, BinSubject/binary, <<"\n">>/binary,
 			<<"\n">>/binary,
@@ -67,9 +68,19 @@ send_email( {Relay,Username,Password}, Sender, Recipients, Subject, Body ) when
 	ok.
 
 
+get_localhostname() ->
+	{ok, LocalHostName} = inet:gethostname(),
+	LocalHostName.
+
+get_appversion_str() ->
+	case {application:get_env(server,git_commit), application:get_env(server,git_branch)} of 
+		{{ok,Commit},{ok,Branch}} ->
+			"Git, " ++ Commit ++ " @ branch '" ++ Branch ++ "'";
+		_ ->
+			"UNKNOWN"
+	end.
 
 
-
-
+	
 
 

@@ -140,12 +140,12 @@ lager_print_board( Board = #board{} ) ->
 lager_print_board( Board = #board{}, 0 ) ->
 	LineStr = io_lib:format( get_print_string( Board#board.width ), get_column_chars( 0, Board)),
 	lager:debug( LineStr ),
-	LineStr ++ "\n";
+	"\t" ++ LineStr ++ "\n";
 
 lager_print_board( Board = #board{}, Row ) ->
 	LineStr = io_lib:format( get_print_string( Board#board.width ), get_column_chars( Row, Board)),
 	lager:debug( LineStr ),
-	LineStr ++ "\n" ++ lager_print_board( Board, Row - 1 ).
+	"\t" ++ LineStr ++ "\n" ++ lager_print_board( Board, Row - 1 ).
 
 
 
