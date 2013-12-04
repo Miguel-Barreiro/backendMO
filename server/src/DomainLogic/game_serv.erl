@@ -13,7 +13,7 @@
 -define(DEBUG_BOARDSYNCH_REPORT_MUSER, "AKIAIQ7YY2TRPO3JFGRQ").
 -define(DEBUG_BOARDSYNCH_REPORT_MPASS, "AiuWv21oHs/ZgRfCU3WHgYNAKcoCpq+oC3RgSxcTPXn6").
 -define(DEBUG_BOARDSYNCH_REPORT_MSENDERADDR, "guilherme.andrade@miniclip.com").
--define(DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS, ["guilherme.andrade@miniclip.com","g@gandrade.net","ana.oliveira@miniclip.com"]).
+-define(DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS, ["guilherme.andrade@miniclip.com","g@gandrade.net","ana.oliveira@miniclip.com","miguel.barreiro@miniclip.com"]).
 
 
 -type game_state_type() :: init | running | waiting_players | waiting_players_reconect.
@@ -83,35 +83,33 @@ debug_cmp_usergamestates(
 	lager:debug( "\nRemote:" ),
 	RBoardTxt = board:lager_print_board( RBoard ),
 
-	MailSenderName = "MiniOrbs @ " ++ swiss:get_localhostname(),
-	VsString = GameUser1#game_user.user_id ++ " VS " ++ GameUser2#game_user.user_id,
-	PlayerIndexStr = "User #" ++ integer_to_list( UserIndex ),
-	AppVersionStr = swiss:get_appversion_str(),
-	MailSubject = "[Board Mismatch] " ++ VsString ++ " - " ++ PlayerIndexStr,
-
-	MailBody = "When :" ++ httpd_util:rfc1123_date() ++ "\n" 
-		++ "Game: " ++ VsString ++ "\n" 
-		++ PlayerIndexStr ++ "\n"
-		++ "Current garb id: " ++ integer_to_list(LGarbageId) ++ "\n"
-		++ "Version: " ++ AppVersionStr ++ "\n"
-		++ "-------------------------------------------------\n\n" 
-		++ "Server board:\n" ++ LBoardTxt ++ "\n\n"
-		++ "Client board:\n" ++ RBoardTxt ++ "\n",
-
-	swiss:send_email(
-		{?DEBUG_BOARDSYNCH_REPORT_MRELAY, ?DEBUG_BOARDSYNCH_REPORT_MUSER, ?DEBUG_BOARDSYNCH_REPORT_MPASS},
-		MailSenderName,
-		?DEBUG_BOARDSYNCH_REPORT_MSENDERADDR, ?DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS,
-		"MiniOrbs ultra-cool report about stuff!!!1!!!!!111!",
-		MailBody
-	),
-
 	Ret = case board:are_boards_equal( LBoard, RBoard ) of
 		true ->
 			lager:debug( "\e[32mComparison success.\e[m" ),
 			ok;
 		false ->
 			lager:debug( "\e[1m\e[31mComparison FAILED.\e[m" ),
+			MailSenderName = "MiniOrbs @ " ++ swiss:get_localhostname(),
+			VsString = binary_to_list(GameUser1#game_user.user_id) ++ " VS " ++ binary_to_list(GameUser2#game_user.user_id),
+			PlayerIndexStr = "User #" ++ integer_to_list( UserIndex ),
+			AppVersionStr = swiss:get_appversion_str(),
+			MailSubject = "[Board Mismatch] " ++ VsString ++ " - " ++ PlayerIndexStr,
+		
+			MailBody = "When: " ++ httpd_util:rfc1123_date() ++ "\n" 
+				++ "Game: " ++ VsString ++ "\n" 
+				++ PlayerIndexStr ++ "\n"
+				++ "Current garb. id: " ++ integer_to_list(LGarbageId) ++ "\n"
+				++ "Version: " ++ AppVersionStr ++ "\n"
+				++ "-------------------------------------------------\n\n" 
+				++ "Server board:\n" ++ LBoardTxt ++ "\n\n"
+				++ "Client board:\n" ++ RBoardTxt ++ "\n",
+		
+			swiss:send_email(
+				{?DEBUG_BOARDSYNCH_REPORT_MRELAY, ?DEBUG_BOARDSYNCH_REPORT_MUSER, ?DEBUG_BOARDSYNCH_REPORT_MPASS},
+				MailSenderName,
+				?DEBUG_BOARDSYNCH_REPORT_MSENDERADDR, ?DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS,
+				MailSubject, MailBody
+			),		
 			error
 	end,
 
