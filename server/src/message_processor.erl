@@ -436,7 +436,7 @@ convert_protocolgstate_to_gameboard( PBlocks ) ->
 	).
 
 
-convert_protocolgstate_to_usergstateelems( ProtocolGState ) ->
+convert_protocolgstate_to_usergstateelems( ProtocolGState, ProtocolLastGarbageId ) ->
 	PrRandom = ProtocolGState#game_state.current_random,
 	PrPieceX = ProtocolGState#game_state.current_piece_x,
 	PrPieceY = ProtocolGState#game_state.current_piece_y,
@@ -445,6 +445,7 @@ convert_protocolgstate_to_usergstateelems( ProtocolGState ) ->
 	PrPieceBlock2Type = ProtocolGState#game_state.current_piece_block2_type,
 	PrBlocks = ProtocolGState#game_state.blocks,
 %	PrGarbageMessageList = ProtocolGState#game_state.garbage_message_list,
+	PrLastGarbageId = ProtocolLastGarbageId,
 
 
 	UStateBoard = convert_protocolgstate_to_gameboard( PrBlocks ),
@@ -464,7 +465,7 @@ convert_protocolgstate_to_usergstateelems( ProtocolGState ) ->
 		current_piece_x = UStatePieceX, current_piece_y = UStatePieceY,
 		piece_generation_step = UStatePieceGenerationStep
 	},
-	{GState, {PrPieceBlock1Type,PrPieceBlock2Type}}.
+	{GState, {PrPieceBlock1Type,PrPieceBlock2Type}, ProtocolLastGarbageId}.
 
 
 
@@ -601,7 +602,8 @@ process_message( message_debug_board, User_process_pid, #request{ debug_game_sta
 				undefined,
 
 				convert_protocolgstate_to_usergstateelems(
-					DebugGameStateContent#message_debug_board.player_state
+					DebugGameStateContent#message_debug_board.player_state,
+					DebugGameStateContent#message_debug_board.player_last_garbage_id
 				)
 			}
 		}

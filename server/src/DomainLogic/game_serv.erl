@@ -73,6 +73,7 @@ debug_cmp_usergamestates(
 				garbage_position_list = RGarbagePositionList, random_state = RRandomState	
 			},
 			{RemotePlayerPieceBlock1Type, RemotePlayerPieceBlock2Type},
+			RGarbageId,
 			UserIndex
 ) ->
 %	lager:debug( "Received Game State comparison request;\n\tLRandomState: ~p\nRRandomState: ~p\n\nLocal: ~p\n\nRemote: ~p\n\nRemote piece block types: ~p,~p\n", [LRandomState,RRandomState,LocalPlayerState,RemotePlayerState,RemotePlayerPieceBlock1Type,RemotePlayerPieceBlock2Type] ),
@@ -83,26 +84,20 @@ debug_cmp_usergamestates(
 	lager:debug( "\nRemote:" ),
 	RBoardTxt = board:lager_print_board( RBoard ),
 
-	Ret = case board:are_boards_equal( LBoard, RBoard ) of
-		true ->
-			lager:debug( "\e[32mComparison success.\e[m" ),
-			ok;
-		false ->
-			lager:debug( "\e[1m\e[31mComparison FAILED.\e[m" ),
 			MailSenderName = "MiniOrbs @ " ++ swiss:get_localhostname(),
 			VsString = binary_to_list(GameUser1#game_user.user_id) ++ " VS " ++ binary_to_list(GameUser2#game_user.user_id),
 			PlayerIndexStr = "User #" ++ integer_to_list( UserIndex ),
 			AppVersionStr = swiss:get_appversion_str(),
 			MailSubject = "[Board Mismatch] " ++ VsString ++ " - " ++ PlayerIndexStr,
 		
-			MailBody = "When: " ++ httpd_util:rfc1123_date() ++ "\n" 
-				++ "Game: " ++ VsString ++ "\n" 
+			MailBody = httpd_util:rfc1123_date() ++ "\n\n" 
 				++ PlayerIndexStr ++ "\n"
-				++ "Current garb. id: " ++ integer_to_list(LGarbageId) ++ "\n"
+				++ "Game: " ++ VsString ++ "\n" 
+				++ "-------------------------------------------------\n" 
 				++ "Version: " ++ AppVersionStr ++ "\n"
 				++ "-------------------------------------------------\n\n" 
-				++ "Server board:\n" ++ LBoardTxt ++ "\n\n"
-				++ "Client board:\n" ++ RBoardTxt ++ "\n",
+				++ "Server\n garb. id: " ++ integer_to_list(LGarbageId) ++ "\n board:\n" ++ LBoardTxt ++ "\n\n"
+				++ "Client\n garb. id: " ++ integer_to_list(RGarbageId) ++ "\n board:\n" ++ RBoardTxt ++ "\n",
 		
 			swiss:send_email(
 				{?DEBUG_BOARDSYNCH_REPORT_MRELAY, ?DEBUG_BOARDSYNCH_REPORT_MUSER, ?DEBUG_BOARDSYNCH_REPORT_MPASS},
@@ -110,6 +105,12 @@ debug_cmp_usergamestates(
 				?DEBUG_BOARDSYNCH_REPORT_MSENDERADDR, ?DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS,
 				MailSubject, MailBody
 			),		
+	Ret = case board:are_boards_equal( LBoard, RBoard ) of
+		true ->
+			lager:debug( "\e[32mComparison success.\e[m" ),
+			ok;
+		false ->
+			lager:debug( "\e[1m\e[31mComparison FAILED.\e[m" ),
 			error
 	end,
 
@@ -451,8 +452,8 @@ handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentUGStateElems, 
 			{GameLogicState#game.user2_gamestate,User2,User1,2}
 	end,
 
-	{RemotePlayerState, RemotePlayerPieceBlockTypes} = RemotePlayerUGStateElems,
-	case debug_cmp_usergamestates( State, LocalPlayerState, RemotePlayerState, RemotePlayerPieceBlockTypes, UserIndex ) of
+	{RemotePlayerState, RemotePlayerPieceBlockTypes, RemotePlayerLastGarbageId} = RemotePlayerUGStateElems,
+	case debug_cmp_usergamestates( State, LocalPlayerState, RemotePlayerState, RemotePlayerPieceBlockTypes, RemotePlayerLastGarbageId, UserIndex ) of
 		ok ->
 			{noreply, State};
 		error ->

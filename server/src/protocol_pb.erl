@@ -652,14 +652,16 @@ decode_message_debug_board_impl(<<>>) -> undefined;
 decode_message_debug_board_impl(Binary) ->
   protocol_buffers:decode(Binary,#message_debug_board{},
      fun(1,{length_encoded,Bin},Rec) -> Rec#message_debug_board{opponent_state = decode_game_state_impl(Bin)};
-        (2,{length_encoded,Bin},Rec) -> Rec#message_debug_board{player_state = decode_game_state_impl(Bin)}
+        (2,{length_encoded,Bin},Rec) -> Rec#message_debug_board{player_state = decode_game_state_impl(Bin)};
+        (3,Val,Rec) -> Rec#message_debug_board{player_last_garbage_id = protocol_buffers:cast(int32,Val)}
       end).
 
 encode_message_debug_board(undefined) -> undefined;
 encode_message_debug_board(R) when is_record(R,message_debug_board) ->
   [
     protocol_buffers:encode(1,length_encoded,encode_game_state(R#message_debug_board.opponent_state)),
-    protocol_buffers:encode(2,length_encoded,encode_game_state(R#message_debug_board.player_state))
+    protocol_buffers:encode(2,length_encoded,encode_game_state(R#message_debug_board.player_state)),
+    protocol_buffers:encode(3,int32,R#message_debug_board.player_last_garbage_id)
   ].
 
 to_request__request_type(1) -> message_login_code;
