@@ -1,6 +1,6 @@
 -module(swiss).
 
--export([unix_timestamp/0, unix_timestamp_ms/0, subscribe/1, notify/2, ip_to_binary/1, string_join/2, string_replace/3, to_integer/1]).
+-export([unix_timestamp/0, unix_timestamp_ms/0, subscribe/1, notify/2, ip_to_binary/1, string_join/2, string_replace/3, to_integer/1, send_email/5]).
 
 -include("include/softstate.hrl").
 
@@ -39,3 +39,37 @@ string_join1([Head | Tail], Sep, Acc) ->
 
 to_integer(Value) when is_integer(Value) -> Value;
 to_integer(Value) when is_binary(Value) -> list_to_integer(binary_to_list(Value)).
+
+to_list(Value) when is_list(Value) -> Value;
+to_list(Value) when is_binary(Value) -> list_to_binary(Value).
+
+to_binary(Value) when is_binary(Value) -> Value;
+to_binary(Value) when is_list(Value) -> list_to_binary(Value).
+
+
+send_email( {Relay,Username,Password}, Sender, Recipients, Subject, Body ) when
+		(is_list(Sender) orelse is_binary(Sender)) 
+			andalso is_list(Recipients) andalso (is_list(Subject) orelse is_binary(Subject))
+			andalso (is_list(Body) orelse is_binary(Body))
+->
+	BinSender = to_binary(Sender),
+	BinJoinedRecipients = to_binary( string:join( lists:map( fun(R)->to_list(R)end, Recipients ), "," ) ), 
+	BinSubject = to_binary(Subject),
+	BinBody = to_binary(Body),
+	FinalBody = <<
+			<<"From: \"MiniOrbs\" <">>/binary, BinSender/binary, <<">\n">>/binary,
+			<<"To: ">>/binary, BinJoinedRecipients/binary,  <<"\n">>/binary,
+			<<"Subject: ">>/binary, BinSubject/binary, <<"\n">>/binary,
+			<<"\n">>/binary,
+			BinBody/binary
+	>>,
+	{ok, _Pid} = gen_smtp_client:send( {Sender, Recipients, FinalBody}, [{relay, Relay}, {username, Username}, {password, Password}] ),
+	ok.
+
+
+
+
+
+
+
+

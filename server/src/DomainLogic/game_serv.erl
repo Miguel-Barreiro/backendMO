@@ -5,9 +5,16 @@
 
 -include("include/softstate.hrl").
 
--define( CONNECTION_TIMEOUT, 40000).
--define( DIFFICULT_CHANGE_SECONDS, 30).
--define( COUNTDOWN_TO_START_MSECONDS , 5000).
+-define(CONNECTION_TIMEOUT, 40000).
+-define(DIFFICULT_CHANGE_SECONDS, 30).
+-define(COUNTDOWN_TO_START_MSECONDS , 5000).
+
+-define(DEBUG_BOARDSYNCH_REPORT_MRELAY, "email-smtp.us-east-1.amazonaws.com").
+-define(DEBUG_BOARDSYNCH_REPORT_MUSER, "AKIAIQ7YY2TRPO3JFGRQ ").
+-define(DEBUG_BOARDSYNCH_REPORT_MPASS, "AiuWv21oHs/ZgRfCU3WHgYNAKcoCpq+oC3RgSxcTPXn6").
+-define(DEBUG_BOARDSYNCH_REPORT_MSENDER, "guilherme.andrade@miniclip.com").
+-define(DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS, ["guilherme.andrade@miniclip.com"]).
+
 
 -type game_state_type() :: init | running | waiting_players | waiting_players_reconect.
 
@@ -63,17 +70,31 @@ debug_cmp_usergamestates(
 			},
 			{RemotePlayerPieceBlock1Type, RemotePlayerPieceBlock2Type}
 ) ->
-	lager:debug( "Received Game State comparison request;\n\tLRandomState: ~p\nRRandomState: ~p\n\nLocal: ~p\n\nRemote: ~p\n\nRemote piece block types: ~p,~p\n", [LRandomState,RRandomState,LocalPlayerState,RemotePlayerState,RemotePlayerPieceBlock1Type,RemotePlayerPieceBlock2Type] ),
+%	lager:debug( "Received Game State comparison request;\n\tLRandomState: ~p\nRRandomState: ~p\n\nLocal: ~p\n\nRemote: ~p\n\nRemote piece block types: ~p,~p\n", [LRandomState,RRandomState,LocalPlayerState,RemotePlayerState,RemotePlayerPieceBlock1Type,RemotePlayerPieceBlock2Type] ),
 
-	lager:debug( "\nLeft:" ),
+	lager:debug( "---------------------------------------------------------------" ),
+	lager:debug( "\nLocal:" ),
 	board:lager_print_board( LBoard ),
-	lager:debug( "\nRight:" ),
+	lager:debug( "\nRemote:" ),
 	board:lager_print_board( RBoard ),
 
-	CompResult = board:are_boards_equal( LBoard, RBoard ), 
-	lager:debug( "Comparison result: ~p\n\n", [CompResult] ),
+	Ret = case board:are_boards_equal( LBoard, RBoard ) of
+		true ->
+			lager:debug( "\e[32mComparison success.\e[m" ),
+			ok;
+		false ->
+			lager:debug( "\e[1m\e[31mComparison FAILED.\e[m" ),
+			swiss:send_email(
+				{?DEBUG_BOARDSYNCH_REPORT_MRELAY, ?DEBUG_BOARDSYNCH_REPORT_MUSER, ?DEBUG_BOARDSYNCH_REPORT_MPASS},
+				?DEBUG_BOARDSYNCH_REPORT_MSENDER, ?DEBUG_BOARDSYNCH_REPORT_MRECIPIENTS,
+				"MiniOrbs ultra-cool report about stuff!!!1!!!!!111!",
+				"¿ OH MY GOD WHAT IS HAPPENING ?\n"
+			),
+			error
+	end,
 
-	ok.
+	lager:debug( "---------------------------------------------------------------" ),
+	Ret.
 
 
 
