@@ -101,16 +101,26 @@ handle_game_start( Logic_user = #logic_user{ lifes_generate_timer = _Timer_ref, 
 
 -spec handle_game_lost( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_lost( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
-	{NewUser, NewTimerRef} = remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
-	{ ok , Logic_user#logic_user{ lifes_generate_timer = NewTimerRef, user = NewUser }}.
+	case remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ) of
+		{error, ReasonL} ->
+			{error, ReasonL};
+		{NewUser, NewTimerRef} ->
+			{ ok , Logic_user#logic_user{ lifes_generate_timer = NewTimerRef, user = NewUser }}
+	end.
 
 
 -spec handle_game_win( Logic_user :: #logic_user{ }, Powers :: [string()], Tier :: league_name() ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_win( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers, Tier ) ->
-	{NewUser1, NewTimerRef} = remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
-	NewUser2 = add_xp_to_user( tier2xp_reward(Tier), NewUser1 ),
-	NewUser3 = add_coins_to_user( tier2coins_reward(Tier), NewUser2 ),
-	{ ok , Logic_user#logic_user{ lifes_generate_timer = NewTimerRef, user = NewUser3 }}.
+	case remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ) of
+		{error, ReasonL} ->
+			{error, ReasonL};
+		{NewUser1, NewTimerRef} ->
+			{NewUser2,PrevXp,NewXp} = add_xp_to_user( tier2xp_reward(Tier), NewUser1 ),
+			PrevLevel = xp2level(PrevXp),
+			NewLevel = xp2level(NewXp),
+			NewUser3 = add_coins_to_user( tier2coins_reward(Tier), NewUser2 ),
+			{ ok , Logic_user#logic_user{ lifes_generate_timer = NewTimerRef, user = NewUser3 }}
+	end.
 
 
 
@@ -307,7 +317,7 @@ add_xp_to_user( Amount, User = #mc_user{} ) when Amount > 0 ->
 	lager:debug("adding xp: CurrentXp ~p  Amount ~p",[CurrentXp,Amount]),
 	{ok, NewXp} = user_store:update_wallet_balance( User#mc_user.user_id, ?XP_KEY, Amount ),
 	NewWallet = [ {?XP_KEY, NewXp} | proplists:delete( ?XP_KEY, User#mc_user.wallet ) ],
-	User#mc_user{ wallet=NewWallet }.
+	{User#mc_user{ wallet=NewWallet }, CurrentXp, (CurrentXp+1)}.
 
 
 
@@ -325,10 +335,10 @@ tier2xp_reward( Tier, Tier2XpRewardGbTree ) ->
 
 
 tier2coins_reward( beginner ) ->
-	tier2xp_reward( 1 );
+	tier2coins_reward( 1 );
 
 tier2coins_reward( Tier ) when is_integer(Tier) ->
-	tier2xp_reward( Tier, gb_trees:from_orddict(?TIER_2_COINREWARD_DICT) ).
+	tier2coins_reward( Tier, gb_trees:from_orddict(?TIER_2_COINREWARD_DICT) ).
 
 tier2coins_reward( Tier, Tier2CoinsRewardGbTree ) ->
 	{value, Value} = gb_trees:lookup( Tier, Tier2CoinsRewardGbTree ),
