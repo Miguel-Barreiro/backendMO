@@ -134,6 +134,7 @@
 
 
 
+-type league_name() :: beginner | skilled | expert | master.
 
 %% CONFIGURATION MODULE
 

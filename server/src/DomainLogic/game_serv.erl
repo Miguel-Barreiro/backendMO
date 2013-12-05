@@ -1,7 +1,7 @@
 -module(game_serv).
 -behaviour(gen_server).
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/8]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/9]).
 
 -include("include/softstate.hrl").
 
@@ -29,7 +29,7 @@
 }).
 
 -record(game_state, {
-
+	tier = undefined,
 	game_difficult_change_timer = undefined,
 	time_difficult_change_left = 0,
 
@@ -48,8 +48,8 @@
 
 
 
-start_link( User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url  ) ->
-    gen_server:start_link(?MODULE, [ User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url ], []).
+start_link( Tier, User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url  ) ->
+    gen_server:start_link(?MODULE, [ Tier, User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url ], []).
 
 init(InitData) ->
 	gen_server:cast(self(), InitData),
@@ -122,7 +122,7 @@ debug_cmp_usergamestates(
 
 
 
-handle_cast([User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url], State = #game_state{ }) ->
+handle_cast([Tier, User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers, Conf_version, Conf_url], State = #game_state{ }) ->
 
 	lager:debug("new game with user_id ~p user ~p",[User_pid,User_pid2]),
 
@@ -132,6 +132,7 @@ handle_cast([User_pid, User_id, User1_powers, User_pid2, User_id2, User2_powers,
 	Connection_monitor2 = monitor(process, User_pid2),
 
 	{noreply, State#game_state{
+				tier = Tier,
 				user1 = #game_user{ pid = User_pid, user_id = User_id, monitor = Connection_monitor1, powers_equipped = User1_powers },
 				user2 = #game_user{ pid = User_pid2, user_id = User_id2, monitor = Connection_monitor2, powers_equipped = User2_powers },
 				state = init,
@@ -270,22 +271,22 @@ handle_cast({ use_power, Power, User_pid }, State = #game_state{ user1 = User1, 
 
 
 
-handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ user1 = User1, user2 = User2 } )  ->
+handle_cast( { user_lost_game, Lost_user_pid } , State = #game_state{ tier = Tier, user1 = User1, user2 = User2 } )  ->
 	lager:debug("game ~p is going to end",[self()]),
 
 	case Lost_user_pid == User2#game_user.pid of
 		true ->
-			gen_server:cast( User2#game_user.pid, {game_lost, User2#game_user.powers_equipped, no_reason}),
-			gen_server:cast( User1#game_user.pid, {game_win, User1#game_user.powers_equipped, normal});
+			gen_server:cast( User2#game_user.pid, {game_lost, User2#game_user.powers_equipped, Tier, no_reason}),
+			gen_server:cast( User1#game_user.pid, {game_win, User1#game_user.powers_equipped, Tier, normal});
 		false ->
-			gen_server:cast( User1#game_user.pid, {game_lost, User1#game_user.powers_equipped, no_reason}),
-			gen_server:cast( User2#game_user.pid, {game_win, User2#game_user.powers_equipped, normal})
+			gen_server:cast( User1#game_user.pid, {game_lost, User1#game_user.powers_equipped, Tier, no_reason}),
+			gen_server:cast( User2#game_user.pid, {game_win, User2#game_user.powers_equipped, Tier, normal})
 	end,
 
 	erlang:cancel_timer(State#game_state.game_difficult_change_timer),
 
 	rematch_queue_serv:enter(User1#game_user.pid, User1#game_user.user_id,
-								User2#game_user.pid, User2#game_user.user_id),
+								User2#game_user.pid, User2#game_user.user_id, Tier),
 
 	{stop, normal, State#game_state{ state = init }};
 
@@ -444,7 +445,7 @@ handle_cast({ user_disconected, User_pid , User_id } , State = #game_state{ game
 
 
 
-handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentUGStateElems, RemotePlayerUGStateElems}}, State = #game_state{ user1=User1, user2=User2, game_logic_state=GameLogicState }) ->
+handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentUGStateElems, RemotePlayerUGStateElems}}, State = #game_state{ tier=Tier, user1=User1, user2=User2, game_logic_state=GameLogicState }) ->
 	{LocalPlayerState,User,OpponentUser,UserIndex} = case {UserPid=:=User1#game_user.pid, UserPid=:=User2#game_user.pid} of
 		{true,false} ->
 			{GameLogicState#game.user1_gamestate,User1,User2,1};
@@ -457,8 +458,8 @@ handle_cast({ debug_confirm_board_synch, UserPid, {_RemoteOpponentUGStateElems, 
 		ok ->
 			{noreply, State};
 		error ->
-			gen_server:cast( User#game_user.pid,         {game_lost, User#game_user.powers_equipped, board_mismatch}),
-			gen_server:cast( OpponentUser#game_user.pid, {game_win,  OpponentUser#game_user.powers_equipped, disconect}),
+			gen_server:cast( User#game_user.pid,         {game_lost, User#game_user.powers_equipped, Tier, board_mismatch}),
+			gen_server:cast( OpponentUser#game_user.pid, {game_win,  OpponentUser#game_user.powers_equipped, Tier, disconect}),
 			{stop, normal, State}
 	end;
 	

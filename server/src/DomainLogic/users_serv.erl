@@ -222,7 +222,7 @@ handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
 
 
 
-handle_cast( {game_lost, Powers, Reason}, State = #user_process_state{ connection_pid = Connection_pid, logic_user = Logic_user} ) ->
+handle_cast( {game_lost, Powers, _Tier, Reason}, State = #user_process_state{ connection_pid = Connection_pid, logic_user = Logic_user} ) ->
 
 	Msg = message_processor:create_lost_message(Reason),
 	gen_server:cast( Connection_pid, {reply, Msg}),
@@ -236,12 +236,12 @@ handle_cast( {game_lost, Powers, Reason}, State = #user_process_state{ connectio
 	end;
 
 
-handle_cast( {game_win,Powers, Reason}, State = #user_process_state{ connection_pid = Connection_pid, logic_user = Logic_user} ) ->
+handle_cast( {game_win, Powers, Tier, Reason}, State = #user_process_state{ connection_pid = Connection_pid, logic_user = Logic_user} ) ->
 
 	Msg = message_processor:create_won_message(Reason),
 	gen_server:cast( Connection_pid, {reply, Msg}),
 
-	case user_logic:handle_game_win( Logic_user, Powers ) of
+	case user_logic:handle_game_win( Logic_user, Powers, Tier ) of
 		{error , not_enough_lifes} ->
 			{noreply, State};
 

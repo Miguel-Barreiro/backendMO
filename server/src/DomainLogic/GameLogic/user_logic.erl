@@ -4,7 +4,7 @@
 
 -export([ init/1, login/2, logout/1, handle_msg/2 ]).
 
--export([can_enter_game/2,handle_game_start/2,handle_game_lost/2,handle_game_win/2]).
+-export([can_enter_game/2,handle_game_start/2,handle_game_lost/2,handle_game_win/3]).
 -export([xp2level/1]).
 
 
@@ -14,12 +14,17 @@
 -define(COIN_LIFE_RATIO, 1).
 
 -define(LIFES_KEY, <<"lifes">>).
--define(COINS_KEY, <<"coins">>).
 -define(LAST_LOGIN_KEY, <<"time_since_last_login">>).
 
+-define(COINS_KEY, <<"coins">>).
+-define(TIER_2_COINREWARD_DICT, [
+		{1,20},
+		{2,40},
+		{3,75}
+]).
 
 -define(XP_KEY, <<"xp">>).
--define(TIER_2_REWARD_DICT, [
+-define(TIER_2_XPREWARD_DICT, [
 		{1,100},
 		{2,200},
 		{3,350}
@@ -96,16 +101,16 @@ handle_game_start( Logic_user = #logic_user{ lifes_generate_timer = _Timer_ref, 
 
 -spec handle_game_lost( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_lost( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
-	remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
-	{ ok , Logic_user}.
+	{NewUser, NewTimerRef} = remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
+	{ ok , Logic_user#logic_user{ lifes_generate_timer = NewTimerRef, user = NewUser }}.
 
 
--spec handle_game_win( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
-handle_game_win( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
-	remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
-	XpReward = tier2reward( begginer ),
-	add_xp_to_user( XpReward, User ),
-	{ ok , Logic_user}.
+-spec handle_game_win( Logic_user :: #logic_user{ }, Powers :: [string()], Tier :: league_name() ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
+handle_game_win( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers, Tier ) ->
+	{NewUser1, NewTimerRef} = remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
+	NewUser2 = add_xp_to_user( tier2xp_reward(Tier), NewUser1 ),
+	NewUser3 = add_coins_to_user( tier2coins_reward(Tier), NewUser2 ),
+	{ ok , Logic_user#logic_user{ lifes_generate_timer = NewTimerRef, user = NewUser3 }}.
 
 
 
@@ -292,9 +297,6 @@ xp2level( Xp ) ->
 xp2level( Xp, Life2XpGbTree ) ->
 	xp2level_gbtree_ceilkey( Life2XpGbTree, Xp ).
 
-	
-
-
 
 add_xp_to_user( Amount, User = #mc_user{} ) when Amount > 0 ->
 	CurrentXp = case proplists:get_value(?XP_KEY, User#mc_user.wallet) of
@@ -310,15 +312,27 @@ add_xp_to_user( Amount, User = #mc_user{} ) when Amount > 0 ->
 
 
 
-tier2reward( begginer ) ->
-	tier2reward( 1 );
+tier2xp_reward( beginner ) ->
+	tier2xp_reward( 1 );
 
-tier2reward( Tier ) when is_integer(Tier) ->
-	tier2reward( Tier, gb_trees:from_orddict(?TIER_2_REWARD_DICT) ).
+tier2xp_reward( Tier ) when is_integer(Tier) ->
+	tier2xp_reward( Tier, gb_trees:from_orddict(?TIER_2_XPREWARD_DICT) ).
 
-tier2reward( Tier, Tier2RewardGbTree ) ->
-	{value, Value} = gb_trees:lookup( Tier, Tier2RewardGbTree ).
+tier2xp_reward( Tier, Tier2XpRewardGbTree ) ->
+	{value, Value} = gb_trees:lookup( Tier, Tier2XpRewardGbTree ),
+	Value.
 
+
+
+tier2coins_reward( beginner ) ->
+	tier2xp_reward( 1 );
+
+tier2coins_reward( Tier ) when is_integer(Tier) ->
+	tier2xp_reward( Tier, gb_trees:from_orddict(?TIER_2_COINREWARD_DICT) ).
+
+tier2coins_reward( Tier, Tier2CoinsRewardGbTree ) ->
+	{value, Value} = gb_trees:lookup( Tier, Tier2CoinsRewardGbTree ),
+	Value.
 
 
 

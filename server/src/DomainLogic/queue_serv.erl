@@ -1,8 +1,9 @@
 -module(queue_serv).
 -behaviour(gen_server).
 
--define(MATCH_MAKE_INTERVAL, 500).
+-include("include/softstate.hrl").
 
+-define(MATCH_MAKE_INTERVAL, 500).
 
 -define(GAME_SIZE, 2).
 
@@ -11,7 +12,6 @@
 -export([enter/5, leave/2, calculate_match_desire_ratio/1]).
 
 
--type league_name() :: beginner | skilled | expert | master.
 
 -record( queue_user, { 
 	user_pid = undefined :: pid(),
@@ -131,7 +131,7 @@ handle_info( match_make , State = #queue_state{} ) ->
 					demonitor( User1#queue_user.user_monitor ),
 					demonitor( User2#queue_user.user_monitor ),
 
-					game_sup:start_new_game_process( [User1#queue_user.user_pid, User1#queue_user.user_id, User1#queue_user.powers,
+					game_sup:start_new_game_process( [League_name, User1#queue_user.user_pid, User1#queue_user.user_id, User1#queue_user.powers,
 														User2#queue_user.user_pid, User2#queue_user.user_id, User2#queue_user.powers,
 															configurations_serv:get_current_version(), 
 															configurations_serv:get_current_url()] ),
