@@ -18,21 +18,27 @@
 -define(LAST_LOGIN_KEY, <<"time_since_last_login">>).
 
 
+-define(XP_KEY, <<"xp">>).
+-define(TIER_2_REWARD_DICT, [
+		{1,100},
+		{2,200},
+		{3,350}
+]).
 -define(LIFE_2_XP_DICT, [
-	{0,0},
-	{100,1},
-	{200,2},
-	{350,3},
-	{450,4},
-	{600,5},
-	{750,6},
-	{900,7},
-	{1050,8},
-	{1200,9},
-	{1400,10},
-	{1600,11},
-	{1800,12},
-	{2000,13}		
+		{0,0},
+		{100,1},
+		{200,2},
+		{350,3},
+		{450,4},
+		{600,5},
+		{750,6},
+		{900,7},
+		{1050,8},
+		{1200,9},
+		{1400,10},
+		{1600,11},
+		{1800,12},
+		{2000,13}		
 ]).
 
 
@@ -97,6 +103,8 @@ handle_game_lost( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, us
 -spec handle_game_win( Logic_user :: #logic_user{ }, Powers :: [string()] ) -> { ok ,#logic_user{}} | {error, not_enough_lifes }.
 handle_game_win( Logic_user = #logic_user{ lifes_generate_timer = Timer_ref, user = User }, Powers ) ->
 	remove_lifes_from_user( ?LIFE_GAME_COST, User, Timer_ref ),
+	XpReward = tier2reward( begginer ),
+	add_xp_to_user( XpReward, User ),
 	{ ok , Logic_user}.
 
 
@@ -288,10 +296,28 @@ xp2level( Xp, Life2XpGbTree ) ->
 
 
 
+add_xp_to_user( Amount, User = #mc_user{} ) when Amount > 0 ->
+	CurrentXp = case proplists:get_value(?XP_KEY, User#mc_user.wallet) of
+		undefined ->	0;
+		Other -> 		Other
+	end,
+
+	lager:debug("adding xp: CurrentXp ~p  Amount ~p",[CurrentXp,Amount]),
+	{ok, NewXp} = user_store:update_wallet_balance( User#mc_user.user_id, ?XP_KEY, Amount ),
+	NewWallet = [ {?XP_KEY, NewXp} | proplists:delete( ?XP_KEY, User#mc_user.wallet ) ],
+	User#mc_user{ wallet=NewWallet }.
 
 
 
 
+tier2reward( begginer ) ->
+	tier2reward( 1 );
+
+tier2reward( Tier ) when is_integer(Tier) ->
+	tier2reward( Tier, gb_trees:from_orddict(?TIER_2_REWARD_DICT) ).
+
+tier2reward( Tier, Tier2RewardGbTree ) ->
+	{value, Value} = gb_trees:lookup( Tier, Tier2RewardGbTree ).
 
 
 
