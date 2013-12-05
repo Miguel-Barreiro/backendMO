@@ -5,6 +5,7 @@
 -export([ init/1, login/2, logout/1, handle_msg/2 ]).
 
 -export([can_enter_game/2,handle_game_start/2,handle_game_lost/2,handle_game_win/2]).
+-export([xp2level/1]).
 
 
 -define(LIFE_GENERATION_TIMEOUT, 120).
@@ -12,10 +13,27 @@
 -define(LIFE_GAME_COST, 1).
 -define(COIN_LIFE_RATIO, 1).
 
-
 -define(LIFES_KEY, <<"lifes">>).
 -define(COINS_KEY, <<"coins">>).
 -define(LAST_LOGIN_KEY, <<"time_since_last_login">>).
+
+
+-define(LIFE_2_XP_DICT, [
+	{0,0},
+	{100,1},
+	{200,2},
+	{350,3},
+	{450,4},
+	{600,5},
+	{750,6},
+	{900,7},
+	{1050,8},
+	{1200,9},
+	{1400,10},
+	{1600,11},
+	{1800,12},
+	{2000,13}		
+]).
 
 
 
@@ -142,8 +160,8 @@ remove_lifes_from_user( Amount, User = #mc_user{}, Timer_ref ) ->
 
 	case user_store:update_wallet_balance( User#mc_user.user_id, ?LIFES_KEY, -Amount) of
 		{ok, New_amount} ->
-			New_properties = [ { ?LIFES_KEY , New_amount} | proplists:delete( ?LIFES_KEY, User#mc_user.wallet ) ],
-			{ User#mc_user{ properties = New_properties }, New_timer_ref };
+			NewWallet = [ { ?LIFES_KEY , New_amount} | proplists:delete( ?LIFES_KEY, User#mc_user.wallet ) ],
+			{ User#mc_user{ wallet = NewWallet }, New_timer_ref };
 		{error, {insufficient, _ }} ->
 			{ error , not_enough_lifes}
 	end.
@@ -238,7 +256,44 @@ max_coin_life_conversion( User = #mc_user{}, CoinLifeRatio ) when is_integer(Coi
 	end.
 
 	
+
+
+
+
+xp2level_gbtree_ceilkey( Tree, Target ) ->
+	xp2level_gbtree_ceilkey( Tree, gb_trees:iterator(Tree), Target, -1 ).
+
+xp2level_gbtree_ceilkey( Tree, Iterator, Target, PrevV ) ->
+	case gb_trees:next(Iterator) of
+		{K, V, NextIterator} ->
+			case Target < K of
+				true ->
+					PrevV;
+				false ->
+					xp2level_gbtree_ceilkey( Tree, NextIterator, Target, V )
+			end;
+		none ->
+			PrevV
+	end.
 	
+
+xp2level( Xp ) ->
+	xp2level( Xp, gb_trees:from_orddict(?LIFE_2_XP_DICT) ).
+
+
+xp2level( Xp, Life2XpGbTree ) ->
+	xp2level_gbtree_ceilkey( Life2XpGbTree, Xp ).
+
+	
+
+
+
+
+
+
+
+
+
 
 
 
