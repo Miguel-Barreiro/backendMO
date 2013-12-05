@@ -14,40 +14,40 @@
 %-------------- PUBLIC -------------------------
 
 
-create_new_game( User1_pid, User1_powers, User2_pid, User2_powers, Initial_seed  ) ->
+create_new_game( User1Pid, User1Powers, User2Pid, User2Powers, InitialSeed  ) ->
 
-	{ New_random_state, Piece } = calculate_next_piece( Initial_seed ),
+	{ NewRandomState, Piece } = calculate_next_piece( InitialSeed ),
 
-	User1_gamestate = #user_gamestate{ user_pid = User1_pid,
+	User1Gamestate = #user_gamestate{ user_pid = User1Pid,
 										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ),
 											current_piece = Piece,
-												random_state = New_random_state },
+												random_state = NewRandomState },
 
-	User2_gamestate = #user_gamestate{ user_pid = User2_pid,
+	User2Gamestate = #user_gamestate{ user_pid = User2Pid,
 										board = board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT ),
 											current_piece = Piece,
-												random_state = New_random_state },
+												random_state = NewRandomState },
 
-	Game_rules = game_rules:get_current_rules(<<"Normal">>),
+	GameRules = game_rules:get_current_rules(<<"Normal">>),
 
-	User1_final_gamestate = equip_powers(User1_gamestate,User1_powers),
-	User2_final_gamestate = equip_powers(User2_gamestate,User2_powers),
+	User1FinalGamestate = equip_powers(User1Gamestate,User1Powers),
+	User2FinalGamestate = equip_powers(User2Gamestate,User2Powers),
 
-	#game{ user1_gamestate = User1_final_gamestate, 
-			user2_gamestate = User2_final_gamestate,
-				initial_seed = Initial_seed, 
-					game_rules = Game_rules }.
-
-
+	#game{ user1_gamestate = User1FinalGamestate, 
+			user2_gamestate = User2FinalGamestate,
+				initial_seed = InitialSeed, 
+					game_rules = GameRules }.
 
 
 
-equip_powers( User_gamestate = #user_gamestate{}, Powers )->
-	User_gamestate#user_gamestate{ board = equip_powers(User_gamestate#user_gamestate.board, Powers) };
+
+
+equip_powers( UserGamestate = #user_gamestate{}, Powers )->
+	UserGamestate#user_gamestate{ board = equip_powers(UserGamestate#user_gamestate.board, Powers) };
 equip_powers( Board = #board{}, [] )->
 	Board;
 equip_powers( Board = #board{}, [ Power | Rest ] )->
-	New_board = case Power of
+	NewBoard = case Power of
 		<<"frenzypower">> ->			Board#board{ active_powers_equiped = [ frenzy | Board#board.active_powers_equiped] };
 		<<"trashpower">> ->				Board#board{ active_powers_equiped = [ trash | Board#board.active_powers_equiped] };
 		<<"redbuttonpower">> ->			Board#board{ active_powers_equiped = [ redbutton | Board#board.active_powers_equiped] };
@@ -55,50 +55,50 @@ equip_powers( Board = #board{}, [ Power | Rest ] )->
 		<<"killingblowpower">> ->		Board#board{ killing_blow_active = true };
 		<<"barrierpower">> ->			Board#board{ barrier_active = true }
 	end,
-	equip_powers( New_board, Rest ).
+	equip_powers( NewBoard, Rest ).
 
 
 
 
 
-handle_power_use( User_pid, Power, Game = #game{} ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid -> 
+handle_power_use( UserPid, Power, Game = #game{} ) when UserPid == (Game#game.user1_gamestate)#user_gamestate.user_pid -> 
 
 	io:format("\n-------------------------------- \n",[]),
-	io:format("\n USER 1 ~p USED POWER \n",[User_pid]),
+	io:format("\n USER 1 ~p USED POWER \n",[UserPid]),
 
-	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
-	{New_gamestate, New_opponent_gamestate} = handle_power_use( Power, User_pid, Opponent_pid, 
+	OpponentPid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
+	{NewGamestate, NewOpponentGamestate} = handle_power_use( Power, UserPid, OpponentPid, 
 																	Game#game.user1_gamestate, Game#game.user2_gamestate, 
 																		Game#game.game_rules),
-	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
+	Game#game{ user1_gamestate = NewGamestate, user2_gamestate = NewOpponentGamestate };
 
 
-handle_power_use( User_pid, Power, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid -> 
+handle_power_use( UserPid, Power, Game = #game{} ) when UserPid == (Game#game.user2_gamestate)#user_gamestate.user_pid -> 
 	io:format("\n-------------------------------- \n",[]),
-	io:format("\n USER 1 ~p USED POWER \n",[User_pid]),
+	io:format("\n USER 1 ~p USED POWER \n",[UserPid]),
 
-	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
-	{New_gamestate, New_opponent_gamestate} = handle_power_use( Power, User_pid, Opponent_pid, 
+	OpponentPid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
+	{NewGamestate, NewOpponentGamestate} = handle_power_use( Power, UserPid, OpponentPid, 
 																	Game#game.user2_gamestate, Game#game.user1_gamestate, 
 																		Game#game.game_rules),
-	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate }.
+	Game#game{ user1_gamestate = NewGamestate, user2_gamestate = NewOpponentGamestate }.
 
 
-handle_power_use( Power, _User_pid, _Opponent_pid, User_gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{}, Game_rules = #game_logic_rules{} ) ->
-	{User_board, Opponent_board} = powers_logic:handle_use_power( Power, User_gamestate#user_gamestate.board, Opponent_gamestate#user_gamestate.board, Game_rules),
-	{ User_gamestate#user_gamestate{ board = User_board }, Opponent_gamestate#user_gamestate{ board = Opponent_board } }.
-
-
-
+handle_power_use( Power, _UserPid, _OpponentPid, UserGamestate = #user_gamestate{}, OpponentGamestate = #user_gamestate{}, GameRules = #game_logic_rules{} ) ->
+	{UserBoard, OpponentBoard} = powers_logic:handle_use_power( Power, UserGamestate#user_gamestate.board, OpponentGamestate#user_gamestate.board, GameRules),
+	{ UserGamestate#user_gamestate{ board = UserBoard }, OpponentGamestate#user_gamestate{ board = OpponentBoard } }.
 
 
 
 
-activate_ability_blocks( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
+
+
+
+activate_ability_blocks( Board = #board{}, GameRules = #game_logic_rules{} ) ->
 
 	Blocks = board:get_all_blocks(Board),
 
-	Filter_fun = fun( Block = #block{} ) ->
+	FilterFun = fun( Block = #block{} ) ->
 		case Block#block.type of
 			bomb -> 				true;
 			chromatic_bomb -> 		true;
@@ -109,12 +109,12 @@ activate_ability_blocks( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 			_other -> 				false
 		end
 	end,
-	Ability_blocks = lists:filter( Filter_fun, Blocks ),
-	New_board = activate_blocks( order_activated_block_list( Ability_blocks ) , Board),
-	Board_after_ghosts = trigger_ghosts(New_board, Game_rules),
-	Board_with_reinforcements = release_reinforcements( Board_after_ghosts ),
-	Board_after_ability_chain = reset_board( Board_with_reinforcements ),
-	{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_ability_chain, Game_rules ).
+	AbilityBlocks = lists:filter( FilterFun, Blocks ),
+	NewBoard = activate_blocks( order_activated_block_list( AbilityBlocks ) , Board),
+	BoardAfterGhosts = trigger_ghosts(NewBoard, GameRules),
+	BoardWithReinforcements = release_reinforcements( BoardAfterGhosts ),
+	BoardAfterAbilityChain = reset_board( BoardWithReinforcements ),
+	{ New_Combos , NewBoard} = apply_gravity_combo_loop( BoardAfterAbilityChain, GameRules ).
 
 
 
@@ -122,14 +122,14 @@ activate_ability_blocks( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
 
 %throws out_of_bounds (in case the user has lost)
 %throws invalid_move (in case of an invalid move)
-handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}, Client_garbage_id ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
+handle_place_piece( UserPid, X, Y, Angle,  Game = #game{}, ClientGarbageId ) when UserPid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
 	
 	io:format("\n-------------------------------- \n",[]),
-	io:format("\n USER 1 ~p PLACE A PIECE \n",[User_pid]),
+	io:format("\n USER 1 ~p PLACE A PIECE \n",[UserPid]),
 
-	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
-	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
-																	Opponent_pid, Client_garbage_id,
+	OpponentPid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
+	{NewGamestate, NewOpponentGamestate} = handle_place_piece( UserPid, 
+																	OpponentPid, ClientGarbageId,
 																		(Game#game.user1_gamestate)#user_gamestate.current_piece, 
 																			X, Y, Angle, 
 																				Game#game.user1_gamestate, 
@@ -137,119 +137,117 @@ handle_place_piece( User_pid, X, Y, Angle,  Game = #game{}, Client_garbage_id ) 
 																						Game#game.game_rules ),
 
 
-	board:print_board( New_gamestate#user_gamestate.board ),
+	board:print_board( NewGamestate#user_gamestate.board ),
 	io:format("\n-------------------------------- \n",[]),
 
-	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state, 
+	Msg = message_processor:create_debug_board(NewGamestate#user_gamestate.random_state, 
 													0, 0, up,
-													board:get_all_blocks( New_gamestate#user_gamestate.board), 
+													board:get_all_blocks( NewGamestate#user_gamestate.board), 
 													[],
-														New_opponent_gamestate#user_gamestate.random_state, 
+														NewOpponentGamestate#user_gamestate.random_state, 
 														0, 0, up, 
-														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
-	gen_server:cast( User_pid , { send_message, Msg} ),
+														board:get_all_blocks( NewOpponentGamestate#user_gamestate.board), [] ),
+	gen_server:cast( UserPid , { send_message, Msg} ),
 
-	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
+	Game#game{ user1_gamestate = NewGamestate, user2_gamestate = NewOpponentGamestate };
 
 
 
-handle_place_piece( User_pid, X, Y, Angle, Game = #game{}, Client_garbage_id ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
+handle_place_piece( UserPid, X, Y, Angle, Game = #game{}, ClientGarbageId ) when UserPid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
 
 	io:format("\n--------------------------------\n",[]),
-	io:format("\n USER 2 (~p) PLACE A PIECE \n",[User_pid]),
+	io:format("\n USER 2 (~p) PLACE A PIECE \n",[UserPid]),
 
-	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
-	{New_gamestate, New_opponent_gamestate} = handle_place_piece( User_pid, 
-																	Opponent_pid, Client_garbage_id,
+	OpponentPid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
+	{NewGamestate, NewOpponentGamestate} = handle_place_piece( UserPid, 
+																	OpponentPid, ClientGarbageId,
 																		(Game#game.user2_gamestate)#user_gamestate.current_piece, 
 																			X, Y, Angle, 
 																				Game#game.user2_gamestate, 
 																					Game#game.user1_gamestate,
 																						Game#game.game_rules ),
 
-	board:print_board( New_gamestate#user_gamestate.board ),
+	board:print_board( NewGamestate#user_gamestate.board ),
 	io:format("\n--------------------------------\n",[]),
 
-	Msg = message_processor:create_debug_board(New_gamestate#user_gamestate.random_state,
+	Msg = message_processor:create_debug_board(NewGamestate#user_gamestate.random_state,
 													0, 0, up,
-													board:get_all_blocks( New_gamestate#user_gamestate.board), 
+													board:get_all_blocks( NewGamestate#user_gamestate.board), 
 													[],
-														New_opponent_gamestate#user_gamestate.random_state, 
+														NewOpponentGamestate#user_gamestate.random_state, 
 														0, 0, up, 
-														board:get_all_blocks( New_opponent_gamestate#user_gamestate.board), [] ),
-	gen_server:cast( User_pid , { send_message, Msg} ),
+														board:get_all_blocks( NewOpponentGamestate#user_gamestate.board), [] ),
+	gen_server:cast( UserPid , { send_message, Msg} ),
 
-	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
-
-
+	Game#game{ user2_gamestate = NewGamestate, user1_gamestate = NewOpponentGamestate }.
 
 
-handle_place_piece( User_pid, Opponent_pid, Client_garbage_id,
+
+
+handle_place_piece( UserPid, OpponentPid, ClientGarbageId,
 						Piece = #piece{}, X, Y, 
-							Angle, Begin_gamestate = #user_gamestate{}, Begin_opponent_gamestate = #user_gamestate{}, 
-								Game_rules = #game_logic_rules{} ) ->
+							Angle, BeginGamestate = #user_gamestate{}, BeginOpponentGamestate = #user_gamestate{}, 
+								GameRules = #game_logic_rules{} ) ->
 
 	io:format("\nplaced the piece [~p ~p] with angle ~p in ~p,~p with client_garbage_id ~p\n",
-					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y,Client_garbage_id]),
+					[board:get_block_representation(Piece#piece.block1),board:get_block_representation(Piece#piece.block2),Angle,X,Y,ClientGarbageId]),
 
-	case Piece == Begin_gamestate#user_gamestate.current_piece of	
+	case Piece == BeginGamestate#user_gamestate.current_piece of	
 		false ->
 			lager:debug("invalid piece place: wrong piece",[]),
 			throw( invalid_move );
 		true ->
 
-			Board_after_place_piece = place_piece( Piece, X, Y, Angle, Begin_gamestate#user_gamestate.board),
-			{ Generated_garbage_position_list, 
-				Generated_garbage_id, 
-					Result_gamestate, 
-						Result_opponent_gamestate} = execute_turn( Begin_gamestate#user_gamestate{ 	board = Board_after_place_piece#board{ reinforcements = [] } }, 
-																										Begin_opponent_gamestate, 
-																											Game_rules, 
-																												Client_garbage_id ),
+			BoardAfterPlacePiece = place_piece( Piece, X, Y, Angle, BeginGamestate#user_gamestate.board),
+			{ GeneratedGarbagePositionList, 
+				GeneratedGarbageId, 
+					ResultGamestate, 
+						ResultOpponentGamestate} = execute_turn( BeginGamestate#user_gamestate{ 	board = BoardAfterPlacePiece#board{ reinforcements = [] } }, 
+																										BeginOpponentGamestate, 
+																											GameRules, 
+																												ClientGarbageId ),
 
-			send_turn_messages(User_pid, Opponent_pid, Generated_garbage_position_list, Piece, Angle, X, Y, Client_garbage_id, Generated_garbage_id),
+			send_turn_messages(UserPid, OpponentPid, GeneratedGarbagePositionList, Piece, Angle, X, Y, ClientGarbageId, GeneratedGarbageId),
 
-			{ Result_gamestate, Result_opponent_gamestate }
+			{ ResultGamestate, ResultOpponentGamestate }
 	end.
 
 
 
 
 
-execute_turn( Player_gamestate = #user_gamestate{ board = Board}, 
-				Opponent_gamestate = # user_gamestate{ board = Opponent_Board}, 
-					Game_rules = #game_logic_rules{}, Client_garbage_id) ->
+execute_turn( PlayerGamestate = #user_gamestate{ board = Board}, 
+				OpponentGamestate = # user_gamestate{ board = Opponent_Board}, 
+					GameRules = #game_logic_rules{}, ClientGarbageId) ->
 
-	{ Normal_combos , Result_loop_board } = apply_gravity_combo_loop( Board, Game_rules ),
+	{ NormalCombos , ResultLoopBoard } = apply_gravity_combo_loop( Board, GameRules ),
 
-	{ Red_button_combos, Board_after_red_button } = powers_logic:trigger_red_button(Result_loop_board, Game_rules),
-	Combos_total = lists:append(Red_button_combos, Normal_combos),			
+	{ RedButtonCombos, BoardAfterRedButton } = powers_logic:trigger_red_button(ResultLoopBoard, GameRules),
+	CombosTotal = lists:append(RedButtonCombos, NormalCombos),			
 
-	{Gamestate_after_piece, Next_piece} = calculate_next_piece( Player_gamestate#user_gamestate{ board = Board_after_red_button}, Combos_total, Game_rules ),
+	{GamestateAfterPiece, NextPiece} = calculate_next_piece( PlayerGamestate#user_gamestate{ board = BoardAfterRedButton}, CombosTotal, GameRules ),
 
-	{Garbage_to_release_list, Gamestate_after_garbage_release} = get_garbage_to_release(Client_garbage_id,Gamestate_after_piece),
-	Board_after_release_garbage = release_garbage_list( Gamestate_after_garbage_release#user_gamestate.board, Garbage_to_release_list ),
+	{GarbageToReleaseList, GamestateAfterGarbageRelease} = get_garbage_to_release(ClientGarbageId,GamestateAfterPiece),
+	BoardAfterReleaseGarbage = release_garbage_list( GamestateAfterGarbageRelease#user_gamestate.board, GarbageToReleaseList ),
 
-	Generated_garbage_position_list = calculate_garbage_from_combos( Combos_total, Board_after_release_garbage, Opponent_Board, Game_rules ),
-	{New_opponent_gamestate,Generated_garbage_id} = add_garbage_to_stack( Generated_garbage_position_list, Opponent_gamestate ),
+	GeneratedGarbagePositionList = calculate_garbage_from_combos( CombosTotal, BoardAfterReleaseGarbage, Opponent_Board, GameRules ),
+	{NewOpponentGamestate,GeneratedGarbageId} = add_garbage_to_stack( GeneratedGarbagePositionList, OpponentGamestate ),
 
-	{ Result_player_Board, Result_opponent_board } = powers_logic:handle_turn_passed(Board_after_release_garbage, 
-																						New_opponent_gamestate#user_gamestate.board,
-																							Game_rules),
-	Result_gamestate = Gamestate_after_garbage_release#user_gamestate{
-								board = Result_player_Board#board{ triggered_abilities = [] },
-								current_piece = Next_piece,
+	{ ResultPlayer_Board, ResultOpponentBoard } = powers_logic:handle_turn_passed(BoardAfterReleaseGarbage, 
+																						NewOpponentGamestate#user_gamestate.board,
+																							GameRules),
+	ResultGamestate = GamestateAfterGarbageRelease#user_gamestate{
+								board = ResultPlayer_Board#board{ triggered_abilities = [] },
+								current_piece = NextPiece,
 								current_piece_angle = down,
 								current_piece_x = ?STARTING_PIECE_X,
-								current_piece_y = Result_player_Board#board.height - 1,
-								piece_generation_step = Gamestate_after_piece#user_gamestate.piece_generation_step + 1
+								current_piece_y = ResultPlayer_Board#board.height - 1,
+								piece_generation_step = GamestateAfterPiece#user_gamestate.piece_generation_step + 1
 						},
 
-	Result_opponent_gamestate = New_opponent_gamestate#user_gamestate{ board = Result_opponent_board},
+	ResultOpponentGamestate = NewOpponentGamestate#user_gamestate{ board = ResultOpponentBoard},
 
-	{ Generated_garbage_position_list, Generated_garbage_id, Result_gamestate, Result_opponent_gamestate}.
-
-
+	{ GeneratedGarbagePositionList, GeneratedGarbageId, ResultGamestate, ResultOpponentGamestate}.
 
 
 
@@ -257,49 +255,51 @@ execute_turn( Player_gamestate = #user_gamestate{ board = Board},
 
 
 
-send_turn_messages(User_pid, Opponent_pid, Generated_garbage_position_list, Piece, Angle, X, Y, Client_garbage_id, Generated_garbage_id) ->
-	case length(Generated_garbage_position_list) of
+
+
+send_turn_messages(UserPid, OpponentPid, GeneratedGarbagePositionList, Piece, Angle, X, Y, ClientGarbageId, GeneratedGarbageId) ->
+	case length(GeneratedGarbagePositionList) of
 		0 ->
 			do_nothing;
 		_other ->
-			Msg_generated = message_processor:create_generated_garbage_message( Generated_garbage_position_list, 
-																				Generated_garbage_id ),
-			gen_server:cast( User_pid , { send_message, Msg_generated } )
+			MsgGenerated = message_processor:create_generated_garbage_message( GeneratedGarbagePositionList, 
+																				GeneratedGarbageId ),
+			gen_server:cast( UserPid , { send_message, MsgGenerated } )
 	end,
 
-	Msg = message_processor:create_opponent_place_piece_message( Generated_garbage_position_list, Piece, 
+	Msg = message_processor:create_opponent_place_piece_message( GeneratedGarbagePositionList, Piece, 
 																	X, Y, Angle, 
-																		Client_garbage_id,
-																		Generated_garbage_id ),
-	gen_server:cast( Opponent_pid , { send_message, Msg } ).
+																		ClientGarbageId,
+																		GeneratedGarbageId ),
+	gen_server:cast( OpponentPid , { send_message, Msg } ).
 
 
 
-get_garbage_to_release( Client_garbage_id, Player_state = #user_gamestate{} ) ->
+get_garbage_to_release( ClientGarbageId, PlayerState = #user_gamestate{} ) ->
 	
-	lager:debug("current garbage stack is ~p\n",[Player_state#user_gamestate.garbage_position_list]),
+	lager:debug("current garbage stack is ~p\n",[PlayerState#user_gamestate.garbage_position_list]),
 
-	Fun = fun( { Garbage_id , Garbage_list}, {Result_list, Unrelease_garbage} ) ->
-		case Garbage_id =< Client_garbage_id of
-			true ->			{ lists:append( Garbage_list , Result_list ) , Unrelease_garbage};
-			false ->		{ Result_list, [ { Garbage_id , Garbage_list} | Unrelease_garbage ] }
+	Fun = fun( { GarbageId , GarbageList}, {ResultList, UnreleaseGarbage} ) ->
+		case GarbageId =< ClientGarbageId of
+			true ->			{ lists:append( GarbageList , ResultList ) , UnreleaseGarbage};
+			false ->		{ ResultList, [ { GarbageId , GarbageList} | UnreleaseGarbage ] }
 		end
 	end,
-	{Result_list, Unrelease_garbage} = lists:foldl( Fun, {[],[]}, Player_state#user_gamestate.garbage_position_list ),
+	{ResultList, UnreleaseGarbage} = lists:foldl( Fun, {[],[]}, PlayerState#user_gamestate.garbage_position_list ),
 
-	lager:info("\n garbage to release is ~p and unreleased now is ~p\n",[Result_list,Unrelease_garbage]),
+	lager:info("\n garbage to release is ~p and unreleased now is ~p\n",[ResultList,UnreleaseGarbage]),
 
-	{Result_list,Player_state#user_gamestate{ garbage_position_list = Unrelease_garbage } }.
+	{ResultList,PlayerState#user_gamestate{ garbage_position_list = UnreleaseGarbage } }.
 
 
 
-add_garbage_to_stack( Garbage_list, Player_state = #user_gamestate{} ) ->
-	New_opponent_garbage_list = [ {Player_state#user_gamestate.current_garbage_id, Garbage_list} | Player_state#user_gamestate.garbage_position_list ],
+add_garbage_to_stack( GarbageList, PlayerState = #user_gamestate{} ) ->
+	NewOpponentGarbageList = [ {PlayerState#user_gamestate.current_garbage_id, GarbageList} | PlayerState#user_gamestate.garbage_position_list ],
 	{
-		Player_state#user_gamestate{ garbage_position_list = New_opponent_garbage_list, 
-										current_garbage_id = Player_state#user_gamestate.current_garbage_id + 1 },
+		PlayerState#user_gamestate{ garbage_position_list = NewOpponentGarbageList, 
+										current_garbage_id = PlayerState#user_gamestate.current_garbage_id + 1 },
 
-		Player_state#user_gamestate.current_garbage_id 
+		PlayerState#user_gamestate.current_garbage_id 
 	}.
 
 
@@ -308,45 +308,45 @@ add_garbage_to_stack( Garbage_list, Player_state = #user_gamestate{} ) ->
 
 %throws out_of_bounds (in case the user has lost)
 %throws invalid_move (in case of an invalid move)
-handle_update_piece( User_pid, X, Y, Angle,  Game = #game{}  ) when User_pid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
-	Opponent_pid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
-	{New_gamestate, New_opponent_gamestate} = handle_update_piece( User_pid, 
-																	Opponent_pid,
+handle_update_piece( UserPid, X, Y, Angle,  Game = #game{}  ) when UserPid == (Game#game.user1_gamestate)#user_gamestate.user_pid->
+	OpponentPid = (Game#game.user2_gamestate)#user_gamestate.user_pid,
+	{NewGamestate, NewOpponentGamestate} = handle_update_piece( UserPid, 
+																	OpponentPid,
 																		(Game#game.user1_gamestate)#user_gamestate.current_piece, 
 																			X, Y, Angle, 
 																				Game#game.user1_gamestate, 
 																					Game#game.user2_gamestate ),
 
-	Game#game{ user1_gamestate = New_gamestate, user2_gamestate = New_opponent_gamestate };
+	Game#game{ user1_gamestate = NewGamestate, user2_gamestate = NewOpponentGamestate };
 
-handle_update_piece( User_pid, X, Y, Angle, Game = #game{} ) when User_pid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
+handle_update_piece( UserPid, X, Y, Angle, Game = #game{} ) when UserPid == (Game#game.user2_gamestate)#user_gamestate.user_pid->
 
-	Opponent_pid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
-	{New_gamestate, New_opponent_gamestate} = handle_update_piece( User_pid, 
-																	Opponent_pid,
+	OpponentPid = (Game#game.user1_gamestate)#user_gamestate.user_pid,
+	{NewGamestate, NewOpponentGamestate} = handle_update_piece( UserPid, 
+																	OpponentPid,
 																		(Game#game.user2_gamestate)#user_gamestate.current_piece, 
 																			X, Y, Angle, 
 																				Game#game.user2_gamestate, 
 																					Game#game.user1_gamestate ),
 
-	Game#game{ user2_gamestate = New_gamestate, user1_gamestate = New_opponent_gamestate }.
+	Game#game{ user2_gamestate = NewGamestate, user1_gamestate = NewOpponentGamestate }.
 
 
 
 
 
-handle_update_piece( _User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gamestate = #user_gamestate{}, Opponent_gamestate = #user_gamestate{} ) ->
+handle_update_piece( _UserPid, OpponentPid, Piece = #piece{}, X, Y, Angle, Gamestate = #user_gamestate{}, OpponentGamestate = #user_gamestate{} ) ->
 
 	case Piece == Gamestate#user_gamestate.current_piece of	
 		false ->
 			lager:debug("invalid piece update: wrong piece",[]),
 			throw( invalid_move );
 		true ->
-			gen_server:cast( Opponent_pid , { send_message, message_processor:create_update_piece_message( Angle, X, Y) } ),
-			New_gamestate = Gamestate#user_gamestate{  current_piece_angle = Angle,
+			gen_server:cast( OpponentPid , { send_message, message_processor:create_update_piece_message( Angle, X, Y) } ),
+			NewGamestate = Gamestate#user_gamestate{  current_piece_angle = Angle,
 															current_piece_x = X,
 																current_piece_y = Y },
-			{ New_gamestate, Opponent_gamestate }
+			{ NewGamestate, OpponentGamestate }
 	end.
 
 
@@ -358,20 +358,20 @@ handle_update_piece( _User_pid, Opponent_pid, Piece = #piece{}, X, Y, Angle, Gam
 %-------------- PRIVATE -------------------------
 
 
-apply_gravity_combo_loop( Board = #board{} , Game_rules = #game_logic_rules{} ) ->
-	Board_after_gravity = simulate_gravity( Board ),
-	Combos = calculate_combos( Board_after_gravity, Game_rules ),
+apply_gravity_combo_loop( Board = #board{} , GameRules = #game_logic_rules{} ) ->
+	BoardAfterGravity = simulate_gravity( Board ),
+	Combos = calculate_combos( BoardAfterGravity, GameRules ),
 	case Combos of
 		[] ->
-			{ [], Board_after_gravity };
+			{ [], BoardAfterGravity };
 		_other ->
-			Board_after_pop_combos = pop_combos( Board_after_gravity, Combos ),
-			Board_after_ghosts = trigger_ghosts(Board_after_pop_combos, Game_rules),
-			Board_with_reinforcements = release_reinforcements( Board_after_ghosts ),
-			Board_after_ability_chain = reset_board( Board_with_reinforcements ),
+			BoardAfterPopCombos = pop_combos( BoardAfterGravity, Combos ),
+			BoardAfterGhosts = trigger_ghosts(BoardAfterPopCombos, GameRules),
+			BoardWithReinforcements = release_reinforcements( BoardAfterGhosts ),
+			BoardAfterAbilityChain = reset_board( BoardWithReinforcements ),
 
-			{ New_Combos , New_board} = apply_gravity_combo_loop( Board_after_ability_chain, Game_rules ),
-			{ [ Combos | New_Combos ] , New_board}
+			{ New_Combos , NewBoard} = apply_gravity_combo_loop( BoardAfterAbilityChain, GameRules ),
+			{ [ Combos | New_Combos ] , NewBoard}
 	end.
 
 
@@ -383,24 +383,24 @@ reset_board( Board = #board{} ) ->
 
 release_reinforcements( Board = #board{} ) ->
 
-	X_list = lists:seq(0, Board#board.width - 1 ),
+	XList = lists:seq(0, Board#board.width - 1 ),
 
-	Fun_foreach_reinforcement = fun( Color, { Y, Result_Board }) ->
+	FunForeachReinforcement = fun( Color, { Y, Result_Board }) ->
 		
-		Fun = fun( X , Inner_result_Board) ->
-			case board:get_block( X, Y, Inner_result_Board) of
+		Fun = fun( X , InnerResult_Board) ->
+			case board:get_block( X, Y, InnerResult_Board) of
 				empty ->
-					board:set_block( #block{ type = color, color = Color }, X, Y, Inner_result_Board);
+					board:set_block( #block{ type = color, color = Color }, X, Y, InnerResult_Board);
 				_block ->
 					lager:info("reinforcements caused the out of bounds"),
 					throw(out_of_bounds)
 			end
 		end,
-		{ Y - 1, lists:foldl( Fun, Result_Board, X_list )}
+		{ Y - 1, lists:foldl( Fun, Result_Board, XList )}
 	end,
 
-	{_,Final_board} = lists:foldl( Fun_foreach_reinforcement, { Board#board.height -1, Board},  Board#board.reinforcements ),
-	Final_board.
+	{_,FinalBoard} = lists:foldl( FunForeachReinforcement, { Board#board.height -1, Board},  Board#board.reinforcements ),
+	FinalBoard.
 
 
 
@@ -432,14 +432,14 @@ place_piece( Piece = #piece{}, X, Y, down, Board = #board{} ) ->
 
 place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
 	Real_y = board:get_column_height( X, Board),
-	Real_y2 = board:get_column_height( X + 1, Board),
-	case Y == Real_y orelse Y == Real_y2 of
+	RealY2 = board:get_column_height( X + 1, Board),
+	case Y == Real_y orelse Y == RealY2 of
 		true ->
 			board:set_block( Piece#piece.block1, X , Real_y,
-			 					board:set_block( Piece#piece.block2, X + 1, Real_y2, Board ) );
+			 					board:set_block( Piece#piece.block2, X + 1, RealY2, Board ) );
 		false ->
 			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
-			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,Real_y2,X + 1,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X + 1 ,RealY2,X + 1,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end;
@@ -447,14 +447,14 @@ place_piece( Piece = #piece{}, X, Y, left, Board = #board{} ) ->
 
 place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 	Real_y = board:get_column_height( X, Board),
-	Real_y2 = board:get_column_height( X - 1, Board),
-	case Y == Real_y orelse Y == Real_y2 of
+	RealY2 = board:get_column_height( X - 1, Board),
+	case Y == Real_y orelse Y == RealY2 of
 		true ->
 			board:set_block( Piece#piece.block1, X , Real_y,
-			 					board:set_block( Piece#piece.block2, X - 1, Real_y2, Board ) );
+			 					board:set_block( Piece#piece.block2, X - 1, RealY2, Board ) );
 		false ->
 			lager:error("piece1 was supposed to be in ~p,~p but was in ~p,~p",[X,Real_y,X,Y]),
-			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,Real_y2,X -1,Y]),
+			lager:error("piece2 was supposed to be in ~p,~p but was in ~p,~p",[X -1 ,RealY2,X -1,Y]),
 			board:print_board(Board),
 			throw( invalid_move )
 	end.
@@ -466,7 +466,7 @@ place_piece( Piece = #piece{}, X, Y, right, Board = #board{} ) ->
 
 
 
-calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
+calculate_combos( Board = #board{}, GameRules = #game_logic_rules{} )->
 	Blocks = board:get_all_blocks(Board),
 
 	Fun = fun( Block = #block{} , Combos ) ->
@@ -477,19 +477,19 @@ calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 			false when Block#block.type == shapeshifter ->
 				Combos;
 			false ->
-				{New_combo, _ } = calculate_combo_for_piece( Block, Block#block.x, Block#block.y, Board),
-				case sets:size(New_combo) of
+				{NewCombo, _ } = calculate_combo_for_piece( Block, Block#block.x, Block#block.y, Board),
+				case sets:size(NewCombo) of
 					0 ->		Combos;
-					_other ->	[New_combo | Combos]
+					_other ->	[NewCombo | Combos]
 				end
 		end
 	end,
 	All_Combos = lists:foldl(Fun, [], Blocks),
 
-	Pred_minimum_combo_size = fun( Combo ) ->
-		sets:size( Combo ) >= Game_rules#game_logic_rules.min_combo_size
+	PredMinimumComboSize = fun( Combo ) ->
+		sets:size( Combo ) >= GameRules#game_logic_rules.min_combo_size
 	end,
-	lists:filter(Pred_minimum_combo_size, All_Combos).
+	lists:filter(PredMinimumComboSize, All_Combos).
 
 
 
@@ -500,23 +500,23 @@ calculate_combos( Board = #board{}, Game_rules = #game_logic_rules{} )->
 
 
 
-pop_combos( Board = #board{}, Combo_list ) ->
+pop_combos( Board = #board{}, ComboList ) ->
 
-	Combo_blocks = lists:foldl( fun( Combo, All_combo_blocks )->
-									lists:append( All_combo_blocks, sets:to_list(Combo) )
-								 end, [], Combo_list),
+	ComboBlocks = lists:foldl( fun( Combo, AllComboBlocks )->
+									lists:append( AllComboBlocks, sets:to_list(Combo) )
+								 end, [], ComboList),
 
 
-	Board_without_combos = lists:foldl( fun( Block = #block{}, Board_without_combos ) ->
-											board:remove_block( Block#block.x, Block#block.y, Board_without_combos)
-										end, Board, Combo_blocks),
+	BoardWithoutCombos = lists:foldl( fun( Block = #block{}, BoardWithoutCombos ) ->
+											board:remove_block( Block#block.x, Block#block.y, BoardWithoutCombos)
+										end, Board, ComboBlocks),
 
-	Blocks_by_proximity = lists:foldl( fun( Combo, List )->
-										lists:append( List, get_afected_by_combo_proximity(Combo , Board_without_combos))
-										end, [], Combo_list), 
+	BlocksByProximity = lists:foldl( fun( Combo, List )->
+										lists:append( List, get_afected_by_combo_proximity(Combo , BoardWithoutCombos))
+										end, [], ComboList), 
 	
-	Board_after_remove_combos_proximity = activate_blocks_by_combo_proximity( Blocks_by_proximity, Board_without_combos),
-	activate_combo_blocks( order_activated_block_list(Combo_blocks), Board_after_remove_combos_proximity).
+	BoardAfterRemoveCombosProximity = activate_blocks_by_combo_proximity( BlocksByProximity, BoardWithoutCombos),
+	activate_combo_blocks( order_activated_block_list(ComboBlocks), BoardAfterRemoveCombosProximity).
 
 
 
@@ -557,11 +557,11 @@ add_affected_block_around_to_set( X, Y, Board = #board{}, Combo, Set ) ->
 
 
 
-get_activated_by_blocks_abilities( Block_list , Board = #board{} ) ->
+get_activated_by_blocks_abilities( BlockList , Board = #board{} ) ->
 	Fun = fun( Block, List ) ->
 		lists:append( get_activated_by_block_abilities( Block, Board ) , List)
 	end,
-	lists:foldl( Fun, [], Block_list ).
+	lists:foldl( Fun, [], BlockList ).
 
 
 
@@ -579,11 +579,11 @@ get_color_order( Color )->
 
 
 
-order_activated_block_list( Block_list ) ->
+order_activated_block_list( BlockList ) ->
 	Fun = fun( Block = #block{} , Block2 = #block{} ) ->
 		get_color_order(Block#block.color) > get_color_order(Block2#block.color)
 	end,
-	lists:sort( Fun , Block_list ).
+	lists:sort( Fun , BlockList ).
 
 
 
@@ -594,29 +594,29 @@ activate_blocks_by_combo_proximity( [ Block | Rest], Board = #board{}) ->
 
 	case board:get_block( Block#block.x, Block#block.y, Board) of
 		
-		Cloner_block when Cloner_block#block.type == cloner ->
-			New_board = pop_cloner( Cloner_block, Board),
-			activate_blocks_by_combo_proximity( Rest, New_board);
+		ClonerBlock when ClonerBlock#block.type == cloner ->
+			NewBoard = pop_cloner( ClonerBlock, Board),
+			activate_blocks_by_combo_proximity( Rest, NewBoard);
 
-		Garbage_block when Garbage_block#block.type == garbage_hard, Garbage_block#block.hardness > 1 ->
-			New_board = board:set_block( Garbage_block#block{ hardness = Garbage_block#block.hardness - 1 }, 
-								Garbage_block#block.x, Garbage_block#block.y, board:remove_block( Garbage_block#block.x, Garbage_block#block.y , Board)),
-			activate_blocks_by_combo_proximity( Rest, New_board);
+		GarbageBlock when GarbageBlock#block.type == garbage_hard, GarbageBlock#block.hardness > 1 ->
+			NewBoard = board:set_block( GarbageBlock#block{ hardness = GarbageBlock#block.hardness - 1 }, 
+								GarbageBlock#block.x, GarbageBlock#block.y, board:remove_block( GarbageBlock#block.x, GarbageBlock#block.y , Board)),
+			activate_blocks_by_combo_proximity( Rest, NewBoard);
 
-		Garbage_block when Garbage_block#block.type == garbage_hard ->
-			New_board = board:remove_block( Garbage_block#block.x, Garbage_block#block.y , Board),
-			activate_blocks_by_combo_proximity( Rest, New_board);
+		GarbageBlock when GarbageBlock#block.type == garbage_hard ->
+			NewBoard = board:remove_block( GarbageBlock#block.x, GarbageBlock#block.y , Board),
+			activate_blocks_by_combo_proximity( Rest, NewBoard);
 
 
-		Garbage_block when Garbage_block#block.type == garbage_color ->
-			New_board = board:set_block( #block{ type = color , color = Garbage_block#block.color }, 
-								Garbage_block#block.x, Garbage_block#block.y, 
-									board:remove_block( Garbage_block#block.x, Garbage_block#block.y, Board) ),
-			activate_blocks_by_combo_proximity( Rest, New_board);
+		GarbageBlock when GarbageBlock#block.type == garbage_color ->
+			NewBoard = board:set_block( #block{ type = color , color = GarbageBlock#block.color }, 
+								GarbageBlock#block.x, GarbageBlock#block.y, 
+									board:remove_block( GarbageBlock#block.x, GarbageBlock#block.y, Board) ),
+			activate_blocks_by_combo_proximity( Rest, NewBoard);
 
-		Garbage_block when Garbage_block#block.type == garbage ->
-			New_board = board:remove_block( Garbage_block#block.x, Garbage_block#block.y, Board),
-			activate_blocks_by_combo_proximity( Rest, New_board);
+		GarbageBlock when GarbageBlock#block.type == garbage ->
+			NewBoard = board:remove_block( GarbageBlock#block.x, GarbageBlock#block.y, Board),
+			activate_blocks_by_combo_proximity( Rest, NewBoard);
 
 		_other ->
 			Board
@@ -631,43 +631,43 @@ activate_blocks_by_combo_proximity( [ Block | Rest], Board = #board{}) ->
 activate_combo_blocks( [], Board = #board{} ) ->
 	Board;
 
-activate_combo_blocks( Block_list, Board = #board{} ) ->
+activate_combo_blocks( BlockList, Board = #board{} ) ->
 
-	Activate_fun = fun( Block, Result_Board = #board{} ) ->
+	ActivateFun = fun( Block, Result_Board = #board{} ) ->
 		activate_block( Block, Result_Board )
 	end,
 
-	Board_after_activate = lists:foldl( Activate_fun , Board, Block_list ),
+	BoardAfterActivate = lists:foldl( ActivateFun , Board, BlockList ),
 
-	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board_after_activate) ),
-	activate_blocks( New_activated_list, Board_after_activate).
+	NewActivatedList = order_activated_block_list( get_activated_by_blocks_abilities(BlockList , BoardAfterActivate) ),
+	activate_blocks( NewActivatedList, BoardAfterActivate).
 
 
 activate_blocks( [], Board = #board{} ) ->
 	Board;
-activate_blocks( Block_list, Board = #board{} ) ->
+activate_blocks( BlockList, Board = #board{} ) ->
 	
-	Remove_fun =  fun( Block, Result_Board = #board{} ) ->
+	RemoveFun =  fun( Block, Result_Board = #board{} ) ->
 		remove_block( Block, Result_Board )
 	end,
 
-	Activate_fun = fun( Block, Result_Board = #board{} ) ->
+	ActivateFun = fun( Block, Result_Board = #board{} ) ->
 		activate_block( Block, Result_Board )
 	end,
 
-	Board_after_removed = lists:foldl( Remove_fun , Board, Block_list ),
-	Board_after_activate = lists:foldl( Activate_fun , Board_after_removed, Block_list ),
+	BoardAfterRemoved = lists:foldl( RemoveFun , Board, BlockList ),
+	BoardAfterActivate = lists:foldl( ActivateFun , BoardAfterRemoved, BlockList ),
 
-	New_activated_list = order_activated_block_list( get_activated_by_blocks_abilities(Block_list , Board_after_activate) ),
-	activate_blocks( New_activated_list, Board_after_activate).
-
-
+	NewActivatedList = order_activated_block_list( get_activated_by_blocks_abilities(BlockList , BoardAfterActivate) ),
+	activate_blocks( NewActivatedList, BoardAfterActivate).
 
 
 
 
 
-remove_block(Paint_block = #block{}, Board = #board{} ) when Paint_block#block.type == paint ->
+
+
+remove_block(PaintBlock = #block{}, Board = #board{} ) when PaintBlock#block.type == paint ->
 	Board;
 remove_block( Block = #block{}, Board = #board{} )->
 	%io:format("\n removing ~p",[Block]),
@@ -705,7 +705,7 @@ activate_block( Block = #block{}, Board = #board{} ) when Block#block.type == gh
 
 
 add_ability_block( Block, List ) ->
-	case lists:any( fun( Any_block ) -> Any_block == Block end, List) of
+	case lists:any( fun( AnyBlock ) -> AnyBlock == Block end, List) of
 		false ->	[ Block | List];
 		true ->		List
 	end.
@@ -749,12 +749,12 @@ add_block_to_list( X, Y, Board = #board{}, List) ->
 
 get_tornado_activated_blocks( X, Y, Board = #board{}) ->
 
-	First_ring = [ {1,0}, {-1,1}, {-1,-1}, {1,1}, {-1,0}, {1,-1}, {0,1}, {0,-1} ],
-	Second_ring = [ {0,2}, {-2,-2}, {2,-2}, {2,2}, {0,-2}, {-2,2}, {2,0}, {-1,2}, {-1,-2}, {2,1}, {-2,0}, {2,-1}, {1,-2}, {-2,1}, {1,2}, {-2,-1} ],
+	FirstRing = [ {1,0}, {-1,1}, {-1,-1}, {1,1}, {-1,0}, {1,-1}, {0,1}, {0,-1} ],
+	SecondRing = [ {0,2}, {-2,-2}, {2,-2}, {2,2}, {0,-2}, {-2,2}, {2,0}, {-1,2}, {-1,-2}, {2,1}, {-2,0}, {2,-1}, {1,-2}, {-2,1}, {1,2}, {-2,-1} ],
 
-	First_ring_pieces = get_tornado_pieces_at( 2, First_ring, X, Y, Board ),
-	Second_ring_pieces = get_tornado_pieces_at( 2, Second_ring, X, Y, Board ),
-	lists:append( First_ring_pieces, Second_ring_pieces).
+	FirstRingPieces = get_tornado_pieces_at( 2, FirstRing, X, Y, Board ),
+	SecondRingPieces = get_tornado_pieces_at( 2, SecondRing, X, Y, Board ),
+	lists:append( FirstRingPieces, SecondRingPieces).
 
 
 get_tornado_pieces_at( 0 , _, _, _, _ ) ->
@@ -779,7 +779,7 @@ get_tornado_pieces_at( Amount, [ {Dx,Dy} | Rest], X, Y, Board = #board{} ) ->
 
 
 
-change_block_color( X, Y, New_color, Board = #board{} ) ->
+change_block_color( X, Y, NewColor, Board = #board{} ) ->
 	case board:get_block( X, Y , Board) of
 		empty ->
 			Board;
@@ -790,10 +790,10 @@ change_block_color( X, Y, New_color, Board = #board{} ) ->
 		Block ->
 			case proplists:get_value( {X,Y}, Board#board.painted ) of
 				undefined ->
-					New_board = board:set_block( Block#block{ color = New_color }, X, Y, board:remove_block( X, Y, Board)),
-					New_board#board{ painted = [ {{X,Y}, New_color} | New_board#board.painted ] };
-				Color when Color == New_color ->
-					board:set_block( Block#block{ color = New_color }, X, Y, board:remove_block( X, Y, Board));
+					NewBoard = board:set_block( Block#block{ color = NewColor }, X, Y, board:remove_block( X, Y, Board)),
+					NewBoard#board{ painted = [ {{X,Y}, NewColor} | NewBoard#board.painted ] };
+				Color when Color == NewColor ->
+					board:set_block( Block#block{ color = NewColor }, X, Y, board:remove_block( X, Y, Board));
 				_color  ->
 					board:set_block( Block#block{ type = shapeshifter, color = undefined }, X, Y, board:remove_block( X, Y, Board))
 			end
@@ -806,82 +806,82 @@ pop_paint( Block, Board = #board{}) ->
 	X = Block#block.x,
 	Y = Block#block.y,
 
-	New_color = Block#block.color,
-	Board_without_paint = board:remove_block( X, Y , Board),
+	NewColor = Block#block.color,
+	BoardWithoutPaint = board:remove_block( X, Y , Board),
 	
-	Result_board = change_block_color( X + 1, Y, New_color, 
-						change_block_color( X, Y + 1, New_color, 
-							change_block_color( X - 1, Y, New_color, 
-								change_block_color( X, Y -1, New_color, Board_without_paint)))),
-	Result_board#board{ triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) }.
+	ResultBoard = change_block_color( X + 1, Y, NewColor, 
+						change_block_color( X, Y + 1, NewColor, 
+							change_block_color( X - 1, Y, NewColor, 
+								change_block_color( X, Y -1, NewColor, BoardWithoutPaint)))),
+	ResultBoard#board{ triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) }.
 
 
 
 
 
 pop_reinforcement( Block, Board = #board{}) ->
-	New_color = Block#block.color,
-	Result_board = board:remove_block( Block#block.x, Block#block.y , Board),
-	Result_board#board{ reinforcements = [ New_color | Result_board#board.reinforcements], 
+	NewColor = Block#block.color,
+	ResultBoard = board:remove_block( Block#block.x, Block#block.y , Board),
+	ResultBoard#board{ reinforcements = [ NewColor | ResultBoard#board.reinforcements], 
 						 triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) }.
 
 
 
-pop_cloner( Cloner_block, Board = #board{}) ->
+pop_cloner( ClonerBlock, Board = #board{}) ->
 
-	X = Cloner_block#block.x,
-	Y = Cloner_block#block.y,
+	X = ClonerBlock#block.x,
+	Y = ClonerBlock#block.y,
 
-	Fun_shift_pieces = fun( Piece_y, Shift_result_board ) ->
+	FunShiftPieces = fun( Piece_y, ShiftResultBoard ) ->
 		case board:get_block( X, Piece_y, Board) of
 			empty ->
-				Shift_result_board;
+				ShiftResultBoard;
 			Block ->
-				board:set_block( Block, X, Piece_y + 1, board:remove_block(X, Piece_y, Shift_result_board))
+				board:set_block( Block, X, Piece_y + 1, board:remove_block(X, Piece_y, ShiftResultBoard))
 		end
 	end,
-	Shifted_board = lists:foldl( Fun_shift_pieces, Board, lists:seq(Board#board.height, Y + 1, -1)),
-	Result_board = board:set_block( #block{ type = color, color = Cloner_block#block.color }, X, Y + 1, Shifted_board ),
-	Result_board.
+	ShiftedBoard = lists:foldl( FunShiftPieces, Board, lists:seq(Board#board.height, Y + 1, -1)),
+	ResultBoard = board:set_block( #block{ type = color, color = ClonerBlock#block.color }, X, Y + 1, ShiftedBoard ),
+	ResultBoard.
 
 
 
 pop_ghost( Block = #block{}, Board = #board{} ) ->
-	Board_without_ghost = board:remove_block( Block#block.x, Block#block.y , Board),
-	Board_without_ghost#board{ ghosts_to_trigger = Board_without_ghost#board.ghosts_to_trigger + 1,
+	BoardWithoutGhost = board:remove_block( Block#block.x, Block#block.y , Board),
+	BoardWithoutGhost#board{ ghosts_to_trigger = BoardWithoutGhost#board.ghosts_to_trigger + 1,
 								 triggered_abilities = add_ability_block( Block, Board#board.triggered_abilities) }.
 
 
 
-trigger_ghosts( Board = #board{ ghosts_to_trigger = Number_ghosts}, _Game_rules = #game_logic_rules{} ) when Number_ghosts == 0 ->
+trigger_ghosts( Board = #board{ ghosts_to_trigger = NumberGhosts}, _GameRules = #game_logic_rules{} ) when NumberGhosts == 0 ->
 	Board;
-trigger_ghosts( Board = #board{}, Game_rules = #game_logic_rules{} ) ->
+trigger_ghosts( Board = #board{}, GameRules = #game_logic_rules{} ) ->
 
-	Garbage_only_filter = fun( Current_Block = #block{} ) ->
+	GarbageOnlyFilter = fun( Current_Block = #block{} ) ->
 		Current_Block#block.type == garbage orelse 
 			Current_Block#block.type == garbage_hard orelse 
 				Current_Block#block.type == garbage_color
 	end,
 
-	Fun_order_garbages = fun( Garbage_block = #block{}, Garbage_block2 = #block{}) ->
-		case Garbage_block#block.type == Garbage_block2#block.type of
+	FunOrderGarbages = fun( GarbageBlock = #block{}, GarbageBlock2 = #block{}) ->
+		case GarbageBlock#block.type == GarbageBlock2#block.type of
 			false ->
-				get_block_type_order( Garbage_block#block.type) > get_block_type_order( Garbage_block2#block.type);
+				get_block_type_order( GarbageBlock#block.type) > get_block_type_order( GarbageBlock2#block.type);
 
-			true when Garbage_block#block.type == garbage_hard andalso Garbage_block#block.hardness =/= Garbage_block2#block.hardness ->
-				Garbage_block#block.hardness > Garbage_block2#block.hardness;
+			true when GarbageBlock#block.type == garbage_hard andalso GarbageBlock#block.hardness =/= GarbageBlock2#block.hardness ->
+				GarbageBlock#block.hardness > GarbageBlock2#block.hardness;
 
 			true ->
-				case Garbage_block#block.x == Garbage_block2#block.x of
-					true ->			Garbage_block#block.y < Garbage_block2#block.y;
-					false ->		Garbage_block#block.x < Garbage_block2#block.x
+				case GarbageBlock#block.x == GarbageBlock2#block.x of
+					true ->			GarbageBlock#block.y < GarbageBlock2#block.y;
+					false ->		GarbageBlock#block.x < GarbageBlock2#block.x
 				end
 		end
 	end,
 
-	Garbage_list = lists:sort( Fun_order_garbages, lists:filter( Garbage_only_filter , board:get_all_blocks( Board ) ) ),
-	Result_board = trigger_ghosts( 1, Garbage_list, Board, Game_rules),
-	Result_board#board{ ghosts_to_trigger = 0 }.
+	GarbageList = lists:sort( FunOrderGarbages, lists:filter( GarbageOnlyFilter , board:get_all_blocks( Board ) ) ),
+	ResultBoard = trigger_ghosts( 1, GarbageList, Board, GameRules),
+	ResultBoard#board{ ghosts_to_trigger = 0 }.
 
 
 
@@ -896,15 +896,15 @@ get_block_type_order( Type ) ->
 
 
 
-trigger_ghosts(_,[], Board = #board{}, _Game_rules = #game_logic_rules{}) ->
+trigger_ghosts(_,[], Board = #board{}, _GameRules = #game_logic_rules{}) ->
 	Board;
-trigger_ghosts(0,_, Board = #board{}, Game_rules = #game_logic_rules{}) ->
+trigger_ghosts(0,_, Board = #board{}, GameRules = #game_logic_rules{}) ->
 	Board;
-trigger_ghosts(How_many, [ Garbage | Rest_garbage_list], Board = #board{}, Game_rules = #game_logic_rules{}) ->
-	Board_with_shapeshifter = board:set_block( #block{ type = shapeshifter }, Garbage#block.x, Garbage#block.y, 
+trigger_ghosts(HowMany, [ Garbage | RestGarbageList], Board = #board{}, GameRules = #game_logic_rules{}) ->
+	BoardWithShapeshifter = board:set_block( #block{ type = shapeshifter }, Garbage#block.x, Garbage#block.y, 
 												board:remove_block( Garbage#block.x, Garbage#block.y, Board ) ),
 
-	trigger_ghosts(How_many - 1, Rest_garbage_list, Board_with_shapeshifter, Game_rules).
+	trigger_ghosts(HowMany - 1, RestGarbageList, BoardWithShapeshifter, GameRules).
 
 
 
@@ -912,12 +912,12 @@ trigger_ghosts(How_many, [ Garbage | Rest_garbage_list], Board = #board{}, Game_
 
 
 get_all_same_color( Color, Board = #board{} ) ->
-	Fun = fun( Block = #block{}, Result_list )->
+	Fun = fun( Block = #block{}, ResultList )->
 		case Block#block.type of
 			color when Block#block.color == Color ->
-				[ Block | Result_list];
+				[ Block | ResultList];
 			_other ->
-				Result_list
+				ResultList
 		end
 	end,
 	lists:foldl( Fun, [], board:get_all_blocks(Board) ).
@@ -937,96 +937,96 @@ simulate_gravity( Board = #board{} )->
 release_garbage_list( Board = #board{}, [] ) ->
 	Board;
 
-release_garbage_list( Board = #board{}, [{{garbage_color, Color}, Garbage_position} | Rest ] ) ->
-	New_board = board:set_block( #block{ type = garbage_color, color = Color }, Garbage_position , board:get_column_height( Garbage_position, Board ), Board ),
-	release_garbage_list( New_board, Rest );
+release_garbage_list( Board = #board{}, [{{garbage_color, Color}, GarbagePosition} | Rest ] ) ->
+	NewBoard = board:set_block( #block{ type = garbage_color, color = Color }, GarbagePosition , board:get_column_height( GarbagePosition, Board ), Board ),
+	release_garbage_list( NewBoard, Rest );
 	
-release_garbage_list( Board = #board{}, [{{garbage_hard, Hardness}, Garbage_position} | Rest ] ) ->
-	New_board = board:set_block( #block{ type = garbage_hard, hardness = Hardness }, Garbage_position , board:get_column_height( Garbage_position, Board ), Board ),
-	release_garbage_list( New_board, Rest );
+release_garbage_list( Board = #board{}, [{{garbage_hard, Hardness}, GarbagePosition} | Rest ] ) ->
+	NewBoard = board:set_block( #block{ type = garbage_hard, hardness = Hardness }, GarbagePosition , board:get_column_height( GarbagePosition, Board ), Board ),
+	release_garbage_list( NewBoard, Rest );
 
-release_garbage_list( Board = #board{}, [{garbage, Garbage_position} | Rest ] ) ->
-	New_board = board:set_block( #block{ type = garbage }, Garbage_position , board:get_column_height( Garbage_position, Board ), Board ),
-	release_garbage_list( New_board, Rest ).
+release_garbage_list( Board = #board{}, [{garbage, GarbagePosition} | Rest ] ) ->
+	NewBoard = board:set_block( #block{ type = garbage }, GarbagePosition , board:get_column_height( GarbagePosition, Board ), Board ),
+	release_garbage_list( NewBoard, Rest ).
 
 
 
-calculate_garbage_from_combos( Combos, Board = #board{}, Opponent_board = #board{}, Game_rules = #game_logic_rules{} ) ->
-	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = case Combos of 
+calculate_garbage_from_combos( Combos, Board = #board{}, OpponentBoard = #board{}, GameRules = #game_logic_rules{} ) ->
+	{ NormalGarbageNumber, ColorGarbageNumber, HardGarbageNumber } = case Combos of 
 		[] -> { 0,0,0 };
-		_ -> game_rules:get_garbage_number( Combos, Game_rules )
+		_ -> game_rules:get_garbage_number( Combos, GameRules )
 	end,
 	
 	io:format("\nWTF ~p\n",[Board#board.triggered_abilities]),
 
-	Triple_garbage_number = length(Board#board.triggered_abilities),
+	TripleGarbageNumber = length(Board#board.triggered_abilities),
 
-	{ Triple_garbage_number2, Normal_garbage_number2, Color_garbage_number2, Hard_garbage_number2 } = 
-		case powers_logic:trigger_barrier_blow(Board, Opponent_board, Game_rules) of 
+	{ TripleGarbageNumber2, NormalGarbageNumber2, ColorGarbageNumber2, HardGarbageNumber2 } = 
+		case powers_logic:trigger_barrier_blow(Board, OpponentBoard, GameRules) of 
 
-			true when Normal_garbage_number > 0 ->
-				{ Triple_garbage_number, Normal_garbage_number - 1, Color_garbage_number, Hard_garbage_number };
+			true when NormalGarbageNumber > 0 ->
+				{ TripleGarbageNumber, NormalGarbageNumber - 1, ColorGarbageNumber, HardGarbageNumber };
 
 			_ ->
-				{ Triple_garbage_number, Normal_garbage_number, Color_garbage_number, Hard_garbage_number }
+				{ TripleGarbageNumber, NormalGarbageNumber, ColorGarbageNumber, HardGarbageNumber }
 		end,
 
 
-	{ Triple_garbage_number3, Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3 } =
+	{ TripleGarbageNumber3, NormalGarbageNumber3, ColorGarbageNumber3, HardGarbageNumber3 } =
 		case Board#board.thrash_turns > 0 of
 			false ->
-				{ Triple_garbage_number2, Hard_garbage_number2, Color_garbage_number2, Normal_garbage_number2};
+				{ TripleGarbageNumber2, HardGarbageNumber2, ColorGarbageNumber2, NormalGarbageNumber2};
 			true ->
-				{ case Triple_garbage_number2 of 0 -> 0; _ -> Triple_garbage_number2 + 1 end,
-					case Hard_garbage_number2 of 0 -> 0; _ -> Hard_garbage_number2 + 1 end,
-						case Color_garbage_number2 of 0 -> 0; _ -> Color_garbage_number2 + 1 end,
-							case Normal_garbage_number2 of 0 -> 0; _ -> Normal_garbage_number2 + 1 end }
+				{ case TripleGarbageNumber2 of 0 -> 0; _ -> TripleGarbageNumber2 + 1 end,
+					case HardGarbageNumber2 of 0 -> 0; _ -> HardGarbageNumber2 + 1 end,
+						case ColorGarbageNumber2 of 0 -> 0; _ -> ColorGarbageNumber2 + 1 end,
+							case NormalGarbageNumber2 of 0 -> 0; _ -> NormalGarbageNumber2 + 1 end }
 		end,
 
 
-	{ Triple_garbage_number4, Normal_garbage_number4, Color_garbage_number4, Hard_garbage_number4 } = 
-		case powers_logic:trigger_killing_blow( Board, Opponent_board, Game_rules) of
-			false ->	{ Triple_garbage_number3, Normal_garbage_number3, Color_garbage_number3, Hard_garbage_number3 };
-			true ->		{ Triple_garbage_number3 * 2, Normal_garbage_number3 * 2, Color_garbage_number3 * 2, Hard_garbage_number3 * 2 }
+	{ TripleGarbageNumber4, NormalGarbageNumber4, ColorGarbageNumber4, HardGarbageNumber4 } = 
+		case powers_logic:trigger_killing_blow( Board, OpponentBoard, GameRules) of
+			false ->	{ TripleGarbageNumber3, NormalGarbageNumber3, ColorGarbageNumber3, HardGarbageNumber3 };
+			true ->		{ TripleGarbageNumber3 * 2, NormalGarbageNumber3 * 2, ColorGarbageNumber3 * 2, HardGarbageNumber3 * 2 }
 		end,
 
-	generate_garbage_positions( Triple_garbage_number4, Normal_garbage_number4, Color_garbage_number4, Hard_garbage_number4, Board ).
+	generate_garbage_positions( TripleGarbageNumber4, NormalGarbageNumber4, ColorGarbageNumber4, HardGarbageNumber4, Board ).
 	
 
 
 
 
 
-calculate_next_piece( Gamestate = #user_gamestate{}, Combos, Game_rules = #game_logic_rules{} ) ->
-	{ New_random_state, Random } = get_next_random( Gamestate#user_gamestate.random_state ),
-	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
+calculate_next_piece( Gamestate = #user_gamestate{}, Combos, GameRules = #game_logic_rules{} ) ->
+	{ NewRandomState, Random } = get_next_random( Gamestate#user_gamestate.random_state ),
+	{ NewRandomState2, Random2 } = get_next_random( NewRandomState ),
 
-	{ Color, Type } = get_block_color_type(Random, Combos, Gamestate#user_gamestate.board, Game_rules),
+	{ Color, Type } = get_block_color_type(Random, Combos, Gamestate#user_gamestate.board, GameRules),
 
-	{ Color2, Type2 } = case powers_logic:trigger_overload( Gamestate#user_gamestate.board, Game_rules ) of
+	{ Color2, Type2 } = case powers_logic:trigger_overload( Gamestate#user_gamestate.board, GameRules ) of
 		true ->			{ undefined, shapeshifter};
 		false ->		get_block_color_type(Random2)
 	end,
 
-	{ Gamestate#user_gamestate{ random_state = New_random_state2 }, 
+	{ Gamestate#user_gamestate{ random_state = NewRandomState2 }, 
 		#piece{ block1 = #block{ type = Type, color = Color }, 
 				block2 = #block{ type = Type2, color = Color2 } }}.
 
-calculate_next_piece( Initial_random_state ) ->
-	{ New_random_state, Random } = get_next_random( Initial_random_state ),
-	{ New_random_state2, Random2 } = get_next_random( New_random_state ),
+calculate_next_piece( InitialRandomState ) ->
+	{ NewRandomState, Random } = get_next_random( InitialRandomState ),
+	{ NewRandomState2, Random2 } = get_next_random( NewRandomState ),
 
 	{ Color, Type } = get_block_color_type(Random),
 	{ Color2, Type2 } = get_block_color_type(Random2),
 
-	{  New_random_state2,
+	{  NewRandomState2,
 		#piece{ block1 = #block{ type = Type, color = Color }, 
 				block2 = #block{ type = Type2, color = Color2 } }}.
 
 
 
 
-get_block_color_type( Random, Combos, Board = #board{}, Game_rules = #game_logic_rules{} ) ->
+get_block_color_type( Random, Combos, Board = #board{}, GameRules = #game_logic_rules{} ) ->
 	Color = case Random rem 6 of
 		0 ->		red;
 		1 ->		yellow;
@@ -1037,8 +1037,8 @@ get_block_color_type( Random, Combos, Board = #board{}, Game_rules = #game_logic
 	end,
 	
 	Type = case Board#board.frenzy_turns > 0 of
-		true ->			game_rules:get_next_piece_type_with_frenzy( Combos, Game_rules );
-		false ->		game_rules:get_next_piece_type( Combos, Game_rules)
+		true ->			game_rules:get_next_piece_type_with_frenzy( Combos, GameRules );
+		false ->		game_rules:get_next_piece_type( Combos, GameRules)
 	end,
 	
 	{Color, Type}.
@@ -1070,14 +1070,14 @@ get_next_random( X ) ->
 
 
 
-generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{} ) ->
-	%lager:debug("generating garbage: ~p hard , ~p color , ~p normal",[Hard_garbage_number,Color_garbage_number,Normal_garbage_number]),
-	generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, 
+generate_garbage_positions( TripleGarbageNumber, HardGarbageNumber, ColorGarbageNumber, NormalGarbageNumber, Board = #board{} ) ->
+	%lager:debug("generating garbage: ~p hard , ~p color , ~p normal",[HardGarbageNumber,ColorGarbageNumber,NormalGarbageNumber]),
+	generate_garbage_positions( TripleGarbageNumber, HardGarbageNumber, ColorGarbageNumber, NormalGarbageNumber, 
 									Board, lists:seq( 0, Board#board.width - 1 ) ).
 
 
-generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{}, [] ) ->
-	generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, 
+generate_garbage_positions( TripleGarbageNumber, HardGarbageNumber, ColorGarbageNumber, NormalGarbageNumber, Board = #board{}, [] ) ->
+	generate_garbage_positions( TripleGarbageNumber, HardGarbageNumber, ColorGarbageNumber, NormalGarbageNumber, 
 									Board, lists:seq( 0 , Board#board.width - 1 ) );
 
 
@@ -1085,45 +1085,45 @@ generate_garbage_positions( 0, 0, 0, 0, _ , _ ) ->
 	[];
 
 
-generate_garbage_positions( 0, 0, 0, Normal_garbage_number, Board = #board{}, Column_list ) ->
-	Random = random:uniform( length(Column_list) ) - 1,
+generate_garbage_positions( 0, 0, 0, NormalGarbageNumber, Board = #board{}, ColumnList ) ->
+	Random = random:uniform( length(ColumnList) ) - 1,
 
-	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
-	New_column_list = lists:append( List1 , List2 ),
+	{ List1 , [ Position | List2] } = lists:split( Random, ColumnList),
+	NewColumnList = lists:append( List1 , List2 ),
 
 	[ {garbage , Position} | 
-		generate_garbage_positions( 0, 0, 0, Normal_garbage_number - 1, Board, New_column_list )];
+		generate_garbage_positions( 0, 0, 0, NormalGarbageNumber - 1, Board, NewColumnList )];
 
 
-generate_garbage_positions( 0, 0, Color_garbage_number, Normal_garbage_number, Board = #board{}, Column_list ) ->
-	Random = random:uniform( length(Column_list) ) - 1,
+generate_garbage_positions( 0, 0, ColorGarbageNumber, NormalGarbageNumber, Board = #board{}, ColumnList ) ->
+	Random = random:uniform( length(ColumnList) ) - 1,
 
-	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
-	New_column_list = lists:append( List1 , List2 ),
+	{ List1 , [ Position | List2] } = lists:split( Random, ColumnList),
+	NewColumnList = lists:append( List1 , List2 ),
 
 	[ {{garbage_color, generate_random_garbage_color() }, Position} | 
-		generate_garbage_positions( 0, 0, Color_garbage_number - 1, Normal_garbage_number, Board, New_column_list )];
+		generate_garbage_positions( 0, 0, ColorGarbageNumber - 1, NormalGarbageNumber, Board, NewColumnList )];
 
 
-generate_garbage_positions( 0, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{}, Column_list ) ->
-	Random = random:uniform( length(Column_list) ) - 1,
+generate_garbage_positions( 0, HardGarbageNumber, ColorGarbageNumber, NormalGarbageNumber, Board = #board{}, ColumnList ) ->
+	Random = random:uniform( length(ColumnList) ) - 1,
 
-	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
-	New_column_list = lists:append( List1 , List2 ),
+	{ List1 , [ Position | List2] } = lists:split( Random, ColumnList),
+	NewColumnList = lists:append( List1 , List2 ),
 
 	[ {{garbage_hard, 2}, Position} | 
-		generate_garbage_positions( 0, Hard_garbage_number -1, Color_garbage_number, Normal_garbage_number, Board, New_column_list )];
+		generate_garbage_positions( 0, HardGarbageNumber -1, ColorGarbageNumber, NormalGarbageNumber, Board, NewColumnList )];
 
 
 
-generate_garbage_positions( Triple_garbage_number, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board = #board{}, Column_list ) ->
-	Random = random:uniform( length(Column_list) ) - 1,
+generate_garbage_positions( TripleGarbageNumber, HardGarbageNumber, ColorGarbageNumber, NormalGarbageNumber, Board = #board{}, ColumnList ) ->
+	Random = random:uniform( length(ColumnList) ) - 1,
 
-	{ List1 , [ Position | List2] } = lists:split( Random, Column_list),
-	New_column_list = lists:append( List1 , List2 ),
+	{ List1 , [ Position | List2] } = lists:split( Random, ColumnList),
+	NewColumnList = lists:append( List1 , List2 ),
 
 	[ {{garbage_hard, 3}, Position} | 
-		generate_garbage_positions( Triple_garbage_number - 1, Hard_garbage_number, Color_garbage_number, Normal_garbage_number, Board, New_column_list )].
+		generate_garbage_positions( TripleGarbageNumber - 1, HardGarbageNumber, ColorGarbageNumber, NormalGarbageNumber, Board, NewColumnList )].
 
 
 
@@ -1160,12 +1160,12 @@ simulate_gravity_by_column( Board = #board{}, X ) when X >= Board#board.width ->
 	Board;
 
 simulate_gravity_by_column( Board = #board{}, X ) ->
-	New_board = move_column_down( Board, X, 0, 0),
-	simulate_gravity_by_column( New_board, X + 1 ).
+	NewBoard = move_column_down( Board, X, 0, 0),
+	simulate_gravity_by_column( NewBoard, X + 1 ).
 
 
 
-move_column_down( Board = #board{}, _X, Y, _How_much ) when Y >= Board#board.height ->
+move_column_down( Board = #board{}, _X, Y, _HowMuch ) when Y >= Board#board.height ->
 	Board;
 
 move_column_down( Board = #board{}, X, Y, 0) ->
@@ -1176,16 +1176,16 @@ move_column_down( Board = #board{}, X, Y, 0) ->
 			move_column_down( Board, X, Y + 1, 0)
 	end;
 
-move_column_down( Board = #board{}, X, Y, How_much ) ->
+move_column_down( Board = #board{}, X, Y, HowMuch ) ->
 	case board:get_block( X, Y, Board) of
 		empty ->
-			move_column_down( Board, X, Y + 1, How_much + 1);
+			move_column_down( Board, X, Y + 1, HowMuch + 1);
 
 		Block ->
-			Board_without_block = board:remove_block( X, Y, Board ),
-			Board_with_block_in_place = board:set_block( Block, X, Y - How_much, Board_without_block ),
+			BoardWithoutBlock = board:remove_block( X, Y, Board ),
+			BoardWithBlockInPlace = board:set_block( Block, X, Y - HowMuch, BoardWithoutBlock ),
 
-			move_column_down( Board_with_block_in_place, X, Y + 1, How_much)
+			move_column_down( BoardWithBlockInPlace, X, Y + 1, HowMuch)
 	end.
 
 
@@ -1209,27 +1209,27 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 		true ->
 			{ Combo, Visited };
 		false ->
-			New_visited = sets:add_element( {X,Y}, Visited),
+			NewVisited = sets:add_element( {X,Y}, Visited),
 
 			case board:get_block( X, Y, Board ) of
 				empty ->
-					{ Combo, New_visited };
+					{ Combo, NewVisited };
 
-				Current_block when (Current_block#block.type =/= garbage andalso
-										Current_block#block.type =/= garbage_hard andalso
-											Current_block#block.type =/= garbage_color andalso
-												Current_block#block.color == Block#block.color) orelse
-													Current_block#block.type == shapeshifter ->
+				CurrentBlock when (CurrentBlock#block.type =/= garbage andalso
+										CurrentBlock#block.type =/= garbage_hard andalso
+											CurrentBlock#block.type =/= garbage_color andalso
+												CurrentBlock#block.color == Block#block.color) orelse
+													CurrentBlock#block.type == shapeshifter ->
 
-					New_combo = sets:add_element( Current_block, Combo ),
+					NewCombo = sets:add_element( CurrentBlock, Combo ),
 
-					{New_combo2, New_visited2 } = calculate_combo_for_piece( Block, X , Y + 1 , New_combo, New_visited, Board),
-					{New_combo3, New_visited3 } = calculate_combo_for_piece( Block, X + 1 , Y , New_combo2, New_visited2, Board),
-					{New_combo4, New_visited4 } = calculate_combo_for_piece( Block, X - 1 , Y , New_combo3, New_visited3, Board),
-					calculate_combo_for_piece( Block, X, Y - 1 , New_combo4, New_visited4, Board);
+					{NewCombo2, NewVisited2 } = calculate_combo_for_piece( Block, X , Y + 1 , NewCombo, NewVisited, Board),
+					{NewCombo3, NewVisited3 } = calculate_combo_for_piece( Block, X + 1 , Y , NewCombo2, NewVisited2, Board),
+					{NewCombo4, NewVisited4 } = calculate_combo_for_piece( Block, X - 1 , Y , NewCombo3, NewVisited3, Board),
+					calculate_combo_for_piece( Block, X, Y - 1 , NewCombo4, NewVisited4, Board);
 
-				_Current_block ->
-					{ Combo, New_visited }
+				_CurrentBlock ->
+					{ Combo, NewVisited }
 			end
 	end.
 
@@ -1255,8 +1255,8 @@ calculate_combo_for_piece( Block = #block{ }, X, Y, Combo, Visited, Board = #boa
 %% --------------------         GOOGLE DOCS             ------------------------------------------
 
 
-get_power_type_from_test_type( Test_type ) ->
-	case Test_type of
+get_power_type_from_test_type( TestType ) ->
+	case TestType of
 
 		<<"none">> ->				color;
 		
@@ -1271,14 +1271,14 @@ get_power_type_from_test_type( Test_type ) ->
 	end.
 
 
-create_board( Block_list, X_offset ) ->
-	Fun = fun(  {Block_properties}, Result) ->
+create_board( BlockList, XOffset ) ->
+	Fun = fun(  {BlockProperties}, Result) ->
 
-		Value = proplists:get_value(<<"block">>, Block_properties),
-		X = proplists:get_value(<<"x">>, Block_properties) - 1 - X_offset,
-		Y = 14 - proplists:get_value(<<"y">>, Block_properties),
+		Value = proplists:get_value(<<"block">>, BlockProperties),
+		X = proplists:get_value(<<"x">>, BlockProperties) - 1 - XOffset,
+		Y = 14 - proplists:get_value(<<"y">>, BlockProperties),
 
-		{Real_block_type, Color, Hardness} = 
+		{RealBlockType, Color, Hardness} = 
 		case Value of
 			<<"w">> -> 	{color,white, 2};
 			<<"p">> -> 	{color,purple, 2};
@@ -1353,10 +1353,10 @@ create_board( Block_list, X_offset ) ->
 
 		end,
 
-		board:set_block( #block{ type = Real_block_type, color = Color, hardness = Hardness}, X, Y, Result)
+		board:set_block( #block{ type = RealBlockType, color = Color, hardness = Hardness}, X, Y, Result)
 	end,
 
-	lists:foldl( Fun , board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT), Block_list ).
+	lists:foldl( Fun , board:new_empty( ?BOARD_WIDTH, ?BOARD_HEIGHT), BlockList ).
 
 
 
@@ -1433,128 +1433,128 @@ tear_down_tests( _ ) ->
 	ok.
 
 
-google_docs_tests(Game_rules) ->
+google_docs_tests(GameRules) ->
 
 	{ok, Dir} = file:get_cwd(),
 	{ok, Binary} = file:read_file(Dir ++ "/../scripts/RESULT.json"),
 	
-	Fun = fun( {Test_data}, Result) ->
+	Fun = fun( {TestData}, Result) ->
 
-		Test_name = proplists:get_value(<<"name">>,Test_data),
+		TestName = proplists:get_value(<<"name">>,TestData),
 
-		[ {binary_to_list(Test_name),
+		[ {binary_to_list(TestName),
 			fun () ->
 
-				Final = proplists:get_value(<<"final">>,Test_data),
-				Start = proplists:get_value(<<"origin">>,Test_data),
+				Final = proplists:get_value(<<"final">>,TestData),
+				Start = proplists:get_value(<<"origin">>,TestData),
 				
-				{Generated_garbage} = proplists:get_value(<<"garbage">>,Test_data),
+				{GeneratedGarbage} = proplists:get_value(<<"garbage">>,TestData),
 
-				Color_garbage = proplists:get_value(<<"colorGarbage">>,Generated_garbage),
-				Hard_garbage = proplists:get_value(<<"hardGarbage">>,Generated_garbage),
-				Normal_garbage = proplists:get_value(<<"normalGarbage">>,Generated_garbage),
-				Triple_Hard_garbage = case proplists:get_value(<<"tripleGarbage">>,Generated_garbage) of undefined -> 0; Other -> Other end,
+				ColorGarbage = proplists:get_value(<<"colorGarbage">>,GeneratedGarbage),
+				HardGarbage = proplists:get_value(<<"hardGarbage">>,GeneratedGarbage),
+				NormalGarbage = proplists:get_value(<<"normalGarbage">>,GeneratedGarbage),
+				Triple_HardGarbage = case proplists:get_value(<<"tripleGarbage">>,GeneratedGarbage) of undefined -> 0; Other -> Other end,
 
-				Secondary_generated_power = proplists:get_value(<<"secPowerGenerated">>,Generated_garbage),
-				Secondary_generated_type = get_power_type_from_test_type( Secondary_generated_power ),
+				SecondaryGeneratedPower = proplists:get_value(<<"secPowerGenerated">>,GeneratedGarbage),
+				SecondaryGeneratedType = get_power_type_from_test_type( SecondaryGeneratedPower ),
 
-				Power_generated = proplists:get_value(<<"PowerGenerated">>,Generated_garbage),
-				Power_type = get_power_type_from_test_type( Power_generated ),
+				PowerGenerated = proplists:get_value(<<"PowerGenerated">>,GeneratedGarbage),
+				PowerType = get_power_type_from_test_type( PowerGenerated ),
 				
 
-				Passive_power = proplists:get_value(<<"passivePower">>,Generated_garbage),
-				Power_trigger = proplists:get_value(<<"triggerPower">>,Generated_garbage),
+				PassivePower = proplists:get_value(<<"passivePower">>,GeneratedGarbage),
+				PowerTrigger = proplists:get_value(<<"triggerPower">>,GeneratedGarbage),
 
-				Final_board = create_board( Final, 9 ),
-				Temporary_board = create_board( Start, 0 ),
+				FinalBoard = create_board( Final, 9 ),
+				TemporaryBoard = create_board( Start, 0 ),
 
-				Start_board1 = case Power_trigger of
-					<<"none">> ->				Temporary_board;
-					<<"redbutton">> ->			Temporary_board#board{ red_button_pressed = true };
-					<<"frenzy">> ->				Temporary_board#board{ frenzy_turns = 5 };
-					<<"trash">> ->				Temporary_board#board{ thrash_turns = 5 }
+				StartBoard1 = case PowerTrigger of
+					<<"none">> ->				TemporaryBoard;
+					<<"redbutton">> ->			TemporaryBoard#board{ red_button_pressed = true };
+					<<"frenzy">> ->				TemporaryBoard#board{ frenzy_turns = 5 };
+					<<"trash">> ->				TemporaryBoard#board{ thrash_turns = 5 }
 				end,
 
-				Start_board = case Passive_power of
-					<<"none">> ->			Start_board1;
-					<<"overload">> ->		Start_board1#board{ is_overload_active = true };
-					<<"killingBlow">> ->	Start_board1#board{ killing_blow_active = true };
-					<<"barrier">> ->		Start_board1#board{ barrier_active = true }
+				StartBoard = case PassivePower of
+					<<"none">> ->			StartBoard1;
+					<<"overload">> ->		StartBoard1#board{ is_overload_active = true };
+					<<"killingBlow">> ->	StartBoard1#board{ killing_blow_active = true };
+					<<"barrier">> ->		StartBoard1#board{ barrier_active = true }
 				end,
 
-				Opponent_board = case Passive_power of
+				OpponentBoard = case PassivePower of
 									<<"killingBlow">> -> 	create_near_death_board();
 									_ -> 					#board{}
 								end,
 
 
-				{ Garbage_position_list, 
+				{ GarbagePositionList, 
 					_, 
-						Result_gamestate,
-							_Result_opponent_gamestate} = execute_turn( #user_gamestate{ board = Start_board, random_state = 0 },
-																			#user_gamestate{ board = Opponent_board, random_state = 0},
-																				Game_rules,
+						ResultGamestate,
+							_ResultOpponentGamestate} = execute_turn( #user_gamestate{ board = StartBoard, random_state = 0 },
+																			#user_gamestate{ board = OpponentBoard, random_state = 0},
+																				GameRules,
 																					0 ),
 
-				Result_board = Result_gamestate#user_gamestate.board,
-				Next_piece = Result_gamestate#user_gamestate.current_piece,
+				ResultBoard = ResultGamestate#user_gamestate.board,
+				NextPiece = ResultGamestate#user_gamestate.current_piece,
 
-				case board:are_boards_equal(Result_board,Final_board) of
+				case board:are_boards_equal(ResultBoard,FinalBoard) of
 					true ->			do_nothing;
 					false ->
 									io:format("\n expected result\n"),
-									board:print_board(Final_board),
+									board:print_board(FinalBoard),
 									io:format("\n actual result \n"),
-									board:print_board(Result_board)
+									board:print_board(ResultBoard)
 				end,
 
-				?assertMatch( true , board:are_boards_equal(Result_board,Final_board) ),
+				?assertMatch( true , board:are_boards_equal(ResultBoard,FinalBoard) ),
 
-				Calculated_number_color_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+				CalculatedNumberColorGarbages = length( lists:filter( fun( {Garbage,_} )-> 
 																case Garbage of 
 																	{garbage_color, _color} -> 	true;
 																	_other ->					false 
 																end
-															end, Garbage_position_list)),
+															end, GarbagePositionList)),
 
-				Calculated_number_hard_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+				CalculatedNumberHardGarbages = length( lists:filter( fun( {Garbage,_} )-> 
 																			case Garbage of 
 																				{garbage_hard , 2 } -> 		true;
 																				_ -> 						false
 																			end
-																		end, Garbage_position_list)),
+																		end, GarbagePositionList)),
 
-				Calculated_number_triple_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+				CalculatedNumberTripleGarbages = length( lists:filter( fun( {Garbage,_} )-> 
 																			case Garbage of 
 																				{garbage_hard , 3 } -> 		true;
 																				_ -> 						false
 																			end
-																		end, Garbage_position_list)),
+																		end, GarbagePositionList)),
 
-				Calculated_number_normal_garbages = length( lists:filter( fun( {Garbage,_} )-> 
+				CalculatedNumberNormalGarbages = length( lists:filter( fun( {Garbage,_} )-> 
 																			Garbage == garbage 
-																		end, Garbage_position_list)),
+																		end, GarbagePositionList)),
 
-				Next_block = Next_piece#piece.block1,
-				Next_sec_block = Next_piece#piece.block2,
+				NextBlock = NextPiece#piece.block1,
+				NextSecBlock = NextPiece#piece.block2,
 
-				Calculated_block_type = Next_block#block.type,
-				Calculated_sec_block_type = Next_sec_block#block.type,
+				CalculatedBlockType = NextBlock#block.type,
+				CalculatedSecBlockType = NextSecBlock#block.type,
 
-				io:format("calculated power [<~p>,<~p>], tripleGarbage ~p garbage ~p, garbage_hard ~p,  garbage_color ~p",[	Calculated_block_type,
-																											Calculated_sec_block_type,
-																											Calculated_number_triple_garbages,
-																											Calculated_number_normal_garbages,
-																											Calculated_number_hard_garbages,	
-									 																		Calculated_number_color_garbages ] ),
+				io:format("calculated power [<~p>,<~p>], tripleGarbage ~p garbage ~p, garbage_hard ~p,  garbage_color ~p",[	CalculatedBlockType,
+																											CalculatedSecBlockType,
+																											CalculatedNumberTripleGarbages,
+																											CalculatedNumberNormalGarbages,
+																											CalculatedNumberHardGarbages,	
+									 																		CalculatedNumberColorGarbages ] ),
 
-				?assertMatch( Calculated_number_normal_garbages, Normal_garbage ),
-				?assertMatch( Calculated_number_hard_garbages, Hard_garbage ),
-				?assertMatch( Calculated_number_color_garbages, Color_garbage ),
-				?assertMatch( Calculated_number_triple_garbages,Triple_Hard_garbage),
+				?assertMatch( CalculatedNumberNormalGarbages, NormalGarbage ),
+				?assertMatch( CalculatedNumberHardGarbages, HardGarbage ),
+				?assertMatch( CalculatedNumberColorGarbages, ColorGarbage ),
+				?assertMatch( CalculatedNumberTripleGarbages,Triple_HardGarbage),
 
-				?assertMatch( Calculated_block_type, Power_type ),
-				?assertMatch( Calculated_sec_block_type, Secondary_generated_type),
+				?assertMatch( CalculatedBlockType, PowerType ),
+				?assertMatch( CalculatedSecBlockType, SecondaryGeneratedType),
 
 
 				ok
@@ -1568,14 +1568,14 @@ google_docs_tests(Game_rules) ->
 full_game_logic_test_() ->
 
 		setup_tests(),
-		Game_rules = game_rules:get_offline_current_rules(<<"Normal">>),
+		GameRules = game_rules:get_offline_current_rules(<<"Normal">>),
 
-		Google_test_list = google_docs_tests(Game_rules),
+		GoogleTestList = google_docs_tests(GameRules),
 		{spawn,
 			{setup,	
 				fun()-> ok end,
 				fun tear_down_tests/1,
-      			Google_test_list
+      			GoogleTestList
 			}
 		}.
 
@@ -1591,7 +1591,7 @@ full_game_logic_test_() ->
 
 
 
-test_garbage_position( Garbage_position_list, Board = #board{} ) ->
+test_garbage_position( GarbagePositionList, Board = #board{} ) ->
 	
 	Fun = fun( { _ , Position }, { Cache , Max } ) ->
 
@@ -1610,22 +1610,22 @@ test_garbage_position( Garbage_position_list, Board = #board{} ) ->
 
 		case proplists:get_value( Position , Cache) of
 			undefined ->
-				New_value = 0,
-				New_cache = [ { Position, 1 } | Cache];
+				NewValue = 0,
+				NewCache = [ { Position, 1 } | Cache];
 			Value ->
-				New_value = Value + 1,
-				New_cache =  [ { Position, New_value } | proplists:delete( Position ,Cache) ]
+				NewValue = Value + 1,
+				NewCache =  [ { Position, NewValue } | proplists:delete( Position ,Cache) ]
 		end,
 
-		New_max = case New_value > Max of
-			true ->		New_value;
+		NewMax = case NewValue > Max of
+			true ->		NewValue;
 			false ->	Max
 		end,
 
-		{ New_cache, New_max }
+		{ NewCache, NewMax }
 
 	end,
-	{ Cache , Max } = lists:foldl(Fun, { [], 0 }, Garbage_position_list),
+	{ Cache , Max } = lists:foldl(Fun, { [], 0 }, GarbagePositionList),
 
 	Min = lists:foldl( fun( {_Position, Value}, Min ) -> 
 		case Value < Min of  

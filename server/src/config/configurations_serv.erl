@@ -33,13 +33,13 @@
 
 
 
-get_offline_configuration( Tier_name ) ->
+get_offline_configuration( TierName ) ->
 	Lines = string:tokens( download(?CONFIGURATION_VERSION_URL), "\n"),
-	[ Latest_version | _ ] = Lines,
+	[ LatestVersion | _ ] = Lines,
 
-	State = get_configuration( Latest_version ),
+	State = get_configuration( LatestVersion ),
 
-	Tier = gb_trees:get(Tier_name, State#configurations_state.tiers ),
+	Tier = gb_trees:get(TierName, State#configurations_state.tiers ),
 
 	{ State#configurations_state.values, 
 		State#configurations_state.products,
@@ -140,21 +140,21 @@ handle_cast( Msg, State) ->
 handle_info( poll_configuration , State = #configurations_state{} ) ->
 
 	Lines = string:tokens( download(?CONFIGURATION_VERSION_URL), "\n"),
-	[ Latest_version | _ ] = Lines,
+	[ LatestVersion | _ ] = Lines,
 
-	lager:debug("latest version is ~p",[Latest_version]),
+	lager:debug("latest version is ~p",[LatestVersion]),
 
-	New_state = case Latest_version == State#configurations_state.latest_version of 
+	NewState = case LatestVersion == State#configurations_state.latest_version of 
 		true ->			State;
 		false ->		
 						swiss:notify( configuration, { new_configuration, 
-														Latest_version, 
-															get_configuration_url_from_version(Latest_version) } ),
+														LatestVersion, 
+															get_configuration_url_from_version(LatestVersion) } ),
 
-						get_configuration( Latest_version )
+						get_configuration( LatestVersion )
 	end,
 	erlang:send_after(?CONFIGURATION_POLLING_INTERVAL, self(), poll_configuration),
-	{ noreply, New_state };
+	{ noreply, NewState };
 
 
 
@@ -221,17 +221,17 @@ get_configuration_url_from_version( Version ) ->
 
 
 
-get_configuration( Latest_version ) ->
+get_configuration( LatestVersion ) ->
 
-	%lager:debug("latest version is ~p",[Latest_version]),
+	%lager:debug("latest version is ~p",[LatestVersion]),
 
-	Json = download( get_configuration_url_from_version(Latest_version) ),
+	Json = download( get_configuration_url_from_version(LatestVersion) ),
 	{Proplist} = ejson:decode(Json),
 
 
-	#configurations_state{  latest_version = Latest_version,
+	#configurations_state{  latest_version = LatestVersion,
 								values = parse_json_file:get_values_from_json( Proplist ),
-									url = ?CONFIGURATION_BUCKET_URL ++ Latest_version,
+									url = ?CONFIGURATION_BUCKET_URL ++ LatestVersion,
 										tiers = parse_json_file:get_tiers_from_json( Proplist ) }.
 
 

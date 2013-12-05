@@ -6,8 +6,8 @@
 -export([ start/0 ,get_user_data/1, push_user_data/1, delete_user_data/1, login_user/3]).
 
 
-get_user_data( User_id )->
-	case mnesia:sync_transaction(fun () -> mnesia:read({user, User_id}) end) of
+get_user_data( UserId )->
+	case mnesia:sync_transaction(fun () -> mnesia:read({user, UserId}) end) of
 		{atomic, []} ->  				{ error, no_user };
 		{atomic, [UserData | _ ]} -> 	{ ok, UserData };
 		{aborted, Reason} ->			{ error, Reason }
@@ -19,23 +19,23 @@ push_user_data( User = #user{ } ) ->
 		{aborted, Reason} ->			{ error, Reason }
 	end.
 
-delete_user_data( User_id ) ->
+delete_user_data( UserId ) ->
 	lager:debug("delete user from server_db"),
-	case mnesia:sync_transaction(fun() -> mnesia:delete(user, User_id ) end) of
+	case mnesia:sync_transaction(fun() -> mnesia:delete(user, UserId ) end) of
 		{atomic, ok } -> 				ok;
 		{aborted, Reason} ->			{ error, Reason }
 	end.
 
 
 
-login_user( User_id , Login_function, Relogin_function) ->
+login_user( UserId , LoginFunction, ReloginFunction) ->
 	Function = fun() ->
-		case mnesia:read({user, User_id}) of
+		case mnesia:read({user, UserId}) of
 			[] ->
-				mnesia:write(Login_function());
+				mnesia:write(LoginFunction());
 
-			[Previous_user_data | _ ] ->
-				case Relogin_function( Previous_user_data ) of 
+			[PreviousUserData | _ ] ->
+				case ReloginFunction( PreviousUserData ) of 
 
 					{save, User = #user{} } -> 	
 						mnesia:write(User);
@@ -62,13 +62,13 @@ create_tables() ->
 	mnesia:create_schema([node()]),
 	mnesia:start(),
 
-	Create_table_res = mnesia:create_table(user, [ 
+	CreateTableRes = mnesia:create_table(user, [ 
 		{type, set},
 		{index, [user_process_pid]},
 		{attributes, record_info(fields, user)},
 		{disc_copies, [node()]}
 	]),
-	lager:debug("creating mnesia tables result is ~p ", [Create_table_res]),
+	lager:debug("creating mnesia tables result is ~p ", [CreateTableRes]),
 
 %	mnesia:create_table(broker_order, [
 %		{type, set},

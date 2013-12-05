@@ -39,17 +39,17 @@ process_pre_login_message(Msg) ->
 
 
 
-process(Msg, User_process_pid) ->
+process(Msg, UserProcessPid) ->
 	Request = protocol_pb:decode_request(Msg),
 	lager:debug( "Received MSG:\n\t~p----------------------------------", [Request] ),
 
 	case Request#request.type of
 		undefined -> {reply_with_disconnect, create_disconect_message() };
-		_other -> message_processor:process_message( Request#request.type , User_process_pid , Request, Msg )
+		_other -> message_processor:process_message( Request#request.type , UserProcessPid , Request, Msg )
 	end.
 
 
-process_user_disconect(_User_pid, _Game_pid) ->
+process_user_disconect(_UserPid, _GamePid) ->
 	ok.
 
 handle_connect() ->
@@ -66,135 +66,135 @@ handle_disconect() ->
 %%										MESSAGE creation
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-create_login_success( User_id, Configuration_url, Configuration_version, Wallet ) ->
+create_login_success( UserId, ConfigurationUrl, ConfigurationVersion, Wallet ) ->
 	lager:debug("LOGIN SUCCESS WITHOUT STATE "),
 
-	Message_wallet = #user_wallet{ items = lists:foldl( fun convert_wallet_to_protocol/2, [], Wallet ) },
+	MessageWallet = #user_wallet{ items = lists:foldl( fun convert_wallet_to_protocol/2, [], Wallet ) },
 
 	Req = #request{ type = message_login_sucess, 
-						login_sucess_content = #messagelogin_success{ user_id = User_id, 
+						login_sucess_content = #messagelogin_success{ user_id = UserId, 
 																		previous_state = lobby,
-																		configuration_url = Configuration_url,
-																		configuration_version = Configuration_version,
-																		wallet = Message_wallet }},
+																		configuration_url = ConfigurationUrl,
+																		configuration_version = ConfigurationVersion,
+																		wallet = MessageWallet }},
 	protocol_pb:encode_request(Req).
 
 
 
-create_login_success( User_id, Configuration_url, Configuration_version, 
-						Player_current_random_step, Player_current_piece_x, Player_current_piece_y, 
-						Player_current_piece_angle, Player_block_list, Player_garbage_list,
-							Opponent_current_random_step, Opponent_current_piece_x, Opponent_current_piece_y, 
-							Opponent_current_piece_angle, Opponent_block_list, Opponent_garbage_list,
-								Starting_seed, 
-									Oppponent_user_id, Wallet ) ->
+create_login_success( UserId, ConfigurationUrl, ConfigurationVersion, 
+						PlayerCurrentRandomStep, PlayerCurrentPiece_x, PlayerCurrentPiece_y, 
+						PlayerCurrentPieceAngle, PlayerBlockList, PlayerGarbageList,
+							OpponentCurrentRandomStep, OpponentCurrentPiece_x, OpponentCurrentPiece_y, 
+							OpponentCurrentPieceAngle, OpponentBlockList, OpponentGarbageList,
+								StartingSeed, 
+									OppponentUserId, Wallet ) ->
 
-	lager:debug("active piece player us ~p  ~p,~p ",[Player_current_piece_angle,Player_current_piece_x,Player_current_piece_y]),
-	lager:debug("active piece opponent is ~p  ~p,~p ",[Opponent_current_piece_angle,Opponent_current_piece_x,Opponent_current_piece_y]),
+	lager:debug("active piece player us ~p  ~p,~p ",[PlayerCurrentPieceAngle,PlayerCurrentPiece_x,PlayerCurrentPiece_y]),
+	lager:debug("active piece opponent is ~p  ~p,~p ",[OpponentCurrentPieceAngle,OpponentCurrentPiece_x,OpponentCurrentPiece_y]),
 
-	Fun = fun( Block = #block{}, Result_block_list ) -> 
-		New_block_position = #block_position{ 	x = Block#block.x, 
+	Fun = fun( Block = #block{}, ResultBlockList ) -> 
+		NewBlockPosition = #block_position{ 	x = Block#block.x, 
 													y = Block#block.y, 
 														color = get_protocol_color_from_block(Block), 
 															type = get_protocol_type_from_block(Block),
 																exploding_times_left = Block#block.hardness
 											},
-		[ New_block_position | Result_block_list]
+		[ NewBlockPosition | ResultBlockList]
 	end,
 
-	Opponent_block_position_list = lists:foldl(Fun, [], Opponent_block_list),
-	Player_block_position_list = lists:foldl(Fun, [], Player_block_list),
+	OpponentBlockPositionList = lists:foldl(Fun, [], OpponentBlockList),
+	PlayerBlockPositionList = lists:foldl(Fun, [], PlayerBlockList),
 
-%	lager:debug("Opponent_block_position_list ~p",[Opponent_block_position_list]),
-%	lager:debug("Player_block_position_list ~p",[Player_block_position_list]),
+%	lager:debug("OpponentBlockPositionList ~p",[OpponentBlockPositionList]),
+%	lager:debug("PlayerBlockPositionList ~p",[PlayerBlockPositionList]),
 
-	Opponent_garbage_message_list =  lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Player_garbage_list),
-	Player_garbage_message_list = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Opponent_garbage_list),
+	OpponentGarbageMessageList =  lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], PlayerGarbageList),
+	PlayerGarbageMessageList = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], OpponentGarbageList),
 
-%	lager:debug("Player_garbage_message_list ~p",[Player_garbage_message_list]),
-%	lager:debug("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),
+%	lager:debug("PlayerGarbageMessageList ~p",[PlayerGarbageMessageList]),
+%	lager:debug("OpponentGarbageMessageList ~p",[OpponentGarbageMessageList]),
 
-	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
-										current_piece_x = Opponent_current_piece_x,
-											current_piece_y = Opponent_current_piece_y,
-												current_piece_angle = Opponent_current_piece_angle,
-													blocks = Opponent_block_position_list,
-														garbage_message_list = Opponent_garbage_message_list  },
+	OpponentGameState = #game_state{ current_random = OpponentCurrentRandomStep,
+										current_piece_x = OpponentCurrentPiece_x,
+											current_piece_y = OpponentCurrentPiece_y,
+												current_piece_angle = OpponentCurrentPieceAngle,
+													blocks = OpponentBlockPositionList,
+														garbage_message_list = OpponentGarbageMessageList  },
 
-	Player_game_state = #game_state{ current_random = Player_current_random_step, 
-										current_piece_x = Player_current_piece_x,
-											current_piece_y = Player_current_piece_y,
-												current_piece_angle = Player_current_piece_angle,
-													blocks = Player_block_position_list,
-														garbage_message_list = Player_garbage_message_list },
+	PlayerGameState = #game_state{ current_random = PlayerCurrentRandomStep, 
+										current_piece_x = PlayerCurrentPiece_x,
+											current_piece_y = PlayerCurrentPiece_y,
+												current_piece_angle = PlayerCurrentPieceAngle,
+													blocks = PlayerBlockPositionList,
+														garbage_message_list = PlayerGarbageMessageList },
 
-	Message_game_state = #message_game_state{ opponent_state = Opponent_game_state, 
-												player_state = Player_game_state, 
-													starting_seed = Starting_seed, 
-														opponent_name = Oppponent_user_id },
+	MessageGameState = #message_game_state{ opponent_state = OpponentGameState, 
+												player_state = PlayerGameState, 
+													starting_seed = StartingSeed, 
+														opponent_name = OppponentUserId },
 
 
-	Message_wallet = #user_wallet{ items = lists:foldl( fun convert_wallet_to_protocol/2, [], Wallet ) },
+	MessageWallet = #user_wallet{ items = lists:foldl( fun convert_wallet_to_protocol/2, [], Wallet ) },
 
 
 	Req = #request{ type = message_login_sucess,
-					login_sucess_content = #messagelogin_success{ user_id = User_id, 
+					login_sucess_content = #messagelogin_success{ user_id = UserId, 
 																	previous_state = playing_game,
-																		configuration_url = Configuration_url,
-																			configuration_version = Configuration_version,
-																				game_state = Message_game_state,
-																					wallet = Message_wallet }},
+																		configuration_url = ConfigurationUrl,
+																			configuration_version = ConfigurationVersion,
+																				game_state = MessageGameState,
+																					wallet = MessageWallet }},
 	protocol_pb:encode_request(Req).
 
 
 
-create_generated_garbage_message( Garbages_position_list, Garbage_id) ->
+create_generated_garbage_message( GarbagePositionsList, GarbageId) ->
 	
-	lager:info("create_generated_garbage_message for ~p with garbage_id ~p",[Garbages_position_list,Garbage_id]),
+	lager:info("create_generated_garbage_message for ~p with garbage_id ~p",[GarbagePositionsList,GarbageId]),
 
 	Req = #request{ type = message_generated_garbage_code,
 					generated_garbage_content = #message_generated_garbage{ 
-						garbage = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(Garbages_position_list) ),
-						garbage_id = Garbage_id
+						garbage = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(GarbagePositionsList) ),
+						garbage_id = GarbageId
 					}},
 	protocol_pb:encode_request(Req).
 
 
-create_opponent_place_piece_message( Garbages_position_list, _Piece = #piece{}, X, Y, Angle, Client_garbage_id, Generated_garbage_id ) ->
+create_opponent_place_piece_message( GarbagePositionsList, _Piece = #piece{}, X, Y, Angle, ClientGarbageId, GeneratedGarbageId ) ->
 
-	lager:info("create_opponent_place_piece_message for ~p with garbage_id ~p ",[Garbages_position_list,Client_garbage_id]),
+	lager:info("create_opponent_place_piece_message for ~p with garbage_id ~p ",[GarbagePositionsList,ClientGarbageId]),
 
-	Garbage_list_part = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(Garbages_position_list) ),
+	GarbageListPart = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], lists:reverse(GarbagePositionsList) ),
 
 	Req = #request{ type = message_opponent_place_piece_code,
 					opponent_place_piece_content = #message_opponent_place_piece{ 
-						garbage = Garbage_list_part,
+						garbage = GarbageListPart,
 						x = X,
 						y = Y,
 						state = Angle,
-						garbage_id = Generated_garbage_id,
-						opponent_garbage_id = Client_garbage_id
+						garbage_id = GeneratedGarbageId,
+						opponent_garbage_id = ClientGarbageId
 					}},
 	protocol_pb:encode_request(Req).
 
 
 
 
-create_match_created_message( Opponnent_name , Seed  ) ->
+create_match_created_message( OpponentName , Seed  ) ->
 	Req = #request{ type = message_match_created,
 					match_created_content = #message_match_created{  
 						seed = Seed,
-						opponent_name = Opponnent_name,
+						opponent_name = OpponentName,
 						start_level = 0
 					}},
 	protocol_pb:encode_request(Req).
 
 
 
-create_start_message( Start_date ) ->
+create_start_message( StartDate ) ->
 	Req = #request{ type = message_game_start_code,
 					game_start_content = #message_game_start{  
-						start_timestamp = Start_date
+						start_timestamp = StartDate
 					}},
 	protocol_pb:encode_request(Req).
 
@@ -208,7 +208,7 @@ create_lost_message(board_mismatch) ->
 	protocol_pb:encode_request( Req );
 
 
-create_lost_message(_Lost_details) ->
+create_lost_message(_LostDetails) ->
 	Req = #request{ type = message_game_end_code,
 					game_end_content = #message_game_end{ reason = ?GAME_END_OPPONNENT_WON } },
 	protocol_pb:encode_request(Req).
@@ -224,7 +224,7 @@ create_won_message(disconect) ->
 	protocol_pb:encode_request(Req);
 
 
-create_won_message(_Won_details) ->
+create_won_message(_WonDetails) ->
 	Req = #request{ type = message_game_end_code,
 					game_end_content = #message_game_end{  
 						reason = ?GAME_END_OPPONNENT_LOST
@@ -248,14 +248,14 @@ create_disconect_message() ->
 
 
 
-create_game_restarts_message( User_id , Start_date ) ->
-	Req = #request{ type = message_game_restart, restart_game_content = #message_restart_game{ opponent = User_id, start_timestamp = Start_date } },
+create_game_restarts_message( UserId , StartDate ) ->
+	Req = #request{ type = message_game_restart, restart_game_content = #message_restart_game{ opponent = UserId, start_timestamp = StartDate } },
 	protocol_pb:encode_request(Req).
 	
 
 
-create_user_disconects_message( User_id ) ->
-	Req = #request{ type = message_user_disconected, user_disconected_content = #message_user_disconected{ opponent = User_id } },
+create_user_disconects_message( UserId ) ->
+	Req = #request{ type = message_user_disconected, user_disconected_content = #message_user_disconected{ opponent = UserId } },
 	protocol_pb:encode_request(Req).
 
 
@@ -265,9 +265,9 @@ create_user_reconected_message() ->
 	protocol_pb:encode_request(Req).
 
 
-create_new_configuration_message( New_version, New_version_url ) ->
+create_new_configuration_message( NewVersion, NewVersionUrl ) ->
 	Req = #request{ type = message_new_configuration_version, 
-						new_configuration_content = #message_new_configuration{  new_version = New_version, new_url = New_version_url } },
+						new_configuration_content = #message_new_configuration{  new_version = NewVersion, new_url = NewVersionUrl } },
 	protocol_pb:encode_request(Req).
 
 
@@ -278,12 +278,12 @@ create_fail_buy_product_response_message() ->
 						buy_product_response_content = #message_buy_product_response{ type = response_fail } },
 	protocol_pb:encode_request(Req).
 
-create_success_buy_product_response_message( Item, New_amount ) ->
-	lager:debug("buy product response is ~p = ~p",[Item, New_amount]),
+create_success_buy_product_response_message( Item, NewAmount ) ->
+	lager:debug("buy product response is ~p = ~p",[Item, NewAmount]),
 	Req = #request{ type = message_buy_product_response, 
 						buy_product_response_content = #message_buy_product_response{ type = response_success , 
 																						new_amount = #user_item{ name = Item, 
-																													amount = New_amount } } },
+																													amount = NewAmount } } },
 	protocol_pb:encode_request(Req).
 
 
@@ -297,10 +297,10 @@ create_update_piece_message( Angle, X, Y) ->
 
 
 
-create_time_sync_message( Client_time, Server_time ) ->
+create_time_sync_message( ClientTime, ServerTime ) ->
 	Req = #request{ type = message_sync_time, 
-						message_sync_content = #message_time_sync{ client_timestamp = Client_time, 
-																	server_timestamp = Server_time } },
+						message_sync_content = #message_time_sync{ client_timestamp = ClientTime, 
+																	server_timestamp = ServerTime } },
 	protocol_pb:encode_request(Req).
 
 
@@ -332,57 +332,57 @@ create_use_power_message(Type) ->
 	protocol_pb:encode_request(Req).
 
 
-create_debug_board(Player_current_random_step, Player_current_piece_x, Player_current_piece_y, 
-						Player_current_piece_angle, Player_block_list, Player_garbage_list,
-							Opponent_current_random_step, Opponent_current_piece_x, Opponent_current_piece_y, 
-							Opponent_current_piece_angle, Opponent_block_list, Opponent_garbage_list )  ->
+create_debug_board(PlayerCurrentRandomStep, PlayerCurrentPiece_x, PlayerCurrentPiece_y, 
+						PlayerCurrentPieceAngle, PlayerBlockList, PlayerGarbageList,
+							OpponentCurrentRandomStep, OpponentCurrentPiece_x, OpponentCurrentPiece_y, 
+							OpponentCurrentPieceAngle, OpponentBlockList, OpponentGarbageList )  ->
 
 
 
 
-	Fun = fun( Block = #block{}, Result_block_list ) -> 
-		New_block_position = #block_position{ 	x = Block#block.x, 
+	Fun = fun( Block = #block{}, ResultBlockList ) -> 
+		NewBlockPosition = #block_position{ 	x = Block#block.x, 
 													y = Block#block.y, 
 														color = get_protocol_color_from_block(Block), 
 															type = get_protocol_type_from_block(Block),
 																exploding_times_left = Block#block.hardness
 											},
-		[ New_block_position | Result_block_list]
+		[ NewBlockPosition | ResultBlockList]
 	end,
 
-	Opponent_block_position_list = lists:foldl(Fun, [], Opponent_block_list),
-	Player_block_position_list = lists:foldl(Fun, [], Player_block_list),
+	OpponentBlockPositionList = lists:foldl(Fun, [], OpponentBlockList),
+	PlayerBlockPositionList = lists:foldl(Fun, [], PlayerBlockList),
 
-%	lager:debug("Opponent_block_position_list ~p",[Opponent_block_position_list]),
-%	lager:debug("Player_block_position_list ~p",[Player_block_position_list]),
+%	lager:debug("OpponentBlockPositionList ~p",[OpponentBlockPositionList]),
+%	lager:debug("PlayerBlockPositionList ~p",[PlayerBlockPositionList]),
 
-	Opponent_garbage_message_list =  lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Opponent_garbage_list),
-	Player_garbage_message_list = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], Player_garbage_list),
+	OpponentGarbageMessageList =  lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], OpponentGarbageList),
+	PlayerGarbageMessageList = lists:foldl( fun convert_garbage_to_protocol_garbage/2, [], PlayerGarbageList),
 
-%	lager:debug("Player_garbage_message_list ~p",[Player_garbage_message_list]),
-%	lager:debug("Opponent_garbage_message_list ~p",[Opponent_garbage_message_list]),
+%	lager:debug("PlayerGarbageMessageList ~p",[PlayerGarbageMessageList]),
+%	lager:debug("OpponentGarbageMessageList ~p",[OpponentGarbageMessageList]),
 
-	Opponent_game_state = #game_state{ current_random = Opponent_current_random_step,
-										current_piece_x = Opponent_current_piece_x,
-											current_piece_y = Opponent_current_piece_y,
-												current_piece_angle = Opponent_current_piece_angle,
-													blocks = Opponent_block_position_list,
-														garbage_message_list = Opponent_garbage_message_list  },
+	OpponentGameState = #game_state{ current_random = OpponentCurrentRandomStep,
+										current_piece_x = OpponentCurrentPiece_x,
+											current_piece_y = OpponentCurrentPiece_y,
+												current_piece_angle = OpponentCurrentPieceAngle,
+													blocks = OpponentBlockPositionList,
+														garbage_message_list = OpponentGarbageMessageList  },
 
-	Player_game_state = #game_state{ current_random = Player_current_random_step, 
-										current_piece_x = Player_current_piece_x,
-											current_piece_y = Player_current_piece_y,
-												current_piece_angle = Player_current_piece_angle,
-													blocks = Player_block_position_list,
-														garbage_message_list = Player_garbage_message_list },
+	PlayerGameState = #game_state{ current_random = PlayerCurrentRandomStep, 
+										current_piece_x = PlayerCurrentPiece_x,
+											current_piece_y = PlayerCurrentPiece_y,
+												current_piece_angle = PlayerCurrentPieceAngle,
+													blocks = PlayerBlockPositionList,
+														garbage_message_list = PlayerGarbageMessageList },
 
 
 
 	Req = #request{ type = message_debug_board, 
 						debug_game_state_content =  #message_debug_board{
 
-							opponent_state = Opponent_game_state,
-							player_state = Player_game_state
+							opponent_state = OpponentGameState,
+							player_state = PlayerGameState
 						}
 					},
 	protocol_pb:encode_request(Req).
@@ -476,69 +476,69 @@ convert_protocolgstate_to_usergstateelems( ProtocolGState, ProtocolLastGarbageId
 
 
 process_message( message_login_code, 
-					_User_process_pid, 
-						_Message_decoded = #request{ login_content = #message_login{ client_time = Client_time , user_id = User_id} },
-							_Message_encoded ) ->
+					_UserProcessPid, 
+						_MessageDecoded = #request{ login_content = #message_login{ client_time = ClientTime , user_id = UserId} },
+							_MessageEncoded ) ->
 
-	case {Client_time, User_id} of
+	case {ClientTime, UserId} of
 
 		{ _ , undefined } ->
-			{ ok, {New_guest_id , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
-			User_initiated = user_logic:init( User ),
-			login_guest_user( New_guest_id , Client_time, User_initiated );
+			{ ok, {NewGuestId , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
+			UserInitiated = user_logic:init( User ),
+			login_guest_user( NewGuestId , ClientTime, UserInitiated );
 
 		{undefined, _ } -> 
 			{ reply_with_disconnect, create_disconect_message() };
 
 		_other ->
 
-			lager:info("User id no login e ~p",[User_id]),
+			lager:info("User id no login e ~p",[UserId]),
 
-			case user_store:login_local_user( User_id ) of
-				{ error, _error } ->	{ ok, {New_guest_id , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
-										User_initiated = user_logic:init( User ),									
-										login_guest_user( New_guest_id , Client_time, User_initiated );
-				{ok, User } ->			login_guest_user( User_id , Client_time, User )
+			case user_store:login_local_user( UserId ) of
+				{ error, _error } ->	{ ok, {NewGuestId , User } } = user_store:create_local_user( <<"Guest">> , 'infinity' ),
+										UserInitiated = user_logic:init( User ),									
+										login_guest_user( NewGuestId , ClientTime, UserInitiated );
+				{ok, User } ->			login_guest_user( UserId , ClientTime, User )
 			end
 	end;
 
 
 
-process_message( message_ready_code, User_process_pid, _Message_decoded, _Message_encoded ) 
-			when User_process_pid =/= no_user_process ->
-	lager:debug("user ~p is ready",[User_process_pid]),
-	gen_server:cast( User_process_pid, { ready, no_details }),
+process_message( message_ready_code, UserProcessPid, _MessageDecoded, _MessageEncoded ) 
+			when UserProcessPid =/= no_user_process ->
+	lager:debug("user ~p is ready",[UserProcessPid]),
+	gen_server:cast( UserProcessPid, { ready, no_details }),
 	{no_reply};
 
 
 
-process_message( message_enter_queue, User_process_pid, 
+process_message( message_enter_queue, UserProcessPid, 
 					#request{ enter_queue_content = #message_enter_queue{ tier = Tier, powers_equipped = Powers } }, 
-						_Message_encoded )
-			when User_process_pid =/= no_user_process ->
+						_MessageEncoded )
+			when UserProcessPid =/= no_user_process ->
 
-	lager:debug("user ~p enters the queue",[User_process_pid]),
-	gen_server:cast( User_process_pid, { enter_queue, Tier, Powers }),
+	lager:debug("user ~p enters the queue",[UserProcessPid]),
+	gen_server:cast( UserProcessPid, { enter_queue, Tier, Powers }),
 	{no_reply};
 
 
 
-process_message( message_lost_game, User_process_pid, _Message_decoded, _Message_encoded ) 
-			when User_process_pid =/= no_user_process ->
-	lager:debug("user ~p said he lost",[User_process_pid]),
-	gen_server:cast( User_process_pid, { lost_game, no_details }),
+process_message( message_lost_game, UserProcessPid, _MessageDecoded, _MessageEncoded ) 
+			when UserProcessPid =/= no_user_process ->
+	lager:debug("user ~p said he lost",[UserProcessPid]),
+	gen_server:cast( UserProcessPid, { lost_game, no_details }),
 	{no_reply};
 
 
 
 process_message( message_place_piece_code, 
-					User_process_pid, 
+					UserProcessPid, 
 						#request{ place_piece_content = Message }, 
-							_Message_encoded ) 
-			when User_process_pid =/= no_user_process ->
+							_MessageEncoded ) 
+			when UserProcessPid =/= no_user_process ->
 
-	lager:debug("place piece received to ~p with garbage id ~p",[User_process_pid,Message#message_place_piece.placed_garbage_id]),
-	gen_server:cast( User_process_pid, { place_piece, 
+	lager:debug("place piece received to ~p with garbage id ~p",[UserProcessPid,Message#message_place_piece.placed_garbage_id]),
+	gen_server:cast( UserProcessPid, { place_piece, 
 											Message#message_place_piece.x, 
 												Message#message_place_piece.y, 
 													Message#message_place_piece.state,
@@ -547,52 +547,52 @@ process_message( message_place_piece_code,
 
 
 
-process_message( message_update_piece_code, User_process_pid, #request{ update_piece_content = Message }, Message_encoded )
-			when User_process_pid =/= no_user_process ->
+process_message( message_update_piece_code, UserProcessPid, #request{ update_piece_content = Message }, MessageEncoded )
+			when UserProcessPid =/= no_user_process ->
 
-	gen_server:cast( User_process_pid, { update_piece, Message#message_update_piece.x, Message#message_update_piece.y, 
+	gen_server:cast( UserProcessPid, { update_piece, Message#message_update_piece.x, Message#message_update_piece.y, 
 												Message#message_update_piece.state }),
-	gen_server:cast( User_process_pid, { send_message_to_other, Message_encoded }),
+	gen_server:cast( UserProcessPid, { send_message_to_other, MessageEncoded }),
 	{no_reply};
 
 
 
-process_message( message_generic_power, User_process_pid, #request{ power_content = Message }, Message_encoded )
-			when User_process_pid =/= no_user_process ->
+process_message( message_generic_power, UserProcessPid, #request{ power_content = Message }, MessageEncoded )
+			when UserProcessPid =/= no_user_process ->
 	lager:debug("~p generic power received ~p",[self(),Message#message_generic_power.type]),
 
-	gen_server:cast( User_process_pid, { use_power, Message#message_generic_power.type }),
+	gen_server:cast( UserProcessPid, { use_power, Message#message_generic_power.type }),
 	{no_reply};
 
 
 
-process_message( message_buy_product, User_process_pid, #request{ buy_product_content = Message }, _Message_encoded ) ->
+process_message( message_buy_product, UserProcessPid, #request{ buy_product_content = Message }, _MessageEncoded ) ->
 	lager:debug("buy product ~p received ~p ",[Message#message_buy_product.product_id, self()]),
-	gen_server:cast( User_process_pid, { buy_product, Message#message_buy_product.product_id, 1 }),
+	gen_server:cast( UserProcessPid, { buy_product, Message#message_buy_product.product_id, 1 }),
 	{no_reply};
 
 
 
 
-process_message( message_sync_time, User_process_pid, #request{ message_sync_content = Message }, _Message_encoded ) ->
-	gen_server:cast( User_process_pid, { time_sync, Message#message_time_sync.client_timestamp }),
+process_message( message_sync_time, UserProcessPid, #request{ message_sync_content = Message }, _MessageEncoded ) ->
+	gen_server:cast( UserProcessPid, { time_sync, Message#message_time_sync.client_timestamp }),
 	{no_reply};
 
 
 
-process_message( message_rematch, User_process_pid, #request{ message_sync_content = _Message }, _Message_encoded ) ->
-	gen_server:cast( User_process_pid, message_rematch ),
+process_message( message_rematch, UserProcessPid, #request{ message_sync_content = _Message }, _MessageEncoded ) ->
+	gen_server:cast( UserProcessPid, message_rematch ),
 	{no_reply};
 
 
-process_message( message_no_rematch, User_process_pid, #request{ message_sync_content = _Message }, _Message_encoded ) ->
-	gen_server:cast( User_process_pid, message_no_rematch),
+process_message( message_no_rematch, UserProcessPid, #request{ message_sync_content = _Message }, _MessageEncoded ) ->
+	gen_server:cast( UserProcessPid, message_no_rematch),
 	{no_reply};
 
 
-process_message( message_debug_board, User_process_pid, #request{ debug_game_state_content=DebugGameStateContent }, _Message_encoded ) ->
+process_message( message_debug_board, UserProcessPid, #request{ debug_game_state_content=DebugGameStateContent }, _MessageEncoded ) ->
 	gen_server:cast(
-		User_process_pid,
+		UserProcessPid,
 		{
 			debug_confirm_board_synch,
 			{
@@ -611,8 +611,8 @@ process_message( message_debug_board, User_process_pid, #request{ debug_game_sta
 	{no_reply};
 
 
-process_message( Other_code, User_process_pid, _Message_decoded, _Message_encoded ) ->	
-	lager:error("I ~p , received unkown message code ~p when user is ~p",[self(),Other_code,User_process_pid]),
+process_message( OtherCode, UserProcessPid, _MessageDecoded, _MessageEncoded ) ->	
+	lager:error("I ~p , received unkown message code ~p when user is ~p",[self(),OtherCode,UserProcessPid]),
 	{reply_with_disconnect, create_disconect_message() }.
 
 
@@ -625,26 +625,26 @@ process_message( Other_code, User_process_pid, _Message_decoded, _Message_encode
 %%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
-login_guest_user( User_id , Client_time, User ) ->
-	User_creation_function = fun() ->
+login_guest_user( UserId , ClientTime, User ) ->
+	UserCreationFunction = fun() ->
 		lager:debug("created a new user proccess in login"),
-		{ok, Child_pid } = users_sup:start_new_user_process([ self() , User_id, Client_time, User ]),
-		#user{ 	user_id = User_id, user_process_pid = Child_pid }
+		{ok, ChildPid } = users_sup:start_new_user_process([ self() , UserId, ClientTime, User ]),
+		#user{ 	user_id = UserId, user_process_pid = ChildPid }
 	end,
 
-	Relogin_User_function = fun( #user{ user_process_pid = User_pid } ) ->
-		case is_process_alive( User_pid ) of
+	ReloginUserFunction = fun( #user{ user_process_pid = UserPid } ) ->
+		case is_process_alive( UserPid ) of
 			false ->
-				{save, User_creation_function() };
+				{save, UserCreationFunction() };
 			true ->
 				lager:debug("reconnected a user to an existing proccess"),
-				gen_server:cast( User_pid, { reconnecting , self() } ),
+				gen_server:cast( UserPid, { reconnecting , self() } ),
 				dont_save  
-				%{save, User_creation_function() }
+				%{save, UserCreationFunction() }
 		end
 	end,
 
-	case server_db:login_user(User_id, User_creation_function, Relogin_User_function) of
+	case server_db:login_user(UserId, UserCreationFunction, ReloginUserFunction) of
 		ok ->
 			{no_reply};
 		{ error, Reason } ->
@@ -653,18 +653,18 @@ login_guest_user( User_id , Client_time, User ) ->
 	end.
 
 
-convert_wallet_to_protocol( { Item_name, Amount } , Rest_items ) ->
-		[ #user_item{ name = Item_name , amount = Amount } | Rest_items].
+convert_wallet_to_protocol( { ItemName, Amount } , RestItems ) ->
+		[ #user_item{ name = ItemName , amount = Amount } | RestItems].
 
 
 
 convert_garbage_to_protocol_garbage( { Type , X } , Result ) ->
-	Garbage_result = case Type of
+	GarbageResult = case Type of
 		garbage ->						#garbage_position{ x = X, type = garbage, color = undefined};
 		{garbage_color, Color } ->		#garbage_position{ x = X, type = garbage_color, color = Color};
 		{garbage_hard, Hardness} ->		#garbage_position{ x = X, type = garbage_hard, color = undefined, hardness = Hardness }
 	end,
-	[ Garbage_result | Result].
+	[ GarbageResult | Result].
 
 
 

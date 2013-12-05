@@ -60,18 +60,18 @@ are_blocks_equal( Block1, Block2 ) when is_record(Block1,block) andalso is_recor
 
 are_boards_equal(Board = #board{}, Board2 = #board{} ) ->
 
-	Board1_keys = gb_trees:keys(Board#board.blocks),
-	Board2_keys = gb_trees:keys(Board2#board.blocks),
+	Board1Keys = gb_trees:keys(Board#board.blocks),
+	Board2Keys = gb_trees:keys(Board2#board.blocks),
 
-	Compare_fun = fun( Block_key ) ->
-		{value,Block1} = gb_trees:lookup( Block_key, Board#board.blocks),
-		{value,Block2} = gb_trees:lookup( Block_key, Board2#board.blocks),
+	CompareFun = fun( BlockKey ) ->
+		{value,Block1} = gb_trees:lookup( BlockKey, Board#board.blocks),
+		{value,Block2} = gb_trees:lookup( BlockKey, Board2#board.blocks),
 		are_blocks_equal( Block1, Block2 )
 	end,
 
-	case length(Board2_keys) == length(Board1_keys) of
+	case length(Board2Keys) == length(Board1Keys) of
 		false ->	false;
-		true ->		lists:all( Compare_fun, Board1_keys)
+		true ->		lists:all( CompareFun, Board1Keys)
 	end.
 	
 

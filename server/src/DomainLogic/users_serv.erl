@@ -21,8 +21,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3, start_link/4]).
 
 
-start_link(Connection_pid , User_id, Client_time, User ) ->
-	gen_server:start_link(?MODULE, [Connection_pid , User_id, Client_time, User ], []).
+start_link(ConnectionPid , UserId, ClientTime, User ) ->
+	gen_server:start_link(?MODULE, [ConnectionPid , UserId, ClientTime, User ], []).
 
 init(InitData) ->
 	gen_server:cast(self(), InitData),
@@ -30,29 +30,29 @@ init(InitData) ->
 
 
 
-handle_cast([ Connection_pid , User_id, _Client_time, User = #mc_user{} ], State = #user_process_state{ }) ->
+handle_cast([ ConnectionPid , UserId, _ClientTime, User = #mc_user{} ], State = #user_process_state{ }) ->
 
-	lager:debug("new user process with user_id ~p and connection ~p",[User_id,Connection_pid]),
+	lager:debug("new user process with user_id ~p and connection ~p",[UserId,ConnectionPid]),
 
 	swiss:subscribe(configuration),
 
-	gen_server:cast( Connection_pid , {register_user_process, self() }),
-	Connection_monitor = monitor(process, Connection_pid),
+	gen_server:cast( ConnectionPid , {register_user_process, self() }),
+	ConnectionMonitor = monitor(process, ConnectionPid),
 
-	Msg =  message_processor:create_login_success( User_id, 
+	Msg =  message_processor:create_login_success( UserId, 
 													configurations_serv:get_current_url(), 
 													configurations_serv:get_current_version(),
 													User#mc_user.wallet),
-	gen_server:cast( Connection_pid , { reply, Msg }),
+	gen_server:cast( ConnectionPid , { reply, Msg }),
 
-	Logic_user = user_logic:login( User , swiss:unix_timestamp() ),
+	LogicUser = user_logic:login( User , swiss:unix_timestamp() ),
 
 	{noreply, State#user_process_state{
-				connection_monitor = Connection_monitor,
-				user_id = User_id,
-				connection_pid = Connection_pid,
+				connection_monitor = ConnectionMonitor,
+				user_id = UserId,
+				connection_pid = ConnectionPid,
 				disconect_timer = undefined,
-				logic_user = Logic_user
+				logic_user = LogicUser
 			}
 	};
 
@@ -60,16 +60,16 @@ handle_cast([ Connection_pid , User_id, _Client_time, User = #mc_user{} ], State
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% GAME LOGIC DEPENDANT
 
-handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid }) 
-				when Connection_pid == undefined ->
+handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = ConnectionPid }) 
+				when ConnectionPid == undefined ->
 	lager:error("users_serv: tried sending msg ~p but connection is down",[Msg]),
 	{noreply, State};
 
-handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = Connection_pid })->
-	%lager:debug("users_serv: sending msg ~p to ~p",[Msg,Connection_pid]),
-	case is_process_alive(Connection_pid) of
+handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid = ConnectionPid })->
+	%lager:debug("users_serv: sending msg ~p to ~p",[Msg,ConnectionPid]),
+	case is_process_alive(ConnectionPid) of
 		true ->
-			gen_server:cast( Connection_pid, {reply, Msg});
+			gen_server:cast( ConnectionPid, {reply, Msg});
 		false ->
 			lager:error("users_serv: tried sending msg ~p but connection is down",[Msg])
 	end,	
@@ -81,10 +81,10 @@ handle_cast( {send_message, Msg }, State = #user_process_state{ connection_pid =
 
 
 
-handle_cast( { time_sync, Client_timestamp }, State = #user_process_state{ connection_pid = Connection_pid })->
-	Current_time = swiss:unix_timestamp_ms(),
-	Msg = message_processor:create_time_sync_message( Client_timestamp, Current_time),
-	gen_server:cast( Connection_pid, {reply, Msg } ),
+handle_cast( { time_sync, ClientTimestamp }, State = #user_process_state{ connection_pid = ConnectionPid })->
+	CurrentTime = swiss:unix_timestamp_ms(),
+	Msg = message_processor:create_time_sync_message( ClientTimestamp, CurrentTime),
+	gen_server:cast( ConnectionPid, {reply, Msg } ),
 	{noreply, State};
 
 
@@ -92,42 +92,42 @@ handle_cast( { time_sync, Client_timestamp }, State = #user_process_state{ conne
 
 
 
-handle_cast( { send_message_to_other, _Msg }, State = #user_process_state{ game_pid = Game_pid }) 
-				when Game_pid == undefined ->
+handle_cast( { send_message_to_other, _Msg }, State = #user_process_state{ game_pid = GamePid }) 
+				when GamePid == undefined ->
 	{noreply, State};
 
-handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_pid = Game_pid }) ->
-	gen_server:cast( Game_pid, { send_message_to_other, Msg, self() } ),
-	{noreply, State};
-
-
-
-
-
-handle_cast( { place_piece , X, Y, Angle, Client_garbage_id } , State = #user_process_state{ game_pid = Game_pid } )  when Game_pid =/= undefined ->
-	gen_server:cast( Game_pid, { place_piece, X, Y, Angle, self(), Client_garbage_id } ),
+handle_cast( { send_message_to_other, Msg }, State = #user_process_state{ game_pid = GamePid }) ->
+	gen_server:cast( GamePid, { send_message_to_other, Msg, self() } ),
 	{noreply, State};
 
 
 
 
-handle_cast( { update_piece, X, Y, Angle }, State = #user_process_state{ game_pid = Game_pid } ) when Game_pid =/= undefined ->
-	gen_server:cast( Game_pid, { update_piece, X, Y, Angle, self() } ),
-	{noreply, State};
 
-
-
-handle_cast( { use_power, Type }, State = #user_process_state{ game_pid = Game_pid } )  when Game_pid =/= undefined ->
-	gen_server:cast( Game_pid, { use_power, Type, self() } ),
+handle_cast( { place_piece , X, Y, Angle, ClientGarbageId } , State = #user_process_state{ game_pid = GamePid } )  when GamePid =/= undefined ->
+	gen_server:cast( GamePid, { place_piece, X, Y, Angle, self(), ClientGarbageId } ),
 	{noreply, State};
 
 
 
 
-handle_cast( {game_start , StartTime }, State = #user_process_state{ connection_pid = Connection_pid }) ->
+handle_cast( { update_piece, X, Y, Angle }, State = #user_process_state{ game_pid = GamePid } ) when GamePid =/= undefined ->
+	gen_server:cast( GamePid, { update_piece, X, Y, Angle, self() } ),
+	{noreply, State};
+
+
+
+handle_cast( { use_power, Type }, State = #user_process_state{ game_pid = GamePid } )  when GamePid =/= undefined ->
+	gen_server:cast( GamePid, { use_power, Type, self() } ),
+	{noreply, State};
+
+
+
+
+handle_cast( {game_start , StartTime }, State = #user_process_state{ connection_pid = ConnectionPid }) ->
 
 	Msg = message_processor:create_start_message( StartTime ),
-	gen_server:cast( Connection_pid, {reply, Msg}),
+	gen_server:cast( ConnectionPid, {reply, Msg}),
 
 	lager:debug("sending start game to ~p",[self()]),
 	{noreply, State};
@@ -138,25 +138,25 @@ handle_cast( {game_start , StartTime }, State = #user_process_state{ connection_
 
 
 
-handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ connection_pid = Connection_pid,
-																			game_pid = Game_pid, 
-																				game_state = User_state, 
-																					user_id = User_id,
-																						logic_user = Logic_user }) 
-				when User_state == init, Game_pid == undefined ->
+handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ connection_pid = ConnectionPid,
+																			game_pid = GamePid, 
+																				game_state = UserState, 
+																					user_id = UserId,
+																						logic_user = LogicUser }) 
+				when UserState == init, GamePid == undefined ->
 	
-	case user_logic:can_enter_game( Logic_user, Powers ) of
+	case user_logic:can_enter_game( LogicUser, Powers ) of
 		false ->
 			lager:debug("users_serv: not enough coins to place in queue with powers ~p",[Powers]),
 
 			Msg = message_processor:create_insufficient_lifes_message(),
-			gen_server:cast( Connection_pid, {reply, Msg}),
+			gen_server:cast( ConnectionPid, {reply, Msg}),
 			{noreply, State};
 		true ->
 			lager:debug("users_serv: ready to place in queue with powers ~p",[Powers]),
 			Elo = 10,
 			Tier = beginner,
-			queue_serv:enter( self(), User_id, Elo, Tier, Powers ),
+			queue_serv:enter( self(), UserId, Elo, Tier, Powers ),
 			{noreply, State#user_process_state{ game_state = in_queue }}
 	end;
 
@@ -166,34 +166,34 @@ handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ connec
 
 
 
-handle_cast( { enter_game, Powers, Game_process_pid, Opponnent_name, Seed } , State = #user_process_state{ connection_pid = Connection_pid, 
-																										game_state = User_state,
-																										logic_user = Logic_user }) 
-				when User_state == in_queue orelse User_state == in_rematch_queue ->
+handle_cast( { enter_game, Powers, GameProcessPid, OpponnentName, Seed } , State = #user_process_state{ connection_pid = ConnectionPid, 
+																										game_state = UserState,
+																										logic_user = LogicUser }) 
+				when UserState == in_queue orelse UserState == in_rematch_queue ->
 
-	lager:info("enter game received when he is in ~p",[User_state]),
+	lager:info("enter game received when he is in ~p",[UserState]),
 
-	case user_logic:handle_game_start( Logic_user, Powers ) of
+	case user_logic:handle_game_start( LogicUser, Powers ) of
 
 		{error , not_enough_lifes} ->
 			{stop, not_enough_lifes, State};
 
-		{ok, New_logic_user} ->
-			Msg = message_processor:create_match_created_message( Opponnent_name, Seed ),
-			gen_server:cast( Connection_pid, {reply, Msg}),
+		{ok, NewLogicUser} ->
+			Msg = message_processor:create_match_created_message( OpponnentName, Seed ),
+			gen_server:cast( ConnectionPid, {reply, Msg}),
 
-			lager:debug("i am now monitoring game ~p",[Game_process_pid]),
-			New_state = State#user_process_state{ 	game_monitor =  monitor(process, Game_process_pid ) , 
-													game_pid = Game_process_pid, 
+			lager:debug("i am now monitoring game ~p",[GameProcessPid]),
+			NewState = State#user_process_state{ 	game_monitor =  monitor(process, GameProcessPid ) , 
+													game_pid = GameProcessPid, 
 													game_state = playing_game,
-													logic_user = New_logic_user },
-			{noreply, New_state}
+													logic_user = NewLogicUser },
+			{noreply, NewState}
 	end;
 
 
 
 
-handle_cast( { enter_game , _Game_process_pid, _Opponnent_name, _Seed } , State ) ->
+handle_cast( { enter_game , _GameProcessPid, _OpponnentName, _Seed } , State ) ->
 	lager:debug("enter game was received when state was ~p",[State]),
 	{noreply, State};
 
@@ -204,13 +204,13 @@ handle_cast( { enter_game , _Game_process_pid, _Opponnent_name, _Seed } , State 
 
 
 
-handle_cast( { ready, _Queue_details }, State = #user_process_state{ game_pid = Game_pid,  game_state = User_state }) 
-				when User_state == playing_game, Game_pid =/= undefined ->
-	gen_server:cast( Game_pid , { user_ready, self()}),
+handle_cast( { ready, _QueueDetails }, State = #user_process_state{ game_pid = GamePid,  game_state = UserState }) 
+				when UserState == playing_game, GamePid =/= undefined ->
+	gen_server:cast( GamePid , { user_ready, self()}),
 	{noreply, State};
 
 
-handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
+handle_cast( { ready, _QueueDetails }, State = #user_process_state{} ) ->
 	lager:debug("ready message sent at wrong time (state = ~p)",[State]),
 	{noreply, State};
 
@@ -222,31 +222,31 @@ handle_cast( { ready, _Queue_details }, State = #user_process_state{} ) ->
 
 
 
-handle_cast( {game_lost, Powers, _Tier, Reason}, State = #user_process_state{ connection_pid = Connection_pid, logic_user = Logic_user} ) ->
+handle_cast( {game_lost, Powers, _Tier, Reason}, State = #user_process_state{ connection_pid = ConnectionPid, logic_user = LogicUser} ) ->
 
 	Msg = message_processor:create_lost_message(Reason),
-	gen_server:cast( Connection_pid, {reply, Msg}),
+	gen_server:cast( ConnectionPid, {reply, Msg}),
 
-	case user_logic:handle_game_lost( Logic_user, Powers ) of
+	case user_logic:handle_game_lost( LogicUser, Powers ) of
 		{error , not_enough_lifes} ->
 			{noreply, State};
 
-		{ok, New_logic_user} ->
-			{noreply, State#user_process_state{ logic_user = New_logic_user }}
+		{ok, NewLogicUser} ->
+			{noreply, State#user_process_state{ logic_user = NewLogicUser }}
 	end;
 
 
-handle_cast( {game_win, Powers, Tier, Reason}, State = #user_process_state{ connection_pid = Connection_pid, logic_user = Logic_user} ) ->
+handle_cast( {game_win, Powers, Tier, Reason}, State = #user_process_state{ connection_pid = ConnectionPid, logic_user = LogicUser} ) ->
 
 	Msg = message_processor:create_won_message(Reason),
-	gen_server:cast( Connection_pid, {reply, Msg}),
+	gen_server:cast( ConnectionPid, {reply, Msg}),
 
-	case user_logic:handle_game_win( Logic_user, Powers, Tier ) of
+	case user_logic:handle_game_win( LogicUser, Powers, Tier ) of
 		{error , not_enough_lifes} ->
 			{noreply, State};
 
-		{ok, New_logic_user} ->
-			{noreply, State#user_process_state{ logic_user = New_logic_user }}
+		{ok, NewLogicUser} ->
+			{noreply, State#user_process_state{ logic_user = NewLogicUser }}
 	end;
 
 
@@ -254,23 +254,23 @@ handle_cast( {game_win, Powers, Tier, Reason}, State = #user_process_state{ conn
 
 
 
-handle_cast({ buy_product, Product_id, Amount } , State = #user_process_state{ user_id = User_id, connection_pid = Connection_pid } ) ->
-	Msg = case user_store:update_wallet_balance( User_id, Product_id, Amount ) of
-		{ok, New_amount } ->						message_processor:create_success_buy_product_response_message(Product_id, New_amount );
+handle_cast({ buy_product, ProductId, Amount } , State = #user_process_state{ user_id = UserId, connection_pid = ConnectionPid } ) ->
+	Msg = case user_store:update_wallet_balance( UserId, ProductId, Amount ) of
+		{ok, NewAmount } ->						message_processor:create_success_buy_product_response_message(ProductId, NewAmount );
 		{error, {insufficient, _Ins_Amount}} ->		message_processor:create_fail_buy_product_response_message()
 	end,
-	gen_server:cast( Connection_pid, {reply, Msg}),
+	gen_server:cast( ConnectionPid, {reply, Msg}),
 	{noreply, State};
 
 
 
 
-handle_cast(message_rematch , State = #user_process_state{ game_state = User_state } ) ->
+handle_cast(message_rematch , State = #user_process_state{ game_state = UserState } ) ->
 	rematch_queue_serv:set_user_rematch(self()),
 	{noreply, State};
 
 
-handle_cast(message_no_rematch , State = #user_process_state{ game_state = User_state } ) ->
+handle_cast(message_no_rematch , State = #user_process_state{ game_state = UserState } ) ->
 	rematch_queue_serv:remove_user(self()),
 	{noreply, State};
 
@@ -279,13 +279,13 @@ handle_cast(set_rematch_queue_state , State = #user_process_state{} ) ->
 	{noreply, State#user_process_state{ game_state = in_rematch_queue } };
 
 
-handle_cast(remove_from_rematch_queue , State = #user_process_state{ connection_pid = Connection_pid } ) ->
+handle_cast(remove_from_rematch_queue , State = #user_process_state{ connection_pid = ConnectionPid } ) ->
 	{noreply, State#user_process_state{ game_state = init } };
 
 
-handle_cast(remove_from_queue , State = #user_process_state{ connection_pid = Connection_pid } ) ->
+handle_cast(remove_from_queue , State = #user_process_state{ connection_pid = ConnectionPid } ) ->
 	Msg = message_processor:create_insufficient_lifes_message(),
-	gen_server:cast( Connection_pid, {reply, Msg}),
+	gen_server:cast( ConnectionPid, {reply, Msg}),
 	{noreply, State#user_process_state{ game_state = init } };
 
 
@@ -297,44 +297,44 @@ handle_cast({debug_confirm_board_synch, RemoteStateElems}, State = #user_process
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-handle_cast( { reconnecting, New_connection_pid}, State ) ->
+handle_cast( { reconnecting, NewConnectionPid}, State ) ->
 	{stop, normal, State};
 
-handle_cast( { reconnecting, New_connection_pid}, State = #user_process_state{ connection_pid = Previous_connection_pid, 
-																				connection_monitor = Previous_connection_monitor,
-																				disconect_timer = Disconect_timer,
-																				user_id = User_id,
-																				game_pid = Game_process_pid,
+handle_cast( { reconnecting, NewConnectionPid}, State = #user_process_state{ connection_pid = PreviousConnectionPid, 
+																				connection_monitor = PreviousConnectionMonitor,
+																				disconect_timer = DisconectTimer,
+																				user_id = UserId,
+																				game_pid = GameProcessPid,
 																				logic_user = #logic_user{ user = User } } ) ->
 	lager:debug("player '~p' reconnected" ,[self()]),
 
 	%cancels the timeout for disconect
-	case Disconect_timer of 
+	case DisconectTimer of 
 		undefined -> 	do_nothing;
-		_ -> 			erlang:cancel_timer( Disconect_timer )
+		_ -> 			erlang:cancel_timer( DisconectTimer )
 	end,
 	
-	case Previous_connection_monitor of
+	case PreviousConnectionMonitor of
 		undefined ->	do_nothing;
-		_ ->			demonitor(Previous_connection_monitor),
-						gen_server:cast( Previous_connection_pid , { reply_with_disconnect, message_processor:create_disconect_message() } )
+		_ ->			demonitor(PreviousConnectionMonitor),
+						gen_server:cast( PreviousConnectionPid , { reply_with_disconnect, message_processor:create_disconect_message() } )
 	end,
 
-	gen_server:cast( New_connection_pid , { register_user_process, self() } ),
-	New_connection_monitor = monitor(process, New_connection_pid),
+	gen_server:cast( NewConnectionPid , { register_user_process, self() } ),
+	NewConnectionMonitor = monitor(process, NewConnectionPid),
 
-	case Game_process_pid of
-		undefined ->	Msg = message_processor:create_login_success( User_id, 
+	case GameProcessPid of
+		undefined ->	Msg = message_processor:create_login_success( UserId, 
 																		configurations_serv:get_current_url(), 
 																			configurations_serv:get_current_version(), 
 																				User#mc_user.wallet ),
-						gen_server:cast( New_connection_pid , { reply, Msg });
+						gen_server:cast( NewConnectionPid , { reply, Msg });
 
-		_ ->			gen_server:cast( Game_process_pid , { reconnecting, self() } )
+		_ ->			gen_server:cast( GameProcessPid , { reconnecting, self() } )
 
 	end,
-	{noreply, State#user_process_state{ connection_monitor = New_connection_monitor,
-											connection_pid = New_connection_pid,
+	{noreply, State#user_process_state{ connection_monitor = NewConnectionMonitor,
+											connection_pid = NewConnectionPid,
 												disconect_timer = undefined } };
 
 
@@ -345,14 +345,14 @@ handle_cast(accept, State ) ->
 
 
 
-handle_info({configuration,{new_configuration, New_version, New_version_url} }, State = #user_process_state{connection_monitor = Connection_monitor, 
-																						game_pid = _Game_process_pid,
-																						user_id = User_id}) ->
-	lager:debug("User ~p is going to be disconected due to new configuration",[User_id]),
+handle_info({configuration,{new_configuration, NewVersion, NewVersionUrl} }, State = #user_process_state{connection_monitor = ConnectionMonitor, 
+																						game_pid = _GameProcessPid,
+																						user_id = UserId}) ->
+	lager:debug("User ~p is going to be disconected due to new configuration",[UserId]),
 	
-	Msg = message_processor:create_new_configuration_message( New_version, New_version_url ),
+	Msg = message_processor:create_new_configuration_message( NewVersion, NewVersionUrl ),
 
-	gen_server:cast(Connection_monitor,{reply, Msg}),
+	gen_server:cast(ConnectionMonitor,{reply, Msg}),
 
 	{stop, normal, State};
 
@@ -362,19 +362,19 @@ handle_info({configuration,{new_configuration, New_version, New_version_url} }, 
 %%
 %	called when the user connection stops
 %%
-handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_state{connection_monitor = Connection_monitor, 
-																						game_pid = Game_process_pid,
-																						user_id = User_id}) 
-				when Reference == Connection_monitor ->
+handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_state{connection_monitor = ConnectionMonitor, 
+																						game_pid = GameProcessPid,
+																						user_id = UserId}) 
+				when Reference == ConnectionMonitor ->
 	lager:debug("user connection went down", []),
-	demonitor(Connection_monitor),
+	demonitor(ConnectionMonitor),
 	TimerRef = erlang:send_after(?CONNECTION_TIMEOUT, self(), connection_timeout),
 
-	case Game_process_pid of 
+	case GameProcessPid of 
 		undefined ->
 			do_nothing;
 		_alive ->
-			gen_server:cast(Game_process_pid, { user_disconected, self() , User_id })
+			gen_server:cast(GameProcessPid, { user_disconected, self() , UserId })
 	end,
 
 	{noreply, State#user_process_state{ disconect_timer = TimerRef,
@@ -385,34 +385,34 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_s
 %%
 %	called when the game stops
 %%
-handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = Game_monitor})
-				when Reference == Game_monitor andalso State#user_process_state.game_state == in_rematch_queue ->
+handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = GameMonitor})
+				when Reference == GameMonitor andalso State#user_process_state.game_state == in_rematch_queue ->
 
 	lager:debug("game stoped (~p) but i will continue", [Reason]),
-	demonitor(Game_monitor),
+	demonitor(GameMonitor),
 	{noreply, State#user_process_state{ game_monitor = undefined, game_pid = undefined }};
 
 
-handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = Game_monitor})
-				when Reference == Game_monitor ->
+handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = GameMonitor})
+				when Reference == GameMonitor ->
 
 	lager:debug("game stoped (~p) but i will continue", [Reason]),
-	demonitor(Game_monitor),
+	demonitor(GameMonitor),
 	{noreply, State#user_process_state{ game_monitor = undefined, game_pid = undefined, game_state = init }};
 
 
-handle_info({ user_logic_msg, Msg}, State = #user_process_state{ logic_user = Logic_user }) ->
+handle_info({ user_logic_msg, Msg}, State = #user_process_state{ logic_user = LogicUser }) ->
 	lager:debug("generate life timeoutfor ~p", [self()]),
-	{ok,New_logic_user} = user_logic:handle_msg( Msg, Logic_user),
+	{ok,NewLogicUser} = user_logic:handle_msg( Msg, LogicUser),
 
-	{noreply, State#user_process_state{ logic_user = New_logic_user } };
+	{noreply, State#user_process_state{ logic_user = NewLogicUser } };
 
 %%
 %	called when the user disconect timeouts
 %%
-handle_info(connection_timeout, State = #user_process_state{ logic_user = Logic_user } ) ->
+handle_info(connection_timeout, State = #user_process_state{ logic_user = LogicUser } ) ->
 	lager:debug("connection timeout", []),
-	user_logic:logout(Logic_user),
+	user_logic:logout(LogicUser),
 	{stop, normal, State};
 
 
@@ -421,8 +421,8 @@ handle_info(M,S) ->
 	{noreply, S}.
 
 
-handle_call( {can_enter_game, Powers }, _From, State = #user_process_state{ logic_user = Logic_user } ) ->
-	{reply, user_logic:can_enter_game( Logic_user, Powers ), State};
+handle_call( {can_enter_game, Powers }, _From, State = #user_process_state{ logic_user = LogicUser } ) ->
+	{reply, user_logic:can_enter_game( LogicUser, Powers ), State};
 
 handle_call(_E, _From, State) ->
 	{noreply, State}.

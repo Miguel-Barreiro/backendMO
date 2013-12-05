@@ -12,6 +12,6 @@ init([]) ->
     	{games, {game_serv, start_link, []}, temporary, 1000, worker, [game_serv]}
     ]}}.
 
-start_new_game_process( Game_data_list )->
-	lager:debug("game_sup: start new game with ~p",[Game_data_list]),
-	supervisor:start_child(game_sup, Game_data_list ).
+start_new_game_process( GameDataList )->
+	lager:debug("game_sup: start new game with ~p",[GameDataList]),
+	supervisor:start_child(game_sup, GameDataList ).

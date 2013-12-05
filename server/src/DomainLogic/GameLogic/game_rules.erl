@@ -11,21 +11,21 @@
 -spec get_offline_current_rules( Tier::binary() ) -> #game_logic_rules{}.
 get_offline_current_rules( Tier ) ->
 
-	{ _Values , _Products, Ability_rules, 
-		Garbage_combo_rule, Garbage_chain_rule, Garbage_simultaneous_combo_rule, 
-			Combo_max, Total_color_number, Min_combo_size } = configurations_serv:get_offline_configuration(Tier),
+	{ _Values , _Products, AbilityRules, 
+		GarbageComboRule, GarbageChainRule, GarbageSimultaneousComboRule, 
+			ComboMax, TotalColorNumber, MinComboSize } = configurations_serv:get_offline_configuration(Tier),
 
 	#game_logic_rules{
 
-		abilities_rule = Ability_rules,
-		garbage_combo_rule = Garbage_combo_rule,
-		garbage_chain_rule = Garbage_chain_rule,
-		garbage_simultaneous_combo_rule = Garbage_simultaneous_combo_rule,
+		abilities_rule = AbilityRules,
+		garbage_combo_rule = GarbageComboRule,
+		garbage_chain_rule = GarbageChainRule,
+		garbage_simultaneous_combo_rule = GarbageSimultaneousComboRule,
 
-		total_color_number = Total_color_number,
-		min_combo_size = Min_combo_size,
+		total_color_number = TotalColorNumber,
+		min_combo_size = MinComboSize,
 
-		garbage_combo_max = Combo_max
+		garbage_combo_max = ComboMax
 	}.
 
 
@@ -49,21 +49,21 @@ get_current_rules( Tier ) ->
 	}.
 	
 
--spec get_next_piece_type_with_frenzy( Combos:: [[[#block{}]]], Game_rules::#game_logic_rules{} ) -> block_type().
-get_next_piece_type_with_frenzy(  Combos, Game_rules = #game_logic_rules{}) ->
-	get_type_from_rule_with_frenzy(  Game_rules#game_logic_rules.abilities_rule, Combos).
+-spec get_next_piece_type_with_frenzy( Combos:: [[[#block{}]]], GameRules::#game_logic_rules{} ) -> block_type().
+get_next_piece_type_with_frenzy(  Combos, GameRules = #game_logic_rules{}) ->
+	get_type_from_rule_with_frenzy(  GameRules#game_logic_rules.abilities_rule, Combos).
 
 
--spec get_next_piece_type( Combos:: [[[#block{}]]] , Game_rules::#game_logic_rules{} ) -> block_type().
-get_next_piece_type( Combos, Game_rules = #game_logic_rules{} ) ->
-	get_type_from_rule(  Game_rules#game_logic_rules.abilities_rule , Combos).
+-spec get_next_piece_type( Combos:: [[[#block{}]]] , GameRules::#game_logic_rules{} ) -> block_type().
+get_next_piece_type( Combos, GameRules = #game_logic_rules{} ) ->
+	get_type_from_rule(  GameRules#game_logic_rules.abilities_rule , Combos).
 
 
 
 
--spec get_garbage_number( Combos:: [[[#block{}]]] , Game_rules::#game_logic_rules{} ) -> { integer(), integer(), integer() }.
-get_garbage_number( Combos, Game_rules = #game_logic_rules{} ) ->
-	get_garbage_from_combo_chain( Combos , Game_rules ).
+-spec get_garbage_number( Combos:: [[[#block{}]]] , GameRules::#game_logic_rules{} ) -> { integer(), integer(), integer() }.
+get_garbage_number( Combos, GameRules = #game_logic_rules{} ) ->
+	get_garbage_from_combo_chain( Combos , GameRules ).
 
 
 
@@ -85,12 +85,12 @@ get_random_garbage_from_types( Number, Types ) ->
 
 
 
-get_garbage_from_single_combo( Combo_size , Game_rules = #game_logic_rules{} ) ->
+get_garbage_from_single_combo( ComboSize , GameRules = #game_logic_rules{} ) ->
 
-	case proplists:get_value( Combo_size, Game_rules#game_logic_rules.garbage_combo_rule ) of
+	case proplists:get_value( ComboSize, GameRules#game_logic_rules.garbage_combo_rule ) of
 	
-		undefined when Combo_size > Game_rules#game_logic_rules.garbage_combo_max ->
-				get_garbage_from_single_combo( Game_rules#game_logic_rules.garbage_combo_max , Game_rules );
+		undefined when ComboSize > GameRules#game_logic_rules.garbage_combo_max ->
+				get_garbage_from_single_combo( GameRules#game_logic_rules.garbage_combo_max , GameRules );
 
 		undefined ->					{ 0,0,0 };
 		{garbage, Value} ->				{ Value,0,0 };
@@ -101,72 +101,72 @@ get_garbage_from_single_combo( Combo_size , Game_rules = #game_logic_rules{} ) -
 
 
 
-get_garbage_from_combo_sequence( Combo_sequence, Game_rules = #game_logic_rules{}  ) ->
+get_garbage_from_combo_sequence( ComboSequence, GameRules = #game_logic_rules{}  ) ->
 
-	Combo_sum = fun( Combo, { Normal_garbage_number, Color_garbage_number, Hard_garbage_number } ) -> 
+	ComboSum = fun( Combo, { NormalGarbageNumber, ColorGarbageNumber, HardGarbageNumber } ) -> 
 			
-			{ New_normal_garbage_number, New_color_garbage_number, New_hard_garbage_number } = get_garbage_from_single_combo( sets:size(Combo), Game_rules ),
+			{ NewNormalGarbageNumber, NewColorGarbageNumber, NewHardGarbageNumber } = get_garbage_from_single_combo( sets:size(Combo), GameRules ),
 			
-			{Normal_garbage_number + New_normal_garbage_number,
-				Color_garbage_number + New_color_garbage_number, 
-					Hard_garbage_number + New_hard_garbage_number}
+			{NormalGarbageNumber + NewNormalGarbageNumber,
+				ColorGarbageNumber + NewColorGarbageNumber, 
+					HardGarbageNumber + NewHardGarbageNumber}
 		end,
 
-	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = lists:foldl( Combo_sum, { 0,0,0 } , Combo_sequence),
+	{ NormalGarbageNumber, ColorGarbageNumber, HardGarbageNumber } = lists:foldl( ComboSum, { 0,0,0 } , ComboSequence),
 	
-	{ Ratio , Garbage_types } = Game_rules#game_logic_rules.garbage_simultaneous_combo_rule,
+	{ Ratio , GarbageTypes } = GameRules#game_logic_rules.garbage_simultaneous_combo_rule,
 
-	Garbage_list = get_random_garbage_from_types( (length(Combo_sequence) - 1) * Ratio, Garbage_types ),
+	GarbageList = get_random_garbage_from_types( (length(ComboSequence) - 1) * Ratio, GarbageTypes ),
 
 	Fun = 
-	fun( Garbage_type, { Normal_garbage_number_acc, Color_garbage_number_acc, Hard_garbage_number_acc } ) ->
-		case Garbage_type of
-			garbage ->			{ Normal_garbage_number_acc + 1, Color_garbage_number_acc, Hard_garbage_number_acc };
-			garbage_color ->	{ Normal_garbage_number_acc, Color_garbage_number_acc + 1, Hard_garbage_number_acc };
-			garbage_hard ->		{ Normal_garbage_number_acc, Color_garbage_number_acc, Hard_garbage_number_acc + 1 }
+	fun( GarbageType, { NormalGarbageNumberAcc, ColorGarbageNumberAcc, HardGarbageNumberAcc } ) ->
+		case GarbageType of
+			garbage ->			{ NormalGarbageNumberAcc + 1, ColorGarbageNumberAcc, HardGarbageNumberAcc };
+			garbage_color ->	{ NormalGarbageNumberAcc, ColorGarbageNumberAcc + 1, HardGarbageNumberAcc };
+			garbage_hard ->		{ NormalGarbageNumberAcc, ColorGarbageNumberAcc, HardGarbageNumberAcc + 1 }
 		end
 	end,
-	lists:foldl( Fun, { Normal_garbage_number, Color_garbage_number, Hard_garbage_number }, Garbage_list).
+	lists:foldl( Fun, { NormalGarbageNumber, ColorGarbageNumber, HardGarbageNumber }, GarbageList).
 
 
 
 
 
 
-get_garbage_from_combo_chain( Combos, Game_rules = #game_logic_rules{} ) ->
-	Sum_sequence = fun( Combo_sequence, { Normal_garbage_number, Color_garbage_number, Hard_garbage_number } ) -> 
+get_garbage_from_combo_chain( Combos, GameRules = #game_logic_rules{} ) ->
+	SumSequence = fun( ComboSequence, { NormalGarbageNumber, ColorGarbageNumber, HardGarbageNumber } ) -> 
 			
-			{ New_normal_garbage_number, New_color_garbage_number, New_hard_garbage_number } = get_garbage_from_combo_sequence( Combo_sequence, Game_rules ),
+			{ NewNormalGarbageNumber, NewColorGarbageNumber, NewHardGarbageNumber } = get_garbage_from_combo_sequence( ComboSequence, GameRules ),
 			
-			{Normal_garbage_number + New_normal_garbage_number,
-				Color_garbage_number + New_color_garbage_number, 
-					Hard_garbage_number + New_hard_garbage_number}
+			{NormalGarbageNumber + NewNormalGarbageNumber,
+				ColorGarbageNumber + NewColorGarbageNumber, 
+					HardGarbageNumber + NewHardGarbageNumber}
 		end,
 
-	{ Normal_garbage_number, Color_garbage_number, Hard_garbage_number } = lists:foldl( Sum_sequence, { 0,0,0 } , Combos),
-	{ Ratio , Garbage_types } = Game_rules#game_logic_rules.garbage_chain_rule,
+	{ NormalGarbageNumber, ColorGarbageNumber, HardGarbageNumber } = lists:foldl( SumSequence, { 0,0,0 } , Combos),
+	{ Ratio , GarbageTypes } = GameRules#game_logic_rules.garbage_chain_rule,
 
-	Garbage_list = get_random_garbage_from_types( (length(Combos) - 1) * Ratio, Garbage_types ),
+	GarbageList = get_random_garbage_from_types( (length(Combos) - 1) * Ratio, GarbageTypes ),
 
 	Fun = 
-	fun( Garbage_type, { Normal_garbage_number_acc, Color_garbage_number_acc, Hard_garbage_number_acc } ) ->
-		case Garbage_type of
-			garbage ->			{ Normal_garbage_number_acc + 1, Color_garbage_number_acc, Hard_garbage_number_acc };
-			garbage_color ->	{ Normal_garbage_number_acc, Color_garbage_number_acc + 1, Hard_garbage_number_acc };
-			garbage_hard ->		{ Normal_garbage_number_acc, Color_garbage_number_acc, Hard_garbage_number_acc + 1 }
+	fun( GarbageType, { NormalGarbageNumberAcc, ColorGarbageNumberAcc, HardGarbageNumberAcc } ) ->
+		case GarbageType of
+			garbage ->			{ NormalGarbageNumberAcc + 1, ColorGarbageNumberAcc, HardGarbageNumberAcc };
+			garbage_color ->	{ NormalGarbageNumberAcc, ColorGarbageNumberAcc + 1, HardGarbageNumberAcc };
+			garbage_hard ->		{ NormalGarbageNumberAcc, ColorGarbageNumberAcc, HardGarbageNumberAcc + 1 }
 		end
 	end,
-	lists:foldl( Fun, { Normal_garbage_number, Color_garbage_number, Hard_garbage_number }, Garbage_list).
+	lists:foldl( Fun, { NormalGarbageNumber, ColorGarbageNumber, HardGarbageNumber }, GarbageList).
 
 
 
 get_combo_color( [] ) ->
 	shapeshifter;
 
-get_combo_color( Combo_list ) ->
-	[ Block | Rest_blocks ] = Combo_list,
+get_combo_color( ComboList ) ->
+	[ Block | RestBlocks ] = ComboList,
 	case Block#block.type of
-		shapeshifter ->		get_combo_color( Rest_blocks );
+		shapeshifter ->		get_combo_color( RestBlocks );
 		_other ->			Block#block.color
 	end.
 
@@ -175,44 +175,44 @@ get_minimum_combo_power( _, []) ->
 	color;
 get_minimum_combo_power( [], _combos) -> 
 	color;
-get_minimum_combo_power( Game_rules, Combos) -> 
-	Reverse_rules = lists:reverse(Game_rules),
-	get_minimum_combo_power_rec( Reverse_rules, lists:flatten(Combos)).
+get_minimum_combo_power( GameRules, Combos) -> 
+	ReverseRules = lists:reverse(GameRules),
+	get_minimum_combo_power_rec( ReverseRules, lists:flatten(Combos)).
 
 
-get_minimum_combo_power_rec( [{{ _combo_size, Rule_color }, Power } | Rest], Combos) -> 
+get_minimum_combo_power_rec( [{{ _combo_size, RuleColor }, Power } | Rest], Combos) -> 
 	Fun = 
-	fun( Combo, { Found, Didnt_match } ) ->
-		Combo_list = sets:to_list(Combo),
-		case Rule_color == any orelse Rule_color == get_combo_color( Combo_list ) of
-			true ->			{ true, Didnt_match};
-			false ->		{ Found, [ Combo | Didnt_match]}
+	fun( Combo, { Found, DidntMatch } ) ->
+		ComboList = sets:to_list(Combo),
+		case RuleColor == any orelse RuleColor == get_combo_color( ComboList ) of
+			true ->			{ true, DidntMatch};
+			false ->		{ Found, [ Combo | DidntMatch]}
 		end
 	end,
 	case lists:foldl( Fun, {false, []}, Combos ) of
 		{ true, [] } ->				Power;
-		{ _, Not_matched } ->		get_minimum_combo_power_rec( Rest, Not_matched)
+		{ _, NotMatched } ->		get_minimum_combo_power_rec( Rest, NotMatched)
 	end.
 
 
 
-get_type_from_rule_with_frenzy( Game_rules , Combos) ->
-	case get_type_from_rule( Game_rules , Combos) of
-		color ->	get_minimum_combo_power( Game_rules, Combos);
+get_type_from_rule_with_frenzy( GameRules , Combos) ->
+	case get_type_from_rule( GameRules , Combos) of
+		color ->	get_minimum_combo_power( GameRules, Combos);
 		Other -> 	Other
 	end.
 
 get_type_from_rule( [] , _combos) ->
 	color;
 
-get_type_from_rule( [{{ Combo_size, Rule_color }, Power } | Rest] , Combos) ->
-	Combo_fits_rule = 
+get_type_from_rule( [{{ ComboSize, RuleColor }, Power } | Rest] , Combos) ->
+	ComboFitsRule = 
 	fun( Combo ) ->
-		Combo_list = sets:to_list(Combo),
-		length(Combo_list) >= Combo_size andalso ( Rule_color == any orelse Rule_color == get_combo_color( Combo_list ) )
+		ComboList = sets:to_list(Combo),
+		length(ComboList) >= ComboSize andalso ( RuleColor == any orelse RuleColor == get_combo_color( ComboList ) )
 	end,
 
-	case lists:any( fun( Combo_sequence )-> lists:any( Combo_fits_rule, Combo_sequence ) end, Combos ) of
+	case lists:any( fun( ComboSequence )-> lists:any( ComboFitsRule, ComboSequence ) end, Combos ) of
 		false ->		get_type_from_rule( Rest, Combos);
 		true ->			Power
 	end.

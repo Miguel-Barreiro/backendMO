@@ -82,10 +82,10 @@ handle_cast({reply_with_disconnect, Reply}, State = #connection_state{socket = S
 
 
 
-handle_cast( { register_user_process, User_process_pid }, State = #connection_state{ } ) ->
-	lager:debug(" register_user_process called ~p with ~p",[self(),User_process_pid]),
-	New_state = State#connection_state{ user_monitor =  monitor(process, User_process_pid ) , user_process_pid = User_process_pid },
-	{noreply, New_state};
+handle_cast( { register_user_process, UserProcessPid }, State = #connection_state{ } ) ->
+	lager:debug(" register_user_process called ~p with ~p",[self(),UserProcessPid]),
+	NewState = State#connection_state{ user_monitor =  monitor(process, UserProcessPid ) , user_process_pid = UserProcessPid },
+	{noreply, NewState};
 
 
 
@@ -152,10 +152,10 @@ handle_cast(accept, State = #connection_state{socket = ListenSocket, sslsocket =
 %%
 %	called when the user process stops
 %%
-handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #connection_state{user_monitor = User_monitor}) when (Reference == User_monitor) ->
+handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #connection_state{user_monitor = UserMonitor}) when (Reference == UserMonitor) ->
 	
 	lager:debug("game either crashed or user was stoped so we disconect and send a disconect message", []),
-	demonitor(User_monitor),
+	demonitor(UserMonitor),
 
     gen_server:cast(self(), {reply_with_disconnect, message_processor:create_disconect_message()}),
     {noreply, State};
@@ -285,10 +285,10 @@ code_change(_OldVsn, State, _Extra) ->
 
 
 
-process(Msg, State = #connection_state{ user_process_pid = User_process_pid} ) when User_process_pid == undefined ->
+process(Msg, State = #connection_state{ user_process_pid = UserProcessPid} ) when UserProcessPid == undefined ->
 	case message_processor:process_pre_login_message(Msg) of
 		{reply, Reply} -> gen_server:cast(self(), {reply, Reply} );
-		{reply_with_disconnect, Last_reply} -> gen_server:cast(self(), {reply_with_disconnect, Last_reply} );
+		{reply_with_disconnect, LastReply} -> gen_server:cast(self(), {reply_with_disconnect, LastReply} );
 		_ -> nothing
 	end,
 	State;
@@ -296,7 +296,7 @@ process(Msg, State = #connection_state{ user_process_pid = User_process_pid} ) w
 process(Msg, State = #connection_state{} ) ->
 	case message_processor:process(Msg, State#connection_state.user_process_pid) of
 		{reply, Reply} -> gen_server:cast(self(), {reply, Reply} );
-		{reply_with_disconnect, Last_reply} -> gen_server:cast(self(), {reply_with_disconnect, Last_reply} );
+		{reply_with_disconnect, LastReply} -> gen_server:cast(self(), {reply_with_disconnect, LastReply} );
 		_ -> nothing
 	end,
 	State.

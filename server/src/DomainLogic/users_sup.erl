@@ -15,7 +15,7 @@ init([]) ->
 	]}}.
 
 %%
-%	@param User_data_list = [ Connection_pid , User_id ]
+%	@param UserDataList = [ ConnectionPid , UserId ]
 %%
-start_new_user_process( User_data_list )->
-	supervisor:start_child(users_sup, User_data_list).
+start_new_user_process( UserDataList )->
+	supervisor:start_child(users_sup, UserDataList).

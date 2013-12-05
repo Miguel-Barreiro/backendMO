@@ -11,21 +11,21 @@
 
 
 get_values_from_json( Proplist ) ->
-	{All_values} = proplists:get_value(<<"values">>,Proplist),
+	{AllValues} = proplists:get_value(<<"values">>,Proplist),
 
 	Fun = fun( { Key, Value} , Tree ) ->  
 		lager:debug("configuration value ~p -> ~p",[ binary_to_list(Key),Value]),
 		gb_trees:insert(Key, Value, Tree) 
 	end,
-	lists:foldl( Fun, gb_trees:empty(), All_values ).
+	lists:foldl( Fun, gb_trees:empty(), AllValues ).
 
 
 
 
 
 
-get_real_garbage_type_from_json( Json_garbage_type ) ->
-	case Json_garbage_type of
+get_real_garbage_type_from_json( JsonGarbageType ) ->
+	case JsonGarbageType of
 		<<"BlockTypeGarbage">> ->		garbage;
 		<<"BlockTypeColor">> ->			garbage_color;
 		<<"BlockTypeHard">> ->			garbage_hard
@@ -34,23 +34,23 @@ get_real_garbage_type_from_json( Json_garbage_type ) ->
 
 
 get_combo_rules_from_json( List ) ->
-	Fun = fun( {[{ <<"blockColor">>,Type}, { <<"comboSize">>, Combo_size}, { <<"quantityGenerated">>, Quantity} ]}, {Result,Max} ) ->
-		Next_max = case Max > Combo_size of true -> Max; false -> Combo_size end,
-		{ [{Combo_size, {get_real_garbage_type_from_json(Type), Quantity}} | Result], Next_max}
+	Fun = fun( {[{ <<"blockColor">>,Type}, { <<"comboSize">>, ComboSize}, { <<"quantityGenerated">>, Quantity} ]}, {Result,Max} ) ->
+		NextMax = case Max > ComboSize of true -> Max; false -> ComboSize end,
+		{ [{ComboSize, {get_real_garbage_type_from_json(Type), Quantity}} | Result], NextMax}
 	end,
 	lists:foldl( Fun, { [], 0 }, List ).
 
 
 get_simultaneous_rules_from_json( List ) ->
-	Fun = fun( {[{ <<"blockColor">>,Type}, { <<"quantityGenerated">>, Quantity} ]} , { _ , Rest_list } ) ->
-		{ Quantity, [ get_real_garbage_type_from_json(Type) | Rest_list] }
+	Fun = fun( {[{ <<"blockColor">>,Type}, { <<"quantityGenerated">>, Quantity} ]} , { _ , RestList } ) ->
+		{ Quantity, [ get_real_garbage_type_from_json(Type) | RestList] }
 	end,
 	lists:foldl( Fun, { 0 , [] }, List ).
 
 
 get_chain_rules_from_json( List ) ->
-	Fun = fun( {[{ <<"blockColor">>,Type}, { <<"quantityGenerated">>, Quantity} ]}, { _ , Rest_list } ) ->
-		{ Quantity, [ get_real_garbage_type_from_json(Type) | Rest_list] }
+	Fun = fun( {[{ <<"blockColor">>,Type}, { <<"quantityGenerated">>, Quantity} ]}, { _ , RestList } ) ->
+		{ Quantity, [ get_real_garbage_type_from_json(Type) | RestList] }
 	end,
 	lists:foldl( Fun, { 0 , [] }, List ).
 
@@ -82,8 +82,8 @@ get_power_from_json( Power )->
 
 
 get_abilities_generation_rules_from_json( List ) ->
-	Fun = fun( {[ {<<"blockColor">>,Type}, {<<"comboSizeMin">>, Combo_size}, { <<"powerType">>, Power} ]}, Rest_list ) ->
-		[ {{Combo_size,get_block_type_from_json(Type)}, get_power_from_json( Power ) } | Rest_list]
+	Fun = fun( {[ {<<"blockColor">>,Type}, {<<"comboSizeMin">>, ComboSize}, { <<"powerType">>, Power} ]}, RestList ) ->
+		[ {{ComboSize,get_block_type_from_json(Type)}, get_power_from_json( Power ) } | RestList]
 	end,
 	lists:reverse(lists:foldl( Fun, [], List )).
 	
@@ -91,46 +91,46 @@ get_abilities_generation_rules_from_json( List ) ->
 
 
 
-get_tier_from_json( Tier_properties ) ->
-	{Garbage_rules} = proplists:get_value(<<"garbage">>,Tier_properties),
+get_tier_from_json( TierProperties ) ->
+	{GarbageRules} = proplists:get_value(<<"garbage">>,TierProperties),
 
-	Garbage_chain_rules = proplists:get_value( <<"garbagePerChain">>, Garbage_rules),
-	Garbage_combo_rules = proplists:get_value( <<"garbagePerCombo">>, Garbage_rules),
-	Garbage_simultaneous_rules = proplists:get_value( <<"garbagePerSimultaneous">>, Garbage_rules),
+	GarbageChainRules = proplists:get_value( <<"garbagePerChain">>, GarbageRules),
+	GarbageComboRules = proplists:get_value( <<"garbagePerCombo">>, GarbageRules),
+	GarbageSimultaneousRules = proplists:get_value( <<"garbagePerSimultaneous">>, GarbageRules),
 
-	Abilities_generation_rules = proplists:get_value( <<"powersGeneration">>, Tier_properties),
+	AbilitiesGenerationRules = proplists:get_value( <<"powersGeneration">>, TierProperties),
 
-	{Garbages_combo, Max_combo} = get_combo_rules_from_json( Garbage_combo_rules ),
-	Garbages_chain = get_chain_rules_from_json( Garbage_chain_rules ),
-	Garbages_simultaneous = get_simultaneous_rules_from_json( Garbage_simultaneous_rules ),
+	{GarbagesCombo, MaxCombo} = get_combo_rules_from_json( GarbageComboRules ),
+	GarbagesChain = get_chain_rules_from_json( GarbageChainRules ),
+	GarbagesSimultaneous = get_simultaneous_rules_from_json( GarbageSimultaneousRules ),
 
 	#configuration_tier{
-		board_width = proplists:get_value( <<"boardSizeX">>, Tier_properties),
-		board_height = proplists:get_value( <<"boardSizeY">>, Tier_properties),
+		board_width = proplists:get_value( <<"boardSizeX">>, TierProperties),
+		board_height = proplists:get_value( <<"boardSizeY">>, TierProperties),
 
-		abilities_generation_rules = get_abilities_generation_rules_from_json(Abilities_generation_rules),
+		abilities_generation_rules = get_abilities_generation_rules_from_json(AbilitiesGenerationRules),
 
-		garbage_combo_rules = Garbages_combo,
-		garbage_chain_rules = Garbages_chain,
-		garbage_simultaneous_rules = Garbages_simultaneous	,
+		garbage_combo_rules = GarbagesCombo,
+		garbage_chain_rules = GarbagesChain,
+		garbage_simultaneous_rules = GarbagesSimultaneous	,
 
-		garbage_combo_max = Max_combo
+		garbage_combo_max = MaxCombo
 	}.
 
 
 
 get_tiers_from_json( Proplist ) ->
-	{All_values} = proplists:get_value(<<"tiers">>,Proplist),
+	{AllValues} = proplists:get_value(<<"tiers">>,Proplist),
 
-%	[{ Tier_name, Tier_properties } | _] = All_values,
-%	lager:info("tier properties for ~p are ~p",[Tier_name, Tier_properties]),
+%	[{ TierName, TierProperties } | _] = AllValues,
+%	lager:info("tier properties for ~p are ~p",[TierName, TierProperties]),
 
-	Fun = fun( { Tier_name, {Tier_properties} }, Result ) ->  
-		%lager:info("tier properties for ~p are ~p",[Tier_name, Tier_properties]),
-		Tier = get_tier_from_json( Tier_properties ),
-		lager:info("\n\ntier ~p has \n\n ~p \n\n",[Tier_name,Tier]),
-		gb_trees:insert(Tier_name, Tier, Result)
+	Fun = fun( { TierName, {TierProperties} }, Result ) ->  
+		%lager:info("tier properties for ~p are ~p",[TierName, TierProperties]),
+		Tier = get_tier_from_json( TierProperties ),
+		lager:info("\n\ntier ~p has \n\n ~p \n\n",[TierName,Tier]),
+		gb_trees:insert(TierName, Tier, Result)
 	end,
 
-	lists:foldl( Fun, gb_trees:empty(), All_values ).
+	lists:foldl( Fun, gb_trees:empty(), AllValues ).
 
