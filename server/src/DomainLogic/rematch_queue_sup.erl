@@ -22,5 +22,8 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-	{ok, { {one_for_one, 5, 10}, [ ?CHILD(rematch_queue_serv, worker) ] } }.
+%	{ok, { {one_for_one, 5, 10}, [ ?CHILD(rematch_queue_serv, worker) ] } }.
+	{ok, {{simple_one_for_one, 60, 3600}, [
+		{rematches, {rematch_queue_serv, start_link, []}, temporary, 1000, worker, [rematch_queue_serv]}
+	]}}.
 
