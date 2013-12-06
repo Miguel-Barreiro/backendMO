@@ -4,7 +4,7 @@
 -define(CONNECTION_TIMEOUT, 40000).
 -include("include/softstate.hrl").
 
--type user_states() :: init | in_rematch_queue | in_queue | playing_game.
+-type user_states() :: init | in_rematch | in_queue | playing_game.
 
 -record(user_process_state, {
 		user_id,
@@ -172,7 +172,7 @@ handle_cast( { enter_queue, _Tier, Powers }, State = #user_process_state{ connec
 handle_cast( { enter_game, Powers, GameProcessPid, OpponnentName, Seed } , State = #user_process_state{ connection_pid = ConnectionPid, 
 																										game_state = UserState,
 																										logic_user = LogicUser }) 
-				when UserState == in_queue orelse UserState == in_rematch_queue ->
+				when UserState == in_queue orelse UserState == in_rematch ->
 
 	lager:info("enter game received when he is in ~p",[UserState]),
 
@@ -272,24 +272,24 @@ handle_cast({ buy_product, ProductId, Amount } , State = #user_process_state{ us
 
 
 
-handle_cast(message_rematch , State = #user_process_state{ game_state = in_rematch_queue, rematch_pid = RPid } ) ->
-	rematch_queue_serv:set_user_rematch( RPid, self() ),
+handle_cast(message_rematch , State = #user_process_state{ game_state = in_rematch, rematch_pid = RPid } ) ->
+	rematches_serv:set_user_rematch( RPid, self() ),
 	{noreply, State};
 
 
-handle_cast(message_no_rematch , State = #user_process_state{ game_state = in_rematch_queue, rematch_pid = RPid } ) ->
-	rematch_queue_serv:remove_user( RPid, self() ),
+handle_cast(message_no_rematch , State = #user_process_state{ game_state = in_rematch, rematch_pid = RPid } ) ->
+	rematches_serv:remove_user( RPid, self() ),
 	{noreply, State};
 
 
-handle_cast({set_rematch_queue_state,RQPid} , State = #user_process_state{} ) ->
+handle_cast({set_rematch_state,RQPid} , State = #user_process_state{} ) ->
 	{noreply, State#user_process_state{ 
-			game_state = in_rematch_queue, 
+			game_state = in_rematch, 
 			rematch_pid = RQPid, rematch_monitor = monitor(process, RQPid) 
 	}};
 
 
-handle_cast(remove_from_rematch_queue , State = #user_process_state{ game_state = in_rematch_queue, rematch_monitor = RematchMonitor } ) ->
+handle_cast(remove_from_rematch , State = #user_process_state{ game_state = in_rematch, rematch_monitor = RematchMonitor } ) ->
 	demonitor( RematchMonitor ),
 	{noreply, State#user_process_state{ game_state = init, rematch_pid = undefined, rematch_monitor = undefined } };
 
@@ -397,7 +397,7 @@ handle_info({'DOWN', Reference, process, _Pid, _Reason}, State = #user_process_s
 %	called when the game stops
 %%
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{game_monitor = GameMonitor})
-				when Reference == GameMonitor andalso State#user_process_state.game_state == in_rematch_queue ->
+				when Reference == GameMonitor andalso State#user_process_state.game_state == in_rematch ->
 
 	lager:debug("game stoped (~p) but i will continue", [Reason]),
 	demonitor(GameMonitor),
@@ -413,7 +413,7 @@ handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_st
 
 
 handle_info({'DOWN', Reference, process, _Pid, Reason}, State = #user_process_state{rematch_monitor = RematchMonitor})
-				when Reference == RematchMonitor andalso State#user_process_state.game_state == in_rematch_queue ->
+				when Reference == RematchMonitor andalso State#user_process_state.game_state == in_rematch ->
 
 	lager:debug("game stoped (~p) but i will continue", [Reason]),
 	demonitor(RematchMonitor),

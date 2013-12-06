@@ -591,23 +591,26 @@ process_message( message_no_rematch, UserProcessPid, #request{ message_sync_cont
 
 
 process_message( message_debug_board, UserProcessPid, #request{ debug_game_state_content=DebugGameStateContent }, _MessageEncoded ) ->
-	gen_server:cast(
-		UserProcessPid,
-		{
-			debug_confirm_board_synch,
+	Fun = fun() ->
+		gen_server:cast(
+			UserProcessPid,
 			{
-%				convert_protocolgstate_to_usergstateelems(
-%					DebugGameStateContent#message_debug_board.opponent_state
-%				),
-				undefined,
-
-				convert_protocolgstate_to_usergstateelems(
-					DebugGameStateContent#message_debug_board.player_state,
-					DebugGameStateContent#message_debug_board.player_last_garbage_id
-				)
+				debug_confirm_board_synch,
+				{
+	%				convert_protocolgstate_to_usergstateelems(
+	%					DebugGameStateContent#message_debug_board.opponent_state
+	%				),
+					undefined,
+	
+					convert_protocolgstate_to_usergstateelems(
+						DebugGameStateContent#message_debug_board.player_state,
+						DebugGameStateContent#message_debug_board.player_last_garbage_id
+					)
+				}
 			}
-		}
-	),
+		)
+	end,
+	catch Fun(),
 	{no_reply};
 
 

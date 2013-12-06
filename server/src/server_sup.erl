@@ -31,6 +31,6 @@ init([]) ->
 		?CHILD(game_sup, supervisor),
 		?CHILD(stats_sup, supervisor),
 		?CHILD(configurations_sup, supervisor),
-		?CHILD(rematch_queue_sup,supervisor)
+		?CHILD(rematches_sup,supervisor)
 	]} }.
 

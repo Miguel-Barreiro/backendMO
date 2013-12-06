@@ -1,4 +1,4 @@
--module(rematch_queue_sup).
+-module(rematches_sup).
 -behaviour(supervisor).
 
 %% API
@@ -22,8 +22,8 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-%	{ok, { {one_for_one, 5, 10}, [ ?CHILD(rematch_queue_serv, worker) ] } }.
+%	{ok, { {one_for_one, 5, 10}, [ ?CHILD(rematches_serv, worker) ] } }.
 	{ok, {{simple_one_for_one, 60, 3600}, [
-		{rematches, {rematch_queue_serv, start_link, []}, temporary, 1000, worker, [rematch_queue_serv]}
+		{rematches, {rematches_serv, start_link, []}, temporary, 1000, worker, [rematches_serv]}
 	]}}.
 

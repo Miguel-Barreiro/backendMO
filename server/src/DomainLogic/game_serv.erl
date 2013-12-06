@@ -285,7 +285,7 @@ handle_cast( { user_lost_game, LostUserPid } , State = #game_state{ tier = Tier,
 
 	erlang:cancel_timer(State#game_state.game_difficult_change_timer),
 
-	rematch_queue_serv:enter(User1#game_user.pid, User1#game_user.user_id,
+	rematches_serv:enter(User1#game_user.pid, User1#game_user.user_id,
 								User2#game_user.pid, User2#game_user.user_id, Tier),
 
 	{stop, normal, State#game_state{ state = init }};

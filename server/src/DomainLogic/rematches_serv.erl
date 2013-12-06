@@ -1,4 +1,4 @@
--module(rematch_queue_serv).
+-module(rematches_serv).
 
 -behaviour(gen_server).
 
@@ -32,7 +32,7 @@
 
 
 enter(User1Pid,User1Id,User2Pid,User2Id,Tier) ->
-	{ok, _Pid} = supervisor:start_child( rematch_queue_sup, [{enter_user_pair,User1Pid,User1Id,User2Pid,User2Id,Tier}] ),
+	{ok, _Pid} = supervisor:start_child( rematches_sup, [{enter_user_pair,User1Pid,User1Id,User2Pid,User2Id,Tier}] ),
 	ok.
 
 
@@ -107,7 +107,7 @@ handle_cast( { set_user_rematch, UserPid },  Lobby = #rematch_lobby{} ) ->
 %			erlang:cancel_timer( Lobby#rematch_lobby.rematch_timeout),
 
 			%NewLobby = Lobby#rematch_lobby{ user_list = NewUserList, state = pick_powers },
-			%{noreply, State#rematch_queue_state{ rematch_lobbies = gb_trees:insert( LobbyKey, NewLobby ,gb_trees:delete(LobbyKey, Lobbies)) } };
+			%{noreply, State#rematches_state{ rematch_lobbies = gb_trees:insert( LobbyKey, NewLobby ,gb_trees:delete(LobbyKey, Lobbies)) } };
 			[ { User1Pid, User1 } , {User2Pid , User2}] = NewUserList,
 			game_sup:start_new_game_process( [ Lobby#rematch_lobby.tier, User1Pid, User1#rematch_lobby_user.user_id, [],
 													User2Pid, User2#rematch_lobby_user.user_id, [],
@@ -135,8 +135,8 @@ handle_cast( { set_user_rematch, UserPid },  Lobby = #rematch_lobby{} ) ->
 handle_cast( { enter_user_pair, User1Pid, User1Id, User2Pid, User2Id, Tier }, 
 					initializing ) ->
 	
-	gen_server:cast( User1Pid, {set_rematch_queue_state,self()} ),
-	gen_server:cast( User2Pid, {set_rematch_queue_state,self()} ),
+	gen_server:cast( User1Pid, {set_rematch_state,self()} ),
+	gen_server:cast( User2Pid, {set_rematch_state,self()} ),
 	lager:info("rematch queue enter ~p,~p",[User2Pid,User1Pid]),
 
 	User1 = #rematch_lobby_user{ user_pid = User1Pid,
@@ -155,7 +155,7 @@ handle_cast( { enter_user_pair, User1Pid, User1Id, User2Pid, User2Id, Tier },
 
 
 handle_cast( Msg, State) ->
-	lager:error("rematch_queue_serv: unhandled cast ~p", [Msg]),
+	lager:error("rematches_serv: unhandled cast ~p", [Msg]),
 	{noreply, State}.
 
 
@@ -171,7 +171,7 @@ handle_cast( Msg, State) ->
 %%
 
 handle_info({'DOWN', _Reference, process, Pid, _Reason}, State = #rematch_lobby{} ) ->
-	lager:debug("rematch_queue_serv: user (~p) connection went down", [Pid]),
+	lager:debug("rematches_serv: user (~p) connection went down", [Pid]),
 	handle_remove_user( Pid , State );
 
 
@@ -180,10 +180,10 @@ handle_info({ rematch_timeout, User1Pid, User2Pid }, rematched ) ->
 
 
 handle_info({ rematch_timeout, User1Pid, User2Pid }, Lobby = #rematch_lobby{} ) ->
-	lager:debug("rematch_queue_serv: rematch_timeout for (~p,~p) reached", [User2Pid, User1Pid]),
+	lager:debug("rematches_serv: rematch_timeout for (~p,~p) reached", [User2Pid, User1Pid]),
 
-	gen_server:cast( User2Pid, remove_from_rematch_queue ),
-	gen_server:cast( User1Pid, remove_from_rematch_queue ),
+	gen_server:cast( User2Pid, remove_from_rematch ),
+	gen_server:cast( User1Pid, remove_from_rematch ),
 
 	Msg = message_processor:create_rematch_timeout_message(),
 	gen_server:cast( User2Pid,{send_message, Msg}),
@@ -200,14 +200,14 @@ handle_info({ rematch_timeout, User1Pid, User2Pid }, Lobby = #rematch_lobby{} ) 
 
 
 handle_info(Msg,State) ->
-	lager:error("rematch_queue_serv: unhandled info ~p", [Msg]),
+	lager:error("rematches_serv: unhandled info ~p", [Msg]),
 	{noreply, State}.
 
 handle_call(_E, _From, State) ->
 	{noreply, State}.
 
 terminate(Reason, _State) ->
-	lager:error("rematch_queue_serv: terminate reason: ~p", [Reason]),
+	lager:error("rematches_serv: terminate reason: ~p", [Reason]),
 	ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -223,7 +223,7 @@ handle_remove_user(UserPid, Lobby = #rematch_lobby{}) ->
 	lists:foreach( fun({ _ , CurrentUser }) ->  gen_server:cast( CurrentUser#rematch_lobby_user.user_pid, {send_message, Msg }) end, ListWithoutUser ),
 
 	Fun = fun({ CurrentUserPid, CurrentUser }) ->
-		gen_server:cast( CurrentUserPid, remove_from_rematch_queue ),
+		gen_server:cast( CurrentUserPid, remove_from_rematch ),
 		demonitor( CurrentUser#rematch_lobby_user.user_monitor)
 	end,
 	lists:foreach( Fun, Lobby#rematch_lobby.user_list ),
